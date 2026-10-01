@@ -7,8 +7,10 @@ Agente de WhatsApp construido con **n8n Community Edition** (gratis) corriendo e
 ## Arranque rápido
 
 ```bash
-cp .env.example .env      # en Windows PowerShell: copy .env.example .env
+cp .env.example .env
 docker compose up -d
 ```
+
+(En Windows PowerShell usa `copy .env.example .env`.)
 
 Abre http://localhost:5678 y crea tu cuenta de administrador.

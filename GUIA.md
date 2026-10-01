@@ -52,11 +52,13 @@ Si `hello-world` imprime "Hello from Docker!", todo está listo.
 git clone https://github.com/davidethc/agentWhatsap.git
 cd agentWhatsap
 
-cp .env.example .env          # Windows PowerShell: copy .env.example .env
-# (opcional) edita .env y cambia la zona horaria GENERIC_TIMEZONE
-
+cp .env.example .env
 docker compose up -d
 ```
+
+> En Windows PowerShell usa `copy .env.example .env` en lugar de `cp`.
+> El archivo `.env` es opcional: si no existe, n8n arranca con valores por defecto.
+> Ahí puedes cambiar la zona horaria (`GENERIC_TIMEZONE`).
 
 El archivo [`docker-compose.yml`](docker-compose.yml) ya trae:
 - la imagen oficial gratuita `docker.n8n.io/n8nio/n8n`

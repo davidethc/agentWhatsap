@@ -367,3 +367,5 @@ ngrok http --url=TU-DOMINIO.ngrok-free.dev 5678   # 3. túnel (deja esta termina
 | El agente no responde | ngrok cerrado / workflow inactivo / URL de test | Revisa ngrok `online`, workflow *Active*, Kapso con `/webhook/` |
 | `Rate limit exceeded: free-models-per-day` | Se acabó la cuota gratis diaria de OpenRouter (~50 peticiones) | Carga $10 de créditos en OpenRouter (sube a ~1000/día gratis) o usa un modelo de pago barato / Gemini. Mientras tanto el flujo envía un aviso amable al cliente |
 | El agente no saluda como nuevo / repite respuestas viejas | La memoria guarda conversaciones anteriores | Cambia el prefijo de `sessionKey` en *Memoria por cliente* (ej. `v3-`) o reinicia n8n (`docker compose restart n8n`) |
+| OpenRouter: `401 API key expired` | La key de OpenRouter tenía fecha de vencimiento | Crea otra con *Expiration: No expiration*, o usa Gemini (gratis) |
+| Gemini: `404 models/gemini-2.5-pro is no longer available to new users` | Modelo viejo / no incluido en el plan gratis | En *Google Gemini Chat Model* usa un modelo Flash (`models/gemini-3-flash-preview`) |

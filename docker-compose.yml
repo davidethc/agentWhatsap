@@ -10,8 +10,8 @@ services:
       - N8N_PORT=5678
       - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
       - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678/}
-      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Mexico_City}
-      - TZ=${GENERIC_TIMEZONE:-America/Mexico_City}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Guayaquil}
+      - TZ=${GENERIC_TIMEZONE:-America/Guayaquil}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
       - N8N_RUNNERS_ENABLED=true
     volumes:

@@ -1,0 +1,267 @@
+{
+  "name": "Agente WhatsApp - Citas (Kapso + Claude + Google Calendar)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "815c58df-43f7-4f91-bde5-6935b562214c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -560,
+        0
+      ],
+      "id": "3da58292-87e8-4b69-a178-d45af9c471aa",
+      "name": "Webhook Kapso",
+      "webhookId": "d6917301-fc81-4d8d-a631-967403a0eac3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Kapso envía los mensajes agrupados (debounce): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Este nodo junta todos los textos del lote en un solo mensaje para el agente.\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\n\nconst textos = [];\nlet from = '';\nlet phoneNumberId = '';\nlet nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue; // ignorar mensajes salientes\n  from = msg.from || it.conversation?.phone_number || from;\n  phoneNumberId = it.phone_number_id || it.conversation?.phone_number_id || phoneNumberId;\n  nombre = it.conversation?.contact_name || nombre;\n\n  const texto = msg.text?.body || msg.kapso?.content || '';\n  if (texto) textos.push(texto);\n  else if (msg.type) textos.push(`[El cliente envió un mensaje de tipo \"${msg.type}\" que no puedo leer]`);\n}\n\n// Si no hay nada que responder, se detiene el flujo\nif (!from || textos.length === 0) return [];\n\nreturn [{\n  json: {\n    text: textos.join('\\n'),\n    to: String(from),\n    nombre,\n    phoneNumberId: String(phoneNumberId || '1347989838397545'),\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -340,
+        0
+      ],
+      "id": "785a10eb-edbf-44e4-9738-fe95e46b6e22",
+      "name": "Normalizar mensaje"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=Eres el asistente de WhatsApp de un negocio que agenda citas.\n\nFECHA Y HORA ACTUAL: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }} (zona horaria America/Guayaquil, UTC-05:00)\n\nCLIENTE\n- Nombre en WhatsApp: {{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\n- Teléfono: {{ $('Normalizar mensaje').first().json.to }} (ya lo tienes, NO lo pidas)\n\nQUÉ PUEDES HACER\n1) Responder preguntas sobre servicios, precios y horario.\n2) Consultar disponibilidad en Google Calendar.\n3) Agendar una cita en Google Calendar.\n\nREGLAS\n- Responde en español, corto y amable (es WhatsApp: máximo 3-4 líneas).\n- Si el cliente solo saluda, preséntate y dile que puede consultar servicios o agendar una cita.\n- Para servicios/precios responde con la lista de abajo, sin usar herramientas.\n- Para agendar necesitas: servicio, día y hora. Si falta algo, pregunta SOLO lo que falta.\n- Interpreta \"hoy\", \"mañana\", \"el viernes\", \"a las 4\" usando la FECHA ACTUAL. \"A las 4\" sin más contexto = 16:00.\n- Nunca agendes en el pasado ni fuera del horario de atención.\n- ANTES de crear una cita, usa \"Consultar disponibilidad\" con el rango exacto de la cita.\n  - Si está ocupado: no la crees; propone 2 o 3 horarios libres cercanos.\n  - Si está libre: confirma con el cliente el resumen (servicio, día, hora) y, cuando diga que sí, usa \"Crear cita\".\n- Nunca inventes disponibilidad: si no consultaste el calendario, no digas que hay espacio.\n- Fechas para las herramientas: formato ISO 8601 con zona horaria, ej. 2026-10-03T16:00:00-05:00.\n- En la cita: Summary = \"<Servicio> - <Nombre del cliente>\"; Description = nombre, teléfono y servicio.\n- Después de crear la cita, confirma día, hora y servicio.\n- Tu respuesta es exactamente el mensaje que recibirá el cliente: sin JSON, sin nombres de herramientas, sin IDs.\n\nSERVICIOS (EDITA ESTA LISTA)\n- Corte de cabello — $10 — 60 min\n- Corte + barba — $15 — 60 min\n- Barba — $7 — 30 min\n\nNEGOCIO (EDITA ESTOS DATOS)\n- Nombre: Mi negocio\n- Horario: lunes a sábado, 09:00 a 18:00\n- Dirección: (pon aquí la dirección)",
+          "maxIterations": 10
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -100,
+        0
+      ],
+      "id": "15b33a05-1b3f-499c-847f-0260990f9339",
+      "name": "Agente de citas"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5",
+          "cachedResultName": "Claude Sonnet 5.5"
+        },
+        "options": {
+          "maxTokensToSample": 1024,
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        -240,
+        240
+      ],
+      "id": "95763d58-5125-44c8-84fa-46eb3b98ccbf",
+      "name": "Claude"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Normalizar mensaje').first().json.to }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        240
+      ],
+      "id": "dda49302-3fc8-4f58-a839-65e30cd884c2",
+      "name": "Memoria por cliente"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Consulta si un rango de tiempo está libre en el calendario de citas. Úsala SIEMPRE antes de crear una cita.",
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "timeMin": "={{ $fromAI('Start_Time', 'Inicio del rango a consultar, ISO 8601 con zona horaria', 'string') }}",
+        "timeMax": "={{ $fromAI('End_Time', 'Fin del rango a consultar, ISO 8601 con zona horaria', 'string') }}",
+        "options": {
+          "outputFormat": "availability",
+          "timezone": {
+            "__rl": true,
+            "mode": "list",
+            "value": "America/Guayaquil"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        240
+      ],
+      "id": "af82d9a2-520d-44fa-933a-d009bce35462",
+      "name": "Consultar disponibilidad"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Crea la cita en el calendario. Úsala solo después de comprobar que el horario está libre y de que el cliente confirmó.",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "start": "={{ $fromAI('Start', 'Inicio de la cita, ISO 8601 con zona horaria', 'string') }}",
+        "end": "={{ $fromAI('End', 'Fin de la cita, ISO 8601 con zona horaria', 'string') }}",
+        "additionalFields": {
+          "summary": "={{ $fromAI('Summary', 'Servicio - Nombre del cliente', 'string') }}",
+          "description": "={{ $fromAI('Description', 'Nombre, teléfono y servicio del cliente', 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        240
+      ],
+      "id": "47d24128-a1ff-4127-b285-b1472fc84b8d",
+      "name": "Crear cita"
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
+        "to": "={{ $('Normalizar mensaje').first().json.to }}",
+        "message": "={{ $json.output }}"
+      },
+      "type": "@kapso/n8n-nodes-kapso.kapso",
+      "typeVersion": 1,
+      "position": [
+        280,
+        0
+      ],
+      "id": "c5f33c59-af3f-436b-88b6-189fb509c834",
+      "name": "Responder por WhatsApp",
+      "credentials": {
+        "kapsoApi": {
+          "id": "OaRk3Pa2Y75dao1H",
+          "name": "Kapso account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Antes de activar\n1. **Claude** → elige tu credencial de Anthropic (API key).\n2. **Consultar disponibilidad** y **Crear cita** → elige tu credencial de Google Calendar. `primary` = tu calendario principal.\n3. **Agente de citas** → edita SERVICIOS y NEGOCIO en el System Message.\n4. Desactiva tu flujo viejo: usa el mismo path de webhook.\n\n## Probar\nKapso → `.../webhook-test/815c...` + botón *Execute workflow*.\nProducción → activa el flujo y en Kapso usa `.../webhook/815c...`",
+        "height": 360,
+        "width": 460,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        220
+      ],
+      "id": "a7dc3277-7b79-4052-9c90-36d47144990b",
+      "name": "Guía"
+    }
+  ],
+  "connections": {
+    "Webhook Kapso": {
+      "main": [
+        [
+          {
+            "node": "Normalizar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar mensaje": {
+      "main": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente de citas": {
+      "main": [
+        [
+          {
+            "node": "Responder por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria por cliente": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar disponibilidad": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Guayaquil"
+  },
+  "tags": []
+}

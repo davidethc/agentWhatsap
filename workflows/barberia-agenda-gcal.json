@@ -1,0 +1,337 @@
+{
+  "name": "Barbería · Agenda (Google Calendar)",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "accion",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "hora",
+              "type": "string"
+            },
+            {
+              "name": "servicio",
+              "type": "string"
+            },
+            {
+              "name": "nombre",
+              "type": "string"
+            },
+            {
+              "name": "telefono",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c5a253b2-122a-43f1-bbd0-35b2a15d770c",
+      "name": "Entrada"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://TU-PROYECTO.supabase.co/rest/v1/rpc/public_bot_info",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "TU_SUPABASE_PUBLISHABLE_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"p_business_id\": \"TU_BUSINESS_ID\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "d039dfe8-1ef7-4580-be28-a64095785a68",
+      "name": "Info negocio",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Valida la petición del agente y prepara el rango del día.\nconst TZ = 'America/Guayaquil';\nconst LEAD_MIN = 15;      // anticipación mínima para citas de hoy\nconst MAX_DIAS = 60;      // hasta cuántos días adelante se agenda\nconst SLOT_MIN = 30;      // cada cuántos minutos empieza un turno\nconst input = $('Entrada').first().json;\nconst info = $('Info negocio').first().json;\nconst fail = (error, mensaje) => [{ json: { valido: false, ok: false, error, mensaje } }];\n\nconst accion = String(input.accion || '').trim().toLowerCase();\nif (!['turnos', 'agendar'].includes(accion)) return fail('ACCION_INVALIDA', 'accion debe ser turnos o agendar');\n\nconst fechaTxt = String(input.fecha || '').trim();\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(fechaTxt)) return fail('FECHA_INVALIDA', 'La fecha debe tener formato YYYY-MM-DD');\nconst dia = DateTime.fromISO(fechaTxt, { zone: TZ });\nif (!dia.isValid) return fail('FECHA_INVALIDA', 'La fecha no existe');\nconst hoy = DateTime.now().setZone(TZ).startOf('day');\nif (dia < hoy) return fail('FECHA_PASADA', 'La fecha ya pasó');\nif (dia > hoy.plus({ days: MAX_DIAS })) return fail('FECHA_MUY_LEJANA', 'Solo se agenda hasta ' + MAX_DIAS + ' días adelante');\n\nconst servicios = info.servicios || [];\nconst q = String(input.servicio || '').trim().toLowerCase();\nconst servicio = servicios.find(s => s.service_id === q) || servicios.find(s => s.nombre.toLowerCase() === q)\n  || servicios.find(s => q && (s.nombre.toLowerCase().includes(q) || q.includes(s.nombre.toLowerCase())));\nif (!servicio) return fail('SERVICIO_INVALIDO', 'Servicios disponibles: ' + servicios.map(s => s.nombre).join(', '));\n\nconst nombresDia = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst nombreDia = nombresDia[dia.weekday % 7];\nconst horario = (info.horario || []).find(h => h.dia === nombreDia);\nif (!horario || !horario.abierto) return fail('DIA_CERRADO', 'El ' + nombreDia + ' estamos cerrados');\n\nconst [ah, am] = horario.abre.split(':').map(Number);\nconst [ch, cm] = horario.cierra.split(':').map(Number);\nconst apertura = dia.set({ hour: ah, minute: am });\nconst cierre = dia.set({ hour: ch, minute: cm });\n\nlet horaPedida = null;\nif (accion === 'agendar') {\n  const h = String(input.hora || '').trim();\n  if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(h)) return fail('HORA_INVALIDA', 'La hora debe tener formato HH:MM (24h)');\n  const nombre = String(input.nombre || '').trim();\n  if (nombre.length < 2 || nombre.length > 80) return fail('NOMBRE_INVALIDO', 'Falta el nombre del cliente');\n  horaPedida = h;\n}\n\nreturn [{ json: {\n  valido: true, accion, fecha: fechaTxt, dia_semana: nombreDia,\n  servicio: servicio.nombre, precio: servicio.precio, duracion_min: Number(servicio.duracion_min),\n  apertura: apertura.toISO(), cierre: cierre.toISO(), slot_min: SLOT_MIN, lead_min: LEAD_MIN,\n  hora: horaPedida, nombre: String(input.nombre || '').trim(), telefono: String(input.telefono || '').trim(),\n  negocio: info.negocio?.nombre || '', direccion: info.negocio?.direccion || ''\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "3d005b51-cda3-408a-909f-b75ab2cebd7c",
+      "name": "Validar entrada"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "68d8b09b-7280-43f1-99af-d40dd26c14cc",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "43bcf9bc-7291-4cd7-99b8-1c29b6b14f47",
+      "name": "¿Entrada válida?"
+    },
+    {
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json.apertura }}",
+        "timeMax": "={{ $json.cierre }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        -100
+      ],
+      "id": "98ace07b-dcab-4736-999d-2d71e441a4ea",
+      "name": "Leer Google Calendar",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calcula turnos libres cruzando el horario con los eventos ocupados de Google Calendar.\nconst TZ = 'America/Guayaquil';\nconst req = $('Validar entrada').first().json;\nconst apertura = DateTime.fromISO(req.apertura, { zone: TZ });\nconst cierre = DateTime.fromISO(req.cierre, { zone: TZ });\nconst minimo = DateTime.now().setZone(TZ).plus({ minutes: req.lead_min });\n\nconst ocupados = [];\nfor (const it of $input.all()) {\n  const ev = it.json || {};\n  if (!ev.start || ev.status === 'cancelled' || ev.transparency === 'transparent') continue;\n  const ini = ev.start.dateTime ? DateTime.fromISO(ev.start.dateTime) : DateTime.fromISO(ev.start.date, { zone: TZ });\n  const fin = ev.end?.dateTime ? DateTime.fromISO(ev.end.dateTime) : DateTime.fromISO(ev.end?.date || ev.start.date, { zone: TZ }).plus(ev.end?.date ? {} : { days: 1 });\n  if (ini.isValid && fin.isValid) ocupados.push([ini, fin]);\n}\n\nconst libres = [];\nfor (let t = apertura; t.plus({ minutes: req.duracion_min }) <= cierre; t = t.plus({ minutes: req.slot_min })) {\n  const f = t.plus({ minutes: req.duracion_min });\n  if (t < minimo) continue;\n  if (ocupados.some(([a, b]) => t < b && f > a)) continue;\n  libres.push(t.toFormat('HH:mm'));\n}\n\nconst base = { fecha: req.fecha, dia_semana: req.dia_semana, servicio: req.servicio, precio: req.precio, duracion_min: req.duracion_min };\n\nif (req.accion === 'turnos') {\n  return [{ json: { ok: true, crear: false, ...base, turnos_libres: libres,\n    mensaje: libres.length ? 'Turnos libres encontrados' : 'No hay turnos libres ese día' } }];\n}\n\nif (!libres.includes(req.hora)) {\n  return [{ json: { ok: false, crear: false, error: 'HORA_NO_DISPONIBLE', ...base, hora: req.hora,\n    turnos_libres: libres, mensaje: 'Esa hora no está disponible. Ofrece otra de turnos_libres.' } }];\n}\n\nconst [hh, mm] = req.hora.split(':').map(Number);\nconst inicio = DateTime.fromISO(req.fecha, { zone: TZ }).set({ hour: hh, minute: mm });\nreturn [{ json: { ok: true, crear: true, ...base, hora: req.hora,\n  inicio: inicio.toISO(), fin: inicio.plus({ minutes: req.duracion_min }).toISO(),\n  titulo: '💈 ' + req.servicio + ' - ' + req.nombre,\n  descripcion: 'Cliente: ' + req.nombre + '\\nTeléfono: ' + (req.telefono || 'N/D') + '\\nServicio: ' + req.servicio + ' ($' + req.precio + ')\\nAgendado por Sofi (WhatsApp)',\n  nombre: req.nombre, ubicacion: req.direccion } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -100
+      ],
+      "id": "ce077a14-416e-43be-acc2-8f1773dbd58c",
+      "name": "Calcular turnos"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "ab4a958f-8c38-46f4-9cce-dc985f2b07e9",
+              "leftValue": "={{ $json.crear }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        -100
+      ],
+      "id": "ae970f4c-221c-4943-978d-41014406e084",
+      "name": "¿Crear cita?"
+    },
+    {
+      "parameters": {
+        "resource": "event",
+        "operation": "create",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "start": "={{ $json.inicio }}",
+        "end": "={{ $json.fin }}",
+        "additionalFields": {
+          "summary": "={{ $json.titulo }}",
+          "description": "={{ $json.descripcion }}",
+          "location": "={{ $json.ubicacion }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1540,
+        -200
+      ],
+      "id": "a295b5e0-238c-485d-8966-2788006cb4e2",
+      "name": "Crear evento"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Respuesta final para el agente tras crear el evento.\nconst c = $('Calcular turnos').first().json;\nconst ev = $input.first().json;\nif (!ev.id) {\n  return [{ json: { ok: false, error: 'NO_SE_CREO_EVENTO', mensaje: 'Google Calendar no confirmó la cita' } }];\n}\nreturn [{ json: { ok: true, agendada: true, fecha: c.fecha, dia_semana: c.dia_semana, hora: c.hora,\n  servicio: c.servicio, precio: c.precio, cliente: c.nombre, event_id: ev.id, link: ev.htmlLink } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        -200
+      ],
+      "id": "c99118f4-847b-4387-9ec0-29b2f0637745",
+      "name": "Confirmación"
+    }
+  ],
+  "connections": {
+    "Entrada": {
+      "main": [
+        [
+          {
+            "node": "Info negocio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Info negocio": {
+      "main": [
+        [
+          {
+            "node": "Validar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar entrada": {
+      "main": [
+        [
+          {
+            "node": "¿Entrada válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Entrada válida?": {
+      "main": [
+        [
+          {
+            "node": "Leer Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Leer Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Calcular turnos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular turnos": {
+      "main": [
+        [
+          {
+            "node": "¿Crear cita?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Crear cita?": {
+      "main": [
+        [
+          {
+            "node": "Crear evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Crear evento": {
+      "main": [
+        [
+          {
+            "node": "Confirmación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Guayaquil"
+  },
+  "tags": []
+}

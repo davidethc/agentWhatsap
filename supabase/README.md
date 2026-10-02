@@ -35,3 +35,9 @@ servicios, precios, horarios, barberos, turnos libres y citas.
 3. n8n → *Credentials → Create → Postgres* con esos datos y **SSL: require**.
 4. En el workflow reemplaza *Memoria por cliente* por **Postgres Chat Memory**: credencial Postgres,
    tabla `n8n_chat_histories`, misma *Key* de sesión.
+
+## Opcional: registro de leads (no conectado al bot todavía)
+En el proyecto existe la migración `whatsapp_lead_tracking` (tablas `leads`, `lead_messages`, `lead_events`
+y funciones `bot_register_inbound`, `bot_register_leadad`, `bot_book`, `bot_log_event`, solo para `service_role`).
+Sirve para registrar leads de Meta (Click-to-WhatsApp y Lead Ads) cuando se quiera medir campañas;
+el bot actual agenda solo en Google Calendar.

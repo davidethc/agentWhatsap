@@ -242,7 +242,8 @@ Alternativa gratis: **Google Gemini** (API key en https://aistudio.google.com/ap
 
 ## 7. Importar y configurar el workflow
 
-Archivo: [`workflows/agente-citas.json`](workflows/agente-citas.json)
+Archivos: [`workflows/barberia-agenda-gcal.json`](workflows/barberia-agenda-gcal.json) (sub-workflow, impórtalo primero)
+y [`workflows/agente-citas.json`](workflows/agente-citas.json) (bot).
 
 ```
 Webhook Kapso → Normalizar mensaje → Agente de citas → Responder por WhatsApp

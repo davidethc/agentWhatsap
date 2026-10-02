@@ -233,6 +233,28 @@
       ],
       "id": "c99118f4-847b-4387-9ec0-29b2f0637745",
       "name": "Confirmación"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        0
+      ],
+      "id": "b47f9838-28a7-4290-a006-5f4a4e9870d1",
+      "name": "Respuesta turnos"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        200
+      ],
+      "id": "b3520b18-d08e-4699-a058-2d44d617068f",
+      "name": "Respuesta entrada inválida"
     }
   ],
   "connections": {
@@ -278,7 +300,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Respuesta entrada inválida",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Leer Google Calendar": {
@@ -312,7 +340,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Respuesta turnos",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Crear evento": {

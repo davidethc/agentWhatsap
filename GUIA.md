@@ -369,3 +369,6 @@ ngrok http --url=TU-DOMINIO.ngrok-free.dev 5678   # 3. túnel (deja esta termina
 | El agente no saluda como nuevo / repite respuestas viejas | La memoria guarda conversaciones anteriores | Cambia el prefijo de `sessionKey` en *Memoria por cliente* (ej. `v3-`) o reinicia n8n (`docker compose restart n8n`) |
 | OpenRouter: `401 API key expired` | La key de OpenRouter tenía fecha de vencimiento | Crea otra con *Expiration: No expiration*, o usa Gemini (gratis) |
 | Gemini: `404 models/gemini-2.5-pro is no longer available to new users` | Modelo viejo / no incluido en el plan gratis | En *Google Gemini Chat Model* usa un modelo Flash (`models/gemini-3-flash-preview`) |
+| Herramienta: `Workflow is not active and cannot be executed` | El sub-workflow de agenda no está publicado | Publica **Barbería · Agenda (Google Calendar)** (un sub-workflow llamado desde producción debe estar publicado) |
+| Herramienta: `The workflow did not return a response` | Una rama del sub-workflow terminaba en la salida "false" de un IF | Cada rama termina en un nodo (`Respuesta turnos`, `Respuesta entrada inválida`) |
+| El bot ofrece horas que no consultó | El modelo inventa si la herramienta falla | "REGLA Nº 1" del prompt: solo horas devueltas por *Ver turnos libres*; si falla, no da horas |

@@ -1,5 +1,5 @@
 {
-  "name": "Agente WhatsApp - Citas (Kapso + Claude + Google Calendar)",
+  "name": "Agente WhatsApp - Citas (Kapso + OpenRouter + Google Calendar)",
   "nodes": [
     {
       "parameters": {
@@ -50,25 +50,20 @@
     },
     {
       "parameters": {
-        "model": {
-          "__rl": true,
-          "mode": "list",
-          "value": "claude-sonnet-5-5",
-          "cachedResultName": "Claude Sonnet 5.5"
-        },
+        "model": "openai/gpt-4.1-mini",
         "options": {
-          "maxTokensToSample": 1024,
-          "temperature": 0.3
+          "temperature": 0.3,
+          "maxTokens": 1024
         }
       },
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-      "typeVersion": 1.3,
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
       "position": [
         -240,
         240
       ],
       "id": "95763d58-5125-44c8-84fa-46eb3b98ccbf",
-      "name": "Claude"
+      "name": "OpenRouter"
     },
     {
       "parameters": {
@@ -163,7 +158,7 @@
     },
     {
       "parameters": {
-        "content": "## Antes de activar\n1. **Claude** → elige tu credencial de Anthropic (API key).\n2. **Consultar disponibilidad** y **Crear cita** → elige tu credencial de Google Calendar. `primary` = tu calendario principal.\n3. **Agente de citas** → edita SERVICIOS y NEGOCIO en el System Message.\n4. Desactiva tu flujo viejo: usa el mismo path de webhook.\n\n## Probar\nKapso → `.../webhook-test/815c...` + botón *Execute workflow*.\nProducción → activa el flujo y en Kapso usa `.../webhook/815c...`",
+        "content": "## Antes de activar\n1. **OpenRouter** → crea la credencial con tu API key de openrouter.ai/keys y elige el modelo (debe soportar *tools*).\n2. **Consultar disponibilidad** y **Crear cita** → elige tu credencial de Google Calendar. `primary` = tu calendario principal.\n3. **Agente de citas** → edita SERVICIOS y NEGOCIO en el System Message.\n4. Desactiva tu flujo viejo: usa el mismo path de webhook.\n\n## Probar\nKapso → `.../webhook-test/815c...` + botón *Execute workflow*.\nProducción → activa el flujo y en Kapso usa `.../webhook/815c...`",
         "height": 360,
         "width": 460,
         "color": 7
@@ -212,17 +207,6 @@
         ]
       ]
     },
-    "Claude": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Agente de citas",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Memoria por cliente": {
       "ai_memory": [
         [
@@ -251,6 +235,17 @@
           {
             "node": "Agente de citas",
             "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]

@@ -25,3 +25,13 @@ servicios, precios, horarios, barberos, turnos libres y citas.
 - Las citas del bot quedan con `source = 'online'` y `status = 'pending'`, igual que las de la web.
 - Errores posibles al agendar: `BOOKING_SLOT_TAKEN`, `BOOKING_TOO_SOON`, `BOOKING_PAST_DATE`,
   `BOOKING_INVALID_INPUT`, `BOOKING_SERVICE_NOT_FOUND`, `BOOKING_BARBER_NOT_BOOKABLE`.
+
+## Memoria del chat en Supabase (Postgres Chat Memory)
+1. Ejecuta `whatsapp_bot_chat_histories.sql` **antes** de conectar n8n (así la tabla queda protegida y
+   no expuesta por la API pública).
+2. Supabase → botón **Connect** → **Session pooler** → copia host, puerto (5432), base (`postgres`) y
+   usuario (`postgres.<ref>`). La contraseña es la de la base (se puede resetear en
+   *Project Settings → Database*). No uses la conexión "Direct": es solo IPv6 y Docker no suele llegar.
+3. n8n → *Credentials → Create → Postgres* con esos datos y **SSL: require**.
+4. En el workflow reemplaza *Memoria por cliente* por **Postgres Chat Memory**: credencial Postgres,
+   tabla `n8n_chat_histories`, misma *Key* de sesión.

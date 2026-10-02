@@ -264,9 +264,8 @@ Webhook Kapso → Normalizar mensaje → Agente de citas → Responder por Whats
 | **Agente de citas** | En *System Message* edita **SERVICIOS** y **NEGOCIO** (nombre, horario, dirección, precios). |
 | **OpenRouter** | Credencial OpenRouter + modelo con *tools*. |
 | **Memoria por cliente** | Nada (recuerda 20 mensajes por número). |
-| **Consultar disponibilidad** | Credencial Google Calendar. **Calendar → modo "From list" → elige tu calendario.** |
-| **Ver ocupados del día** | Igual: credencial Google Calendar y **Calendar "From list"**. La usa el agente para ofrecer turnos libres. |
-| **Crear cita** | Igual: credencial Google Calendar y **Calendar "From list"**. |
+| **Info negocio / Ver turnos libres / Agendar cita** | Datos de Supabase (ver [`supabase/README.md`](supabase/README.md)). |
+| **Crear cita** | Credencial Google Calendar y **Calendar "From list"** (copia de la cita). |
 | **Responder por WhatsApp** | Credencial Kapso. |
 
 > ⚠️ El campo **Calendar** no debe quedar en modo *ID* con `primary` ni en "lo decide la IA"

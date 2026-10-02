@@ -1,5 +1,5 @@
 {
-  "name": "Agente WhatsApp - Citas (Kapso + OpenRouter + Google Calendar)",
+  "name": "Agente WhatsApp - Citas (Kapso + OpenRouter + Supabase + Google Calendar)",
   "nodes": [
     {
       "parameters": {
@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Kapso envía los mensajes agrupados (debounce): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Este nodo junta todos los textos del lote en un solo mensaje para el agente.\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\n\nconst textos = [];\nlet from = '';\nlet phoneNumberId = '';\nlet nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue; // ignorar mensajes salientes\n  from = msg.from || it.conversation?.phone_number || from;\n  phoneNumberId = it.phone_number_id || it.conversation?.phone_number_id || phoneNumberId;\n  nombre = it.conversation?.contact_name || nombre;\n\n  const texto = msg.text?.body || msg.kapso?.content || '';\n  if (texto) textos.push(texto);\n  else if (msg.type) textos.push(`[El cliente envió un mensaje de tipo \"${msg.type}\" que no puedo leer]`);\n}\n\n// Si no hay nada que responder, se detiene el flujo\nif (!from || textos.length === 0) return [];\n\nreturn [{\n  json: {\n    text: textos.join('\\n'),\n    to: String(from),\n    nombre,\n    phoneNumberId: String(phoneNumberId || '1347989838397545'),\n  },\n}];"
+        "jsCode": "// Kapso envía los mensajes agrupados (debounce): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Este nodo junta todos los textos del lote en un solo mensaje para el agente.\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\n\nconst textos = [];\nlet from = '';\nlet phoneNumberId = '';\nlet nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue; // ignorar mensajes salientes\n  from = msg.from || it.conversation?.phone_number || from;\n  phoneNumberId = it.phone_number_id || it.conversation?.phone_number_id || phoneNumberId;\n  nombre = it.conversation?.contact_name || nombre;\n\n  const texto = msg.text?.body || msg.kapso?.content || '';\n  if (texto) textos.push(texto);\n  else if (msg.type) textos.push(`[El cliente envió un mensaje de tipo \"${msg.type}\" que no puedo leer]`);\n}\n\n// Si no hay nada que responder, se detiene el flujo\nif (!from || textos.length === 0) return [];\n\n// Formato local de Ecuador que exige la app (0XXXXXXXXX): 593939039191 -> 0939039191\nconst digitos = String(from).replace(/\\D/g, '');\nlet telefonoLocal = '';\nif (/^593\\d{9}$/.test(digitos)) telefonoLocal = '0' + digitos.slice(3);\nelse if (/^0\\d{9}$/.test(digitos)) telefonoLocal = digitos;\n\nreturn [{\n  json: {\n    text: textos.join('\\n'),\n    to: String(from),\n    telefonoLocal,\n    nombre,\n    phoneNumberId: String(phoneNumberId || '1347989838397545'),\n  },\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -33,9 +33,9 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.text }}",
+        "text": "={{ $('Normalizar mensaje').first().json.text }}",
         "options": {
-          "systemMessage": "=Eres Sofi, la asistente virtual por WhatsApp de \"Mi negocio\". Atiendes con calidez, entiendes qué necesita cada cliente y le ayudas a agendar su cita de la forma más fácil posible.\n\nFECHA Y HORA ACTUAL: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }} (zona horaria America/Guayaquil, UTC-05:00)\nMAÑANA ES: {{ $now.setZone('America/Guayaquil').plus({days: 1}).setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy\") }} ({{ $now.setZone('America/Guayaquil').plus({days: 1}).toFormat('yyyy-MM-dd') }})\n\nCLIENTE\n- Nombre en WhatsApp: {{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\n- Teléfono: {{ $('Normalizar mensaje').first().json.to }} (ya lo tienes, NO lo pidas)\n\n==================================================\nCÓMO LLEVAR LA CONVERSACIÓN (revisa el historial para saber en qué paso estás)\n==================================================\n\nPASO 1 — BIENVENIDA (si no hay historial previo o el cliente vuelve a saludar después de mucho tiempo)\n- Saluda con calidez, agradece que nos haya escrito y preséntate como Sofi de \"Mi negocio\".\n- Pregúntale en qué está interesado o en qué le puedes ayudar.\n- NO listes servicios ni precios todavía. Mensaje corto (2-3 líneas).\n- Ejemplo: \"¡Hola! Gracias por escribirnos. Soy Sofi, de Mi negocio. ¿En qué te puedo ayudar hoy?\"\n- Si en ese primer mensaje el cliente YA dice lo que quiere (ej. \"quiero un corte\", \"qué servicios tienen\"), saluda en una línea y pasa directo al PASO 2.\n\nPASO 2 — SERVICIOS + TURNOS DISPONIBLES (cuando el cliente cuenta qué le interesa o pregunta por servicios)\n- ANTES de responder, usa la herramienta \"Ver ocupados del día\" para MAÑANA, con el rango de apertura a cierre de ese día (si mañana el negocio está cerrado, usa el siguiente día que abra).\n- Calcula los turnos LIBRES: empiezan en horas en punto dentro del horario; un turno está libre si el intervalo completo (inicio + duración del servicio) no se cruza con ningún horario ocupado y termina antes del cierre.\n- En UN solo mensaje:\n  a) Presenta los servicios con sus precios en una lista corta (si el cliente ya dijo qué servicio quiere, menciona ese servicio y su precio, y los demás en una línea).\n  b) Ofrece 2 o 3 turnos libres de ese día. Ej.: \"Mañana viernes tengo libre a las 10:00, 11:00 o 15:00.\"\n  c) Pregunta cuál le queda mejor o si prefiere otro día.\n- Si ese día no hay turnos libres, dilo y revisa el siguiente día que abra.\n\nPASO 3 — OTRO DÍA U OTRA HORA\n- Si el cliente pide otro día (\"¿y el lunes?\", \"pasado mañana\"), usa \"Ver ocupados del día\" para ESE día y ofrécele 2 o 3 turnos libres.\n- Si pide una hora concreta (\"a las 4\"), usa \"Consultar disponibilidad\" con ese rango exacto. Si está ocupado, ofrece los turnos libres más cercanos de ese día.\n\nPASO 4 — CONFIRMAR Y AGENDAR\n- Cuando el cliente elija servicio, día y hora: muestra el resumen (servicio, día, hora, precio) y pide que confirme.\n- Cuando confirme: usa \"Consultar disponibilidad\" con el rango exacto y, si está libre, usa \"Crear cita\".\n- Solo después de que \"Crear cita\" responda bien, confirma la cita (día, hora, servicio) y agradece.\n\n==================================================\nREGLAS IMPORTANTES\n==================================================\n- Nunca inventes horarios libres: solo ofrece turnos que calculaste a partir de \"Ver ocupados del día\" o que confirmaste con \"Consultar disponibilidad\". No reutilices horarios de mensajes anteriores sin volver a consultar.\n- MUY IMPORTANTE: solo di que la cita quedó agendada si \"Crear cita\" respondió correctamente (devolvió el evento creado). Si una herramienta devuelve un error, NO confirmes: dile con amabilidad que hubo un problema técnico y que en breve lo contactaremos.\n- NO inventes nada que no esté en este mensaje: ni opiniones o reseñas de clientes, ni experiencia del negocio, ni tipos de diseño, ni promociones. Si preguntan algo que no sabes (ej. diseños de corte, experiencia del barbero), di con amabilidad que el barbero se lo explicará en la cita y ofrece agendar.\n- Por privacidad, nunca des datos de otras citas o clientes.\n- Nunca ofrezcas ni agendes turnos en el pasado (si es hoy, solo horas posteriores a la hora actual) ni fuera del horario de atención.\n- Para agendar necesitas servicio, día y hora. Si falta algo, pregunta SOLO lo que falta.\n- Interpreta \"hoy\", \"mañana\", \"el viernes\", \"a las 4\" usando la FECHA ACTUAL. \"A las 4\" sin más contexto = 16:00.\n- Duración de la cita = la del servicio elegido.\n- Fechas para las herramientas: ISO 8601 con zona horaria, ej. 2026-10-03T16:00:00-05:00.\n- En la cita: Summary = \"<Servicio> - <Nombre del cliente>\"; Description = nombre, teléfono y servicio. Si la cita es para otra persona, usa el nombre que te den.\n- Si el mensaje del cliente viene vacío, con solo puntos o como \"Unsupported message\", pídele amablemente que lo escriba de nuevo.\n\n==================================================\nPERSONALIDAD, FORMATO Y EMOJIS\n==================================================\n- Amable, cercana y alegre, como una buena recepcionista. Tutea al cliente.\n- Usa el primer nombre del cliente de vez en cuando (no siempre). Si el nombre parece un negocio, un apodo raro o es \"desconocido\", no lo uses.\n- Mensajes cortos de WhatsApp (2 a 5 líneas). Nada robótico. Termina con una pregunta que guíe al siguiente paso.\n- Emojis: máximo UNO por mensaje, siempre al FINAL. Aproximadamente en 1 de cada 3 mensajes: si alguno de tus 2 mensajes anteriores terminó con emoji, este va SIN emoji. Usa: 😊 ✨ 💈 📅 🙌\n- Tu respuesta es exactamente el mensaje que recibirá el cliente: sin JSON, sin nombres de herramientas, sin IDs, sin explicar cómo calculaste, sin asteriscos dobles.\n\n==================================================\nSERVICIOS (EDITA ESTA LISTA)\n==================================================\n- Corte de cabello — $10 — 60 min\n- Corte + barba — $15 — 60 min\n- Barba — $7 — 30 min\n\n==================================================\nNEGOCIO (EDITA ESTOS DATOS)\n==================================================\n- Nombre: Mi negocio\n- Horario: lunes a sábado, 09:00 a 18:00 (domingo cerrado)\n- Dirección: (pon aquí la dirección)",
+          "systemMessage": "=Eres Sofi, la asistente virtual por WhatsApp de {{ $('Info negocio').first().json.negocio.nombre }}. Atiendes con calidez, entiendes qué necesita cada cliente y le ayudas a agendar su cita de la forma más fácil posible.\n\nFECHA Y HORA ACTUAL: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }} (America/Guayaquil)\nHOY: {{ $now.setZone('America/Guayaquil').toFormat('yyyy-MM-dd') }}\nMAÑANA: {{ $now.setZone('America/Guayaquil').plus({days: 1}).setLocale('es').toFormat(\"cccc d 'de' LLLL\") }} ({{ $now.setZone('America/Guayaquil').plus({days: 1}).toFormat('yyyy-MM-dd') }})\n\nCLIENTE\n- Nombre en WhatsApp: {{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\n- Teléfono: {{ $('Normalizar mensaje').first().json.telefonoLocal || $('Normalizar mensaje').first().json.to }} (ya lo tienes, NO lo pidas)\n\nDATOS REALES DEL NEGOCIO (úsalos tal cual, es la única fuente de verdad)\n{{ JSON.stringify($('Info negocio').first().json) }}\n\n==================================================\nCÓMO LLEVAR LA CONVERSACIÓN (revisa el historial para saber en qué paso estás)\n==================================================\n\nPASO 1 — BIENVENIDA (si no hay historial previo o el cliente vuelve a saludar después de mucho tiempo)\n- Saluda con calidez, agradece que nos haya escrito y preséntate como Sofi del negocio.\n- Pregúntale en qué está interesado o en qué le puedes ayudar.\n- NO listes servicios ni precios todavía. Mensaje corto (2-3 líneas).\n- Si en ese primer mensaje el cliente YA dice lo que quiere (ej. \"quiero un corte\", \"qué servicios tienen\"), saluda en una línea y pasa directo al PASO 2.\n\nPASO 2 — SERVICIOS + TURNOS DISPONIBLES (cuando el cliente cuenta qué le interesa o pregunta por servicios)\n- ANTES de responder, usa \"Ver turnos libres\" para MAÑANA (si mañana está cerrado o sin turnos, el siguiente día abierto según el horario). Usa el service_id del servicio que pidió; si aún no eligió, usa el primer servicio de la lista.\n- En UN solo mensaje:\n  a) Presenta los servicios activos con su precio (lista corta).\n  b) Ofrece 2 o 3 horas libres repartidas en el día (mañana / tarde). Ej.: \"Mañana viernes tengo libre a las 10:00, 14:30 o 17:00.\"\n  c) Pregunta cuál le queda mejor o si prefiere otro día.\n\nPASO 3 — OTRO DÍA, OTRA HORA U OTRO BARBERO\n- Si pide otro día, usa \"Ver turnos libres\" para ESE día y ofrécele 2 o 3 horas.\n- Si pide una hora concreta, revisa en \"Ver turnos libres\" si algún barbero la tiene libre; si no, ofrece las horas libres más cercanas.\n- Si cambia de servicio, vuelve a consultar (la duración cambia los turnos).\n- Si quiere un barbero específico, ofrece solo horas de ese barbero. Si no tiene preferencia, asigna tú un barbero que tenga libre esa hora y menciónalo.\n\nPASO 4 — CONFIRMAR Y AGENDAR\n- Necesitas: servicio, fecha, hora, barbero y el nombre de la persona que asistirá (si el nombre de WhatsApp parece un negocio o apodo, pregúntale su nombre).\n- Muestra el resumen (servicio, día, hora, barbero, precio) y pide que confirme.\n- Cuando confirme: usa \"Agendar cita\". Si devuelve un ID, usa enseguida \"Crear cita\" para copiarla en Google Calendar y luego confírmale al cliente con un mensaje cálido.\n- Si \"Agendar cita\" devuelve error: BOOKING_SLOT_TAKEN = esa hora se acaba de ocupar (vuelve a consultar y ofrece otras); BOOKING_TOO_SOON = es muy pronto, ofrece más tarde; BOOKING_INVALID_INPUT = revisa los datos (si el problema es el teléfono, pídele un celular ecuatoriano de 10 dígitos que empiece con 0). Nunca digas que quedó agendada si hubo error.\n\n==================================================\nREGLAS IMPORTANTES\n==================================================\n- Nunca inventes horarios: solo ofrece horas que salieron en \"Ver turnos libres\" en ESTE mensaje.\n- Solo di que la cita quedó agendada si \"Agendar cita\" devolvió un ID. Si falla \"Crear cita\" (Google Calendar) pero \"Agendar cita\" funcionó, la cita SÍ está agendada.\n- NO inventes nada que no esté en los DATOS REALES: ni servicios, precios, reseñas, experiencia, diseños o promociones. Si preguntan algo que no sabes, di que el barbero se lo explicará en la cita y ofrece agendar.\n- Solo ofrece servicios activos de la lista. Por privacidad, nunca des datos de otras citas o clientes.\n- Interpreta \"hoy\", \"mañana\", \"el viernes\", \"a las 4\" con la FECHA ACTUAL. \"A las 4\" sin más contexto = 16:00.\n- Si el mensaje viene vacío, con solo puntos o como \"Unsupported message\", pide amablemente que lo escriba de nuevo.\n\n==================================================\nPERSONALIDAD, FORMATO Y EMOJIS\n==================================================\n- Amable, cercana y alegre, como una buena recepcionista. Tutea al cliente.\n- Usa el primer nombre del cliente de vez en cuando (no siempre). Si el nombre parece un negocio, un apodo raro o es \"desconocido\", no lo uses.\n- Mensajes cortos de WhatsApp (2 a 5 líneas). Nada robótico. Termina con una pregunta que guíe al siguiente paso.\n- Emojis: máximo UNO por mensaje, siempre al FINAL. Aproximadamente en 1 de cada 3 mensajes: si alguno de tus 2 mensajes anteriores terminó con emoji, este va SIN emoji. Usa: 😊 ✨ 💈 📅 🙌\n- Tu respuesta es exactamente el mensaje que recibirá el cliente: sin JSON, sin IDs, sin nombres de herramientas, sin explicar cómo calculaste, sin asteriscos dobles.",
           "maxIterations": 10
         }
       },
@@ -84,37 +84,7 @@
     {
       "parameters": {
         "descriptionType": "manual",
-        "toolDescription": "Consulta si un rango de tiempo está libre en el calendario de citas. Úsala SIEMPRE antes de crear una cita.",
-        "resource": "calendar",
-        "calendar": {
-          "__rl": true,
-          "mode": "list",
-          "value": ""
-        },
-        "timeMin": "={{ $fromAI('Start_Time', 'Inicio del rango a consultar, ISO 8601 con zona horaria', 'string') }}",
-        "timeMax": "={{ $fromAI('End_Time', 'Fin del rango a consultar, ISO 8601 con zona horaria', 'string') }}",
-        "options": {
-          "outputFormat": "availability",
-          "timezone": {
-            "__rl": true,
-            "mode": "list",
-            "value": "America/Guayaquil"
-          }
-        }
-      },
-      "type": "n8n-nodes-base.googleCalendarTool",
-      "typeVersion": 1.3,
-      "position": [
-        80,
-        240
-      ],
-      "id": "af82d9a2-520d-44fa-933a-d009bce35462",
-      "name": "Consultar disponibilidad"
-    },
-    {
-      "parameters": {
-        "descriptionType": "manual",
-        "toolDescription": "Crea la cita en el calendario. Úsala solo después de comprobar que el horario está libre y de que el cliente confirmó.",
+        "toolDescription": "Copia en Google Calendar una cita que YA fue guardada con 'Agendar cita'. Úsala inmediatamente después de que 'Agendar cita' devuelva un ID. Nunca la uses si 'Agendar cita' falló.",
         "calendar": {
           "__rl": true,
           "mode": "list",
@@ -123,8 +93,8 @@
         "start": "={{ $fromAI('Start', 'Inicio de la cita, ISO 8601 con zona horaria', 'string') }}",
         "end": "={{ $fromAI('End', 'Fin de la cita, ISO 8601 con zona horaria', 'string') }}",
         "additionalFields": {
-          "summary": "={{ $fromAI('Summary', 'Servicio - Nombre del cliente', 'string') }}",
-          "description": "={{ $fromAI('Description', 'Nombre, teléfono y servicio del cliente', 'string') }}"
+          "description": "={{ $fromAI('Description', 'Cliente, teléfono, servicio, barbero e ID de la cita', 'string') }}",
+          "summary": "={{ $fromAI('Summary', 'Servicio - Cliente (Barbero)', 'string') }}"
         }
       },
       "type": "n8n-nodes-base.googleCalendarTool",
@@ -159,7 +129,7 @@
     },
     {
       "parameters": {
-        "content": "## Antes de activar\n1. **OpenRouter** → crea la credencial con tu API key de openrouter.ai/keys y elige el modelo (debe soportar *tools*).\n2. **Consultar disponibilidad**, **Ver ocupados del día** y **Crear cita** → elige tu credencial de Google Calendar. En **Calendar** elige tu calendario de la lista (el principal es tu correo).\n3. **Agente de citas** → edita SERVICIOS y NEGOCIO en el System Message.\n4. Desactiva tu flujo viejo: usa el mismo path de webhook.\n\n## Probar\nKapso → `.../webhook-test/815c...` + botón *Execute workflow*.\nProducción → activa el flujo y en Kapso usa `.../webhook/815c...`",
+        "content": "## Antes de activar\n1. **Info negocio**, **Ver turnos libres**, **Agendar cita** → cambia `TU-PROYECTO`, `TU_SUPABASE_PUBLISHABLE_KEY` y `TU_BUSINESS_ID` (ver `supabase/README.md`).\n2. **OpenRouter** → credencial y modelo con *tools*.\n3. **Crear cita** → credencial Google Calendar y calendario *From list*.\n4. **Responder / Avisar error** → credencial Kapso.\n\n## Probar\nKapso → `.../webhook-test/815c...` + *Execute workflow*.\nProducción → publica y en Kapso usa `.../webhook/815c...`",
         "height": 360,
         "width": 460,
         "color": 7
@@ -172,36 +142,6 @@
       ],
       "id": "a7dc3277-7b79-4052-9c90-36d47144990b",
       "name": "Guía"
-    },
-    {
-      "parameters": {
-        "descriptionType": "manual",
-        "toolDescription": "Devuelve la lista de horarios OCUPADOS (inicio y fin) del calendario de citas en un rango de tiempo. Úsala para saber qué turnos están LIBRES en un día: pide el rango desde la hora de apertura hasta la de cierre de ese día. Si la lista viene vacía, todo el día está libre.",
-        "resource": "calendar",
-        "calendar": {
-          "__rl": true,
-          "mode": "list",
-          "value": ""
-        },
-        "timeMin": "={{ $fromAI('Start_Time', 'Inicio del rango: hora de apertura del día a revisar, ISO 8601 con zona horaria, ej. 2026-10-03T09:00:00-05:00', 'string') }}",
-        "timeMax": "={{ $fromAI('End_Time', 'Fin del rango: hora de cierre del día a revisar, ISO 8601 con zona horaria, ej. 2026-10-03T18:00:00-05:00', 'string') }}",
-        "options": {
-          "outputFormat": "bookedSlots",
-          "timezone": {
-            "__rl": true,
-            "mode": "list",
-            "value": "America/Guayaquil"
-          }
-        }
-      },
-      "type": "n8n-nodes-base.googleCalendarTool",
-      "typeVersion": 1.3,
-      "position": [
-        400,
-        240
-      ],
-      "id": "35e7ad0b-46d6-4b4f-a6d6-81a0bc12c98b",
-      "name": "Ver ocupados del día"
     },
     {
       "parameters": {
@@ -223,6 +163,134 @@
           "name": "Kapso account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://TU-PROYECTO.supabase.co/rest/v1/rpc/public_bot_info",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "TU_SUPABASE_PUBLISHABLE_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"p_business_id\": \"TU_BUSINESS_ID\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -120,
+        0
+      ],
+      "id": "5cd82ec6-3fdc-445c-87c1-18aa160e3c0c",
+      "name": "Info negocio",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "toolDescription": "Devuelve los turnos LIBRES (horas HH:MM) de cada barbero para una fecha y un servicio. Úsala siempre antes de ofrecer horarios o de agendar. Si todas las listas vienen vacías, ese día no hay turnos (cerrado o lleno).",
+        "method": "POST",
+        "url": "https://TU-PROYECTO.supabase.co/rest/v1/rpc/public_bot_slots",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "TU_SUPABASE_PUBLISHABLE_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "p_business_id",
+              "value": "TU_BUSINESS_ID"
+            },
+            {
+              "name": "p_date",
+              "value": "={{ $fromAI('fecha', 'Fecha a consultar en formato YYYY-MM-DD', 'string') }}"
+            },
+            {
+              "name": "p_service_id",
+              "value": "={{ $fromAI('service_id', 'service_id del servicio, tomado de la lista SERVICIOS', 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        240
+      ],
+      "id": "1f5c6ef6-32c4-42a4-b72c-ddbc7b1cb8c9",
+      "name": "Ver turnos libres"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Agenda la cita en el sistema de la barbería (guarda al cliente y la cita). Úsala solo cuando el cliente ya confirmó servicio, fecha, hora y barbero, y esa hora salió libre para ese barbero en 'Ver turnos libres'. Si responde un ID, la cita quedó guardada. Si responde un error (BOOKING_SLOT_TAKEN, BOOKING_TOO_SOON, etc.), la cita NO se guardó.",
+        "method": "POST",
+        "url": "https://TU-PROYECTO.supabase.co/rest/v1/rpc/create_public_appointment",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "TU_SUPABASE_PUBLISHABLE_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "p_service_id",
+              "value": "={{ $fromAI('service_id', 'service_id del servicio elegido', 'string') }}"
+            },
+            {
+              "name": "p_barber_id",
+              "value": "={{ $fromAI('barber_id', 'barber_id del barbero que tiene libre esa hora', 'string') }}"
+            },
+            {
+              "name": "p_date",
+              "value": "={{ $fromAI('fecha', 'Fecha de la cita YYYY-MM-DD', 'string') }}"
+            },
+            {
+              "name": "p_start_time",
+              "value": "={{ $fromAI('hora', 'Hora de inicio HH:MM en 24h, exactamente uno de los turnos libres', 'string') }}"
+            },
+            {
+              "name": "p_client_name",
+              "value": "={{ $fromAI('nombre_cliente', 'Nombre y apellido de la persona que asistirá a la cita', 'string') }}"
+            },
+            {
+              "name": "p_client_phone",
+              "value": "={{ $('Normalizar mensaje').first().json.telefonoLocal }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        240
+      ],
+      "id": "3b41195e-ecb8-4b09-b9f8-3a140c88fe39",
+      "name": "Agendar cita"
     }
   ],
   "connections": {
@@ -241,7 +309,7 @@
       "main": [
         [
           {
-            "node": "Agente de citas",
+            "node": "Info negocio",
             "type": "main",
             "index": 0
           }
@@ -277,17 +345,6 @@
         ]
       ]
     },
-    "Consultar disponibilidad": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente de citas",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Crear cita": {
       "ai_tool": [
         [
@@ -310,7 +367,29 @@
         ]
       ]
     },
-    "Ver ocupados del día": {
+    "Info negocio": {
+      "main": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ver turnos libres": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agendar cita": {
       "ai_tool": [
         [
           {

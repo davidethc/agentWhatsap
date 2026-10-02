@@ -87,8 +87,8 @@
         "resource": "calendar",
         "calendar": {
           "__rl": true,
-          "mode": "id",
-          "value": "primary"
+          "mode": "list",
+          "value": ""
         },
         "timeMin": "={{ $fromAI('Start_Time', 'Inicio del rango a consultar, ISO 8601 con zona horaria', 'string') }}",
         "timeMax": "={{ $fromAI('End_Time', 'Fin del rango a consultar, ISO 8601 con zona horaria', 'string') }}",
@@ -116,8 +116,8 @@
         "toolDescription": "Crea la cita en el calendario. Úsala solo después de comprobar que el horario está libre y de que el cliente confirmó.",
         "calendar": {
           "__rl": true,
-          "mode": "id",
-          "value": "primary"
+          "mode": "list",
+          "value": ""
         },
         "start": "={{ $fromAI('Start', 'Inicio de la cita, ISO 8601 con zona horaria', 'string') }}",
         "end": "={{ $fromAI('End', 'Fin de la cita, ISO 8601 con zona horaria', 'string') }}",
@@ -158,7 +158,7 @@
     },
     {
       "parameters": {
-        "content": "## Antes de activar\n1. **OpenRouter** → crea la credencial con tu API key de openrouter.ai/keys y elige el modelo (debe soportar *tools*).\n2. **Consultar disponibilidad** y **Crear cita** → elige tu credencial de Google Calendar. `primary` = tu calendario principal.\n3. **Agente de citas** → edita SERVICIOS y NEGOCIO en el System Message.\n4. Desactiva tu flujo viejo: usa el mismo path de webhook.\n\n## Probar\nKapso → `.../webhook-test/815c...` + botón *Execute workflow*.\nProducción → activa el flujo y en Kapso usa `.../webhook/815c...`",
+        "content": "## Antes de activar\n1. **OpenRouter** → crea la credencial con tu API key de openrouter.ai/keys y elige el modelo (debe soportar *tools*).\n2. **Consultar disponibilidad** y **Crear cita** → elige tu credencial de Google Calendar. En **Calendar** elige tu calendario de la lista (el principal es tu correo).\n3. **Agente de citas** → edita SERVICIOS y NEGOCIO en el System Message.\n4. Desactiva tu flujo viejo: usa el mismo path de webhook.\n\n## Probar\nKapso → `.../webhook-test/815c...` + botón *Execute workflow*.\nProducción → activa el flujo y en Kapso usa `.../webhook/815c...`",
         "height": 360,
         "width": 460,
         "color": 7

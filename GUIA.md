@@ -265,6 +265,7 @@ Webhook Kapso → Normalizar mensaje → Agente de citas → Responder por Whats
 | **OpenRouter** | Credencial OpenRouter + modelo con *tools*. |
 | **Memoria por cliente** | Nada (recuerda 20 mensajes por número). |
 | **Consultar disponibilidad** | Credencial Google Calendar. **Calendar → modo "From list" → elige tu calendario.** |
+| **Ver ocupados del día** | Igual: credencial Google Calendar y **Calendar "From list"**. La usa el agente para ofrecer turnos libres. |
 | **Crear cita** | Igual: credencial Google Calendar y **Calendar "From list"**. |
 | **Responder por WhatsApp** | Credencial Kapso. |
 

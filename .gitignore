@@ -1,2 +1,7 @@
 .env
 local-files/
+.env.*
+!.env.example
+*.backup
+backups/
+.DS_Store

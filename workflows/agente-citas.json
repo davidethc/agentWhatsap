@@ -53,8 +53,8 @@
         "model": {
           "__rl": true,
           "mode": "list",
-          "value": "claude-sonnet-5-5",
-          "cachedResultName": "Claude Sonnet 5.5"
+          "value": "claude-sonnet-5",
+          "cachedResultName": "Claude Sonnet 5"
         },
         "options": {
           "maxTokensToSample": 1024,

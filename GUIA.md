@@ -209,7 +209,7 @@ Si Google dice «Google no verificó esta app»: *Configuración avanzada → Ir
    |---|---|
    | **Normalizar mensaje** | En el código, `TU_PHONE_NUMBER_ID` → el Phone Number ID de tu número (paso 5). Solo se atienden mensajes de ese número |
    | **buscar_mis_citas, mover_cita, cancelar_cita, Leer Google Calendar, Crear evento** | Calendar: elígelo **de la lista** (no en modo ID ni con `primary`) |
-   | **Validar pedido** | Horario (`APERTURA`, `CIERRE`), `DIAS_CERRADOS` y `SERVICIOS` con precios |
+   | **Validar pedido** | `HORARIO` (bloques por día, por ejemplo `lunes: [[9, 13], [15, 19]]`; día sin bloques = cerrado) y `SERVICIOS` (precio `null` si no se publica) |
    | **Agente version4** | En el *system message*: nombre del consultorio y de la doctora, servicios, precios, horario, dirección y estilo (hoy son datos provisionales) |
    | Nodos con credencial | Si alguno marca credencial en rojo, elige la del paso 8 |
 

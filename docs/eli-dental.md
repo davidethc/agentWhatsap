@@ -26,7 +26,7 @@ iniciar sesión.
 | Servicios publicados | Ortodoncia, resinas (cambio de amalgama por resina), limpieza dental cada 6 meses | Publicaciones de Facebook |
 | Servicios que agenda Eli | Consulta de valoración, Limpieza dental, Resina (calza), Control de ortodoncia, Urgencia dental | Definido para el bot |
 | Precios | No publicados (rango «$$»). Eli no da cifras: el valor lo confirma la doctora en la consulta | Facebook |
-| Horario | **Provisional:** lunes a sábado, 09:00 a 18:00. El horario de Facebook solo se ve con sesión iniciada | Por confirmar |
+| Horario | **Provisional (horario común):** lunes a viernes de 09:00 a 13:00 y de 15:00 a 19:00, sábado de 09:00 a 13:00; domingo cerrado. El horario de Facebook solo se ve con sesión iniciada | Por confirmar |
 
 ## 1. Lo que pide la doctora
 

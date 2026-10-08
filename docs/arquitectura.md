@@ -82,8 +82,8 @@ Todo vive en un solo workflow ([`workflows/eli-version4.json`](../workflows/eli-
 El agente también tiene `buscar_mis_citas`, `mover_cita` y `cancelar_cita`, que son herramientas
 directas de Google Calendar.
 
-Los datos del consultorio (horario 09:00–18:00 provisional, domingo cerrado y servicios; sin
-precios) se editan en el nodo **Validar pedido**. La personalidad y las reglas de Eli están en el *system message* del nodo **Agente version4**.
+Los datos del consultorio se editan en el nodo **Validar pedido**: `HORARIO` (bloques por día; hoy
+provisional: L–V 09–13 y 15–19, sábado 09–13, domingo cerrado) y `SERVICIOS` (sin precios). La personalidad y las reglas de Eli están en el *system message* del nodo **Agente version4**.
 
 ## Claves de Redis (DB 1)
 

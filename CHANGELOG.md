@@ -10,6 +10,9 @@ Ecuador.
   datos públicos de su Facebook: dirección, WhatsApp 099 970 1778, correo y servicios (valoración,
   limpieza, resina, control de ortodoncia, urgencia). Sin precios; horario provisional. Deriva quejas
   y pedidos de hablar con la doctora al WhatsApp del consultorio.
+- Horario por día con descanso de mediodía (provisional): L–V 09:00–13:00 y 15:00–19:00, sábado
+  09:00–13:00, domingo cerrado. `Validar pedido` usa `HORARIO` por bloques; se borró la memoria de chat
+  anterior (2 conversaciones de prueba).
 - `workflows/sofi-version4.json` → `workflows/eli-version4.json`, `docs/sofi-dentista.md` → `docs/eli-dental.md`.
 - `scripts/export-workflow.sh` admite contacto público del negocio (`workflows/.datos-publicos`).
 - `version4` en producción con contexto de consultorio dental y datos provisionales: prompt de Sofi

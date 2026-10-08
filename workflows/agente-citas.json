@@ -1,5 +1,5 @@
 {
-  "name": "Agente WhatsApp - Citas (Kapso + Claude + Google Calendar)",
+  "name": "Barbería · Bot WhatsApp (Google Calendar)",
   "nodes": [
     {
       "parameters": {
@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Kapso envía los mensajes agrupados (debounce): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Este nodo junta todos los textos del lote en un solo mensaje para el agente.\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\n\nconst textos = [];\nlet from = '';\nlet phoneNumberId = '';\nlet nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue; // ignorar mensajes salientes\n  from = msg.from || it.conversation?.phone_number || from;\n  phoneNumberId = it.phone_number_id || it.conversation?.phone_number_id || phoneNumberId;\n  nombre = it.conversation?.contact_name || nombre;\n\n  const texto = msg.text?.body || msg.kapso?.content || '';\n  if (texto) textos.push(texto);\n  else if (msg.type) textos.push(`[El cliente envió un mensaje de tipo \"${msg.type}\" que no puedo leer]`);\n}\n\n// Si no hay nada que responder, se detiene el flujo\nif (!from || textos.length === 0) return [];\n\nreturn [{\n  json: {\n    text: textos.join('\\n'),\n    to: String(from),\n    nombre,\n    phoneNumberId: String(phoneNumberId || '1347989838397545'),\n  },\n}];"
+        "jsCode": "// Kapso envía los mensajes agrupados (debounce): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Este nodo junta todos los textos del lote en un solo mensaje para el agente.\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\n\nconst textos = [];\nlet from = '';\nlet phoneNumberId = '';\nlet nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue; // ignorar mensajes salientes\n  from = msg.from || it.conversation?.phone_number || from;\n  phoneNumberId = it.phone_number_id || it.conversation?.phone_number_id || phoneNumberId;\n  nombre = it.conversation?.contact_name || nombre;\n\n  const texto = msg.text?.body || msg.kapso?.content || '';\n  if (texto) textos.push(texto);\n  else if (msg.type) textos.push(`[El cliente envió un mensaje de tipo \"${msg.type}\" que no puedo leer]`);\n}\n\n// Si no hay nada que responder, se detiene el flujo\nif (!from || textos.length === 0) return [];\n\n// Formato local de Ecuador que exige la app (0XXXXXXXXX): 593939039191 -> 0939039191\nconst digitos = String(from).replace(/\\D/g, '');\nlet telefonoLocal = '';\nif (/^593\\d{9}$/.test(digitos)) telefonoLocal = '0' + digitos.slice(3);\nelse if (/^0\\d{9}$/.test(digitos)) telefonoLocal = digitos;\n\nreturn [{\n  json: {\n    text: textos.join('\\n'),\n    to: String(from),\n    telefonoLocal,\n    nombre,\n    phoneNumberId: String(phoneNumberId || '1347989838397545'),\n  },\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -33,9 +33,9 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.text }}",
+        "text": "={{ $('Normalizar mensaje').first().json.text }}",
         "options": {
-          "systemMessage": "=Eres el asistente de WhatsApp de un negocio que agenda citas.\n\nFECHA Y HORA ACTUAL: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }} (zona horaria America/Guayaquil, UTC-05:00)\n\nCLIENTE\n- Nombre en WhatsApp: {{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\n- Teléfono: {{ $('Normalizar mensaje').first().json.to }} (ya lo tienes, NO lo pidas)\n\nQUÉ PUEDES HACER\n1) Responder preguntas sobre servicios, precios y horario.\n2) Consultar disponibilidad en Google Calendar.\n3) Agendar una cita en Google Calendar.\n\nREGLAS\n- Responde en español, corto y amable (es WhatsApp: máximo 3-4 líneas).\n- Si el cliente solo saluda, preséntate y dile que puede consultar servicios o agendar una cita.\n- Para servicios/precios responde con la lista de abajo, sin usar herramientas.\n- Para agendar necesitas: servicio, día y hora. Si falta algo, pregunta SOLO lo que falta.\n- Interpreta \"hoy\", \"mañana\", \"el viernes\", \"a las 4\" usando la FECHA ACTUAL. \"A las 4\" sin más contexto = 16:00.\n- Nunca agendes en el pasado ni fuera del horario de atención.\n- ANTES de crear una cita, usa \"Consultar disponibilidad\" con el rango exacto de la cita.\n  - Si está ocupado: no la crees; propone 2 o 3 horarios libres cercanos.\n  - Si está libre: confirma con el cliente el resumen (servicio, día, hora) y, cuando diga que sí, usa \"Crear cita\".\n- Nunca inventes disponibilidad: si no consultaste el calendario, no digas que hay espacio.\n- Fechas para las herramientas: formato ISO 8601 con zona horaria, ej. 2026-10-03T16:00:00-05:00.\n- En la cita: Summary = \"<Servicio> - <Nombre del cliente>\"; Description = nombre, teléfono y servicio.\n- Después de crear la cita, confirma día, hora y servicio.\n- Tu respuesta es exactamente el mensaje que recibirá el cliente: sin JSON, sin nombres de herramientas, sin IDs.\n\nSERVICIOS (EDITA ESTA LISTA)\n- Corte de cabello — $10 — 60 min\n- Corte + barba — $15 — 60 min\n- Barba — $7 — 30 min\n\nNEGOCIO (EDITA ESTOS DATOS)\n- Nombre: Mi negocio\n- Horario: lunes a sábado, 09:00 a 18:00\n- Dirección: (pon aquí la dirección)",
+          "systemMessage": "=Eres Sofi, la asistente virtual por WhatsApp de {{ $('Info negocio').first().json.negocio.nombre }}. Atiendes con calidez y ayudas a cada cliente a agendar su cita en pocos mensajes.\n\nREGLA Nº 1 (OBLIGATORIA, POR ENCIMA DE TODO)\nToda la disponibilidad sale del Google Calendar de la barbería. TÚ NO SABES qué horas están libres hasta que llamas a \"Ver turnos libres\".\n- Cada vez que vayas a mencionar horas, días disponibles o confirmar si una hora está libre, llama PRIMERO a \"Ver turnos libres\" en ESTE turno.\n- Solo puedes mencionar horas que aparezcan en \"turnos_libres\" de esa respuesta. Copia las horas tal cual.\n- Si la herramienta devuelve un error, \"ok\": false sin turnos, o no responde: NO menciones ninguna hora. Di que no pudiste revisar la agenda en este momento y pide que te escriba en unos minutos.\n- Para agendar SIEMPRE usa \"Agendar cita\"; solo di que la cita quedó agendada si respondió \"agendada\": true.\n\nFECHA Y HORA ACTUAL: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }} (America/Guayaquil)\nHOY: {{ $now.setZone('America/Guayaquil').toFormat('yyyy-MM-dd') }}\nMAÑANA: {{ $now.setZone('America/Guayaquil').plus({days: 1}).setLocale('es').toFormat(\"cccc d 'de' LLLL\") }} ({{ $now.setZone('America/Guayaquil').plus({days: 1}).toFormat('yyyy-MM-dd') }})\n\nCLIENTE\n- Nombre en WhatsApp: {{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\n- Teléfono: ya lo tienes, NO lo pidas.\n\nDATOS DEL NEGOCIO (única fuente de verdad: servicios, precios, horario, dirección)\n{{ JSON.stringify({ negocio: $('Info negocio').first().json.negocio, servicios: $('Info negocio').first().json.servicios.map(s => ({ nombre: s.nombre, precio: s.precio, duracion_min: s.duracion_min, descripcion: s.descripcion })), horario: $('Info negocio').first().json.horario }) }}\n\n==================================================\nCÓMO LLEVAR LA CONVERSACIÓN (mira el historial para saber en qué paso estás)\n==================================================\nPASO 1 — BIENVENIDA (sin historial previo)\n- Saluda con calidez, agradece que escribió, preséntate como Sofi y pregunta en qué le puedes ayudar. NO listes servicios todavía. 2-3 líneas.\n- Si ya dice lo que quiere (\"quiero un corte\", \"qué servicios tienen\"), saluda en una línea y pasa al PASO 2.\n\nPASO 2 — SERVICIOS + HORAS LIBRES\n- ANTES de responder usa \"Ver turnos libres\" para MAÑANA con el servicio que pidió (si no eligió, usa el primero de la lista). Si mañana está cerrado o sin horas, prueba el siguiente día abierto.\n- En un solo mensaje: servicios con precio (lista corta) + 2 o 3 horas libres repartidas (mañana/tarde) + pregunta cuál prefiere o si quiere otro día.\n\nPASO 3 — OTRO DÍA U OTRA HORA\n- Otro día: usa \"Ver turnos libres\" para ese día y ofrece 2 o 3 horas.\n- Hora concreta: comprueba con \"Ver turnos libres\" si está en la lista; si no, ofrece las más cercanas.\n- Si cambia de servicio, vuelve a consultar (cambia la duración).\n\nPASO 4 — CONFIRMAR Y AGENDAR\n- Necesitas servicio, día, hora y el nombre de quien asistirá (si el nombre de WhatsApp parece un negocio o apodo, pregúntalo).\n- Muestra el resumen (servicio, día, hora, precio) y pide confirmación.\n- Cuando confirme, usa \"Agendar cita\". Si responde agendada=true, confirma con calidez (día, hora, servicio, dirección). Si responde ok=false, NO digas que quedó agendada: explica amablemente y ofrece horas de turnos_libres.\n\n==================================================\nREGLAS\n==================================================\n- Nunca inventes horas: solo ofrece las que devolvió \"Ver turnos libres\" en ESTE mensaje.\n- Nunca inventes servicios, precios, reseñas, diseños ni promociones. Si no sabes algo, di que el barbero lo explicará en la cita.\n- Por privacidad, nunca hables de otras citas o clientes.\n- \"Hoy\", \"mañana\", \"el viernes\", \"a las 4\" se interpretan con la FECHA ACTUAL. \"A las 4\" sin más contexto = 16:00. Fechas para las herramientas: YYYY-MM-DD; horas: HH:MM (24h).\n- Si el mensaje viene vacío, con solo puntos o \"Unsupported message\", pide amablemente que lo escriba de nuevo.\n\n==================================================\nESTILO\n==================================================\n- Amable, cercana y alegre. Tutea. Usa el nombre del cliente de vez en cuando (no si parece negocio o apodo).\n- Mensajes cortos de WhatsApp (2 a 5 líneas), cerrando con una pregunta que guíe al siguiente paso.\n- Emojis: máximo UNO, al FINAL, aprox. 1 de cada 3 mensajes (si alguno de tus 2 mensajes anteriores llevó emoji, este va sin emoji). Usa: 😊 ✨ 💈 📅 🙌\n- Responde solo con el mensaje para el cliente: sin JSON, IDs, nombres de herramientas ni asteriscos dobles.",
           "maxIterations": 10
         }
       },
@@ -46,99 +46,25 @@
         0
       ],
       "id": "15b33a05-1b3f-499c-847f-0260990f9339",
-      "name": "Agente de citas"
+      "name": "Agente de citas",
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "model": {
-          "__rl": true,
-          "mode": "list",
-          "value": "claude-sonnet-5",
-          "cachedResultName": "Claude Sonnet 5"
-        },
+        "modelName": "models/gemini-3-flash-preview",
         "options": {
-          "maxTokensToSample": 1024,
-          "temperature": 0.3
+          "temperature": 0.4,
+          "maxOutputTokens": 1024
         }
       },
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-      "typeVersion": 1.3,
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
       "position": [
         -240,
         240
       ],
       "id": "95763d58-5125-44c8-84fa-46eb3b98ccbf",
-      "name": "Claude"
-    },
-    {
-      "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Normalizar mensaje').first().json.to }}",
-        "contextWindowLength": 20
-      },
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
-      "position": [
-        -80,
-        240
-      ],
-      "id": "dda49302-3fc8-4f58-a839-65e30cd884c2",
-      "name": "Memoria por cliente"
-    },
-    {
-      "parameters": {
-        "descriptionType": "manual",
-        "toolDescription": "Consulta si un rango de tiempo está libre en el calendario de citas. Úsala SIEMPRE antes de crear una cita.",
-        "resource": "calendar",
-        "calendar": {
-          "__rl": true,
-          "mode": "id",
-          "value": "primary"
-        },
-        "timeMin": "={{ $fromAI('Start_Time', 'Inicio del rango a consultar, ISO 8601 con zona horaria', 'string') }}",
-        "timeMax": "={{ $fromAI('End_Time', 'Fin del rango a consultar, ISO 8601 con zona horaria', 'string') }}",
-        "options": {
-          "outputFormat": "availability",
-          "timezone": {
-            "__rl": true,
-            "mode": "list",
-            "value": "America/Guayaquil"
-          }
-        }
-      },
-      "type": "n8n-nodes-base.googleCalendarTool",
-      "typeVersion": 1.3,
-      "position": [
-        80,
-        240
-      ],
-      "id": "af82d9a2-520d-44fa-933a-d009bce35462",
-      "name": "Consultar disponibilidad"
-    },
-    {
-      "parameters": {
-        "descriptionType": "manual",
-        "toolDescription": "Crea la cita en el calendario. Úsala solo después de comprobar que el horario está libre y de que el cliente confirmó.",
-        "calendar": {
-          "__rl": true,
-          "mode": "id",
-          "value": "primary"
-        },
-        "start": "={{ $fromAI('Start', 'Inicio de la cita, ISO 8601 con zona horaria', 'string') }}",
-        "end": "={{ $fromAI('End', 'Fin de la cita, ISO 8601 con zona horaria', 'string') }}",
-        "additionalFields": {
-          "summary": "={{ $fromAI('Summary', 'Servicio - Nombre del cliente', 'string') }}",
-          "description": "={{ $fromAI('Description', 'Nombre, teléfono y servicio del cliente', 'string') }}"
-        }
-      },
-      "type": "n8n-nodes-base.googleCalendarTool",
-      "typeVersion": 1.3,
-      "position": [
-        240,
-        240
-      ],
-      "id": "47d24128-a1ff-4127-b285-b1472fc84b8d",
-      "name": "Crear cita"
+      "name": "Google Gemini Chat Model"
     },
     {
       "parameters": {
@@ -163,7 +89,7 @@
     },
     {
       "parameters": {
-        "content": "## Antes de activar\n1. **Claude** → elige tu credencial de Anthropic (API key).\n2. **Consultar disponibilidad** y **Crear cita** → elige tu credencial de Google Calendar. `primary` = tu calendario principal.\n3. **Agente de citas** → edita SERVICIOS y NEGOCIO en el System Message.\n4. Desactiva tu flujo viejo: usa el mismo path de webhook.\n\n## Probar\nKapso → `.../webhook-test/815c...` + botón *Execute workflow*.\nProducción → activa el flujo y en Kapso usa `.../webhook/815c...`",
+        "content": "## Antes de activar\n1. Importa primero `barberia-agenda-gcal.json` y copia su ID en **Ver turnos libres** y **Agendar cita** (`ID_DEL_SUBWORKFLOW_AGENDA`).\n2. **Info negocio** (aquí y en el sub-workflow) → `TU-PROYECTO`, `TU_SUPABASE_PUBLISHABLE_KEY`, `TU_BUSINESS_ID`.\n3. Credenciales: Google Gemini (API key gratis de aistudio.google.com/apikey), Redis (Memoria Redis), Google Calendar (sub-workflow), Kapso.\n\n## Probar\nKapso → `.../webhook/815c...` con el workflow publicado.",
         "height": 360,
         "width": 460,
         "color": 7
@@ -176,6 +102,253 @@
       ],
       "id": "a7dc3277-7b79-4052-9c90-36d47144990b",
       "name": "Guía"
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
+        "to": "={{ $('Normalizar mensaje').first().json.to }}",
+        "message": "¡Hola! En este momento tengo muchos mensajes y no pude responderte bien. Dame unos minutos y vuelve a escribirme, por favor. ¡Gracias por tu paciencia!"
+      },
+      "type": "@kapso/n8n-nodes-kapso.kapso",
+      "typeVersion": 1,
+      "position": [
+        280,
+        -200
+      ],
+      "id": "d1d5d32f-e154-491c-86e4-08ee7e1befe3",
+      "name": "Avisar error al cliente",
+      "credentials": {
+        "kapsoApi": {
+          "id": "OaRk3Pa2Y75dao1H",
+          "name": "Kapso account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://TU-PROYECTO.supabase.co/rest/v1/rpc/public_bot_info",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "TU_SUPABASE_PUBLISHABLE_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"p_business_id\": \"TU_BUSINESS_ID\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -120,
+        0
+      ],
+      "id": "5cd82ec6-3fdc-445c-87c1-18aa160e3c0c",
+      "name": "Info negocio",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ 'barberia:' + $('Normalizar mensaje').first().json.to }}",
+        "sessionTTL": 86400,
+        "contextWindowLength": 12
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        -40,
+        240
+      ],
+      "id": "c0e15ff3-2e14-402e-9208-ae7c45ca15c0",
+      "name": "Memoria Redis"
+    },
+    {
+      "parameters": {
+        "description": "Lee el Google Calendar de la barbería y devuelve las horas LIBRES (HH:MM) de un día para un servicio. Úsala SIEMPRE antes de ofrecer horarios. Si devuelve ok=false, lee 'error' y 'mensaje' (ej. DIA_CERRADO, FECHA_PASADA, SERVICIO_INVALIDO).",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "ID_DEL_SUBWORKFLOW_AGENDA",
+          "cachedResultName": "Barbería · Agenda (Google Calendar)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "accion": "turnos",
+            "fecha": "={{ $fromAI('fecha', 'Día a consultar en formato YYYY-MM-DD', 'string') }}",
+            "servicio": "={{ $fromAI('servicio', 'Nombre exacto del servicio de la lista SERVICIOS', 'string') }}",
+            "hora": "",
+            "nombre": "",
+            "telefono": ""
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "accion",
+              "displayName": "accion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "hora",
+              "displayName": "hora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "servicio",
+              "displayName": "servicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        120,
+        240
+      ],
+      "id": "00d1cd8e-321a-46e3-b025-c237131be489",
+      "name": "Ver turnos libres"
+    },
+    {
+      "parameters": {
+        "description": "Agenda la cita creando el evento en el Google Calendar de la barbería. Úsala solo cuando el cliente confirmó servicio, día, hora y nombre. Vuelve a verificar que la hora siga libre. Si devuelve ok=true y agendada=true la cita quedó creada; si devuelve ok=false NO se creó (lee 'error' y ofrece las horas de turnos_libres).",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "ID_DEL_SUBWORKFLOW_AGENDA",
+          "cachedResultName": "Barbería · Agenda (Google Calendar)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "accion": "agendar",
+            "fecha": "={{ $fromAI('fecha', 'Día de la cita en formato YYYY-MM-DD', 'string') }}",
+            "hora": "={{ $fromAI('hora', 'Hora de inicio HH:MM en 24h, una de las horas libres', 'string') }}",
+            "servicio": "={{ $fromAI('servicio', 'Nombre exacto del servicio elegido', 'string') }}",
+            "nombre": "={{ $fromAI('nombre', 'Nombre y apellido de quien asistirá', 'string') }}",
+            "telefono": "={{ $('Normalizar mensaje').first().json.telefonoLocal || $('Normalizar mensaje').first().json.to }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "accion",
+              "displayName": "accion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "hora",
+              "displayName": "hora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "servicio",
+              "displayName": "servicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        280,
+        240
+      ],
+      "id": "d805a684-fbf5-4d37-8a24-16c84ad17191",
+      "name": "Agendar cita"
     }
   ],
   "connections": {
@@ -194,7 +367,7 @@
       "main": [
         [
           {
-            "node": "Agente de citas",
+            "node": "Info negocio",
             "type": "main",
             "index": 0
           }
@@ -209,21 +382,28 @@
             "type": "main",
             "index": 0
           }
-        ]
-      ]
-    },
-    "Claude": {
-      "ai_languageModel": [
+        ],
         [
           {
-            "node": "Agente de citas",
-            "type": "ai_languageModel",
+            "node": "Avisar error al cliente",
+            "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Memoria por cliente": {
+    "Info negocio": {
+      "main": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Redis": {
       "ai_memory": [
         [
           {
@@ -234,7 +414,7 @@
         ]
       ]
     },
-    "Consultar disponibilidad": {
+    "Ver turnos libres": {
       "ai_tool": [
         [
           {
@@ -245,12 +425,23 @@
         ]
       ]
     },
-    "Crear cita": {
+    "Agendar cita": {
       "ai_tool": [
         [
           {
             "node": "Agente de citas",
             "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente de citas",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]

@@ -1,0 +1,158 @@
+{
+  "version": "7.2",
+  "screens": [
+    {
+      "id": "DATOS",
+      "title": "Agendar cita",
+      "data": {
+        "min_date": { "type": "string", "__example__": "2026-10-09" },
+        "max_date": { "type": "string", "__example__": "2026-12-08" },
+        "domingos": { "type": "array", "items": { "type": "string" }, "__example__": ["2026-10-11", "2026-10-18"] }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextHeading", "text": "EliDental" },
+          { "type": "TextBody", "text": "Complete estos datos y le mostraremos los turnos libres. Toma menos de un minuto." },
+          {
+            "type": "RadioButtonsGroup",
+            "name": "para_quien",
+            "label": "¿Para quién es la cita?",
+            "required": true,
+            "data-source": [
+              { "id": "para_mi", "title": "Para mí" },
+              { "id": "otra_persona", "title": "Para otra persona" }
+            ]
+          },
+          { "type": "TextInput", "name": "nombre", "label": "Nombre completo del paciente", "input-type": "text", "required": true },
+          { "type": "TextInput", "name": "edad", "label": "Edad del paciente", "input-type": "number", "required": true },
+          {
+            "type": "TextInput",
+            "name": "responsable",
+            "label": "Adulto responsable",
+            "input-type": "text",
+            "required": false,
+            "helper-text": "Solo si el paciente es menor de edad"
+          },
+          {
+            "type": "Footer",
+            "label": "Continuar",
+            "on-click-action": {
+              "name": "navigate",
+              "next": { "type": "screen", "name": "MOTIVO" },
+              "payload": { "min_date": "${data.min_date}", "max_date": "${data.max_date}", "domingos": "${data.domingos}" }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "MOTIVO",
+      "title": "Motivo de la cita",
+      "data": {
+        "min_date": { "type": "string", "__example__": "2026-10-09" },
+        "max_date": { "type": "string", "__example__": "2026-12-08" },
+        "domingos": { "type": "array", "items": { "type": "string" }, "__example__": ["2026-10-11", "2026-10-18"] }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "RadioButtonsGroup",
+            "name": "motivo",
+            "label": "¿En qué le podemos ayudar?",
+            "required": true,
+            "data-source": [
+              { "id": "limpieza", "title": "Limpieza dental" },
+              { "id": "resina", "title": "Resina o calza" },
+              { "id": "control_ortodoncia", "title": "Control de ortodoncia" },
+              { "id": "valoracion", "title": "Valoración", "description": "Revisión, ortodoncia nueva u otro tratamiento" }
+            ]
+          },
+          { "type": "TextBody", "text": "Si tiene dolor fuerte, hinchazón o un diente roto, cierre este formulario y escríbanos: le damos prioridad." },
+          {
+            "type": "RadioButtonsGroup",
+            "name": "primera_vez",
+            "label": "¿Es su primera vez en EliDental?",
+            "required": true,
+            "data-source": [
+              { "id": "si", "title": "Sí" },
+              { "id": "no", "title": "No" }
+            ]
+          },
+          { "type": "OptIn", "name": "info_sedacion", "label": "Me da miedo el odontólogo: quiero saber sobre la sedación", "required": false },
+          {
+            "type": "Footer",
+            "label": "Continuar",
+            "on-click-action": {
+              "name": "navigate",
+              "next": { "type": "screen", "name": "PREFERENCIA" },
+              "payload": { "min_date": "${data.min_date}", "max_date": "${data.max_date}", "domingos": "${data.domingos}" }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREFERENCIA",
+      "title": "Fecha preferida",
+      "terminal": true,
+      "data": {
+        "min_date": { "type": "string", "__example__": "2026-10-09" },
+        "max_date": { "type": "string", "__example__": "2026-12-08" },
+        "domingos": { "type": "array", "items": { "type": "string" }, "__example__": ["2026-10-11", "2026-10-18"] }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "DatePicker",
+            "name": "fecha",
+            "label": "¿Qué día prefiere?",
+            "min-date": "${data.min_date}",
+            "max-date": "${data.max_date}",
+            "unavailable-dates": "${data.domingos}",
+            "helper-text": "Atendemos de lunes a sábado"
+          },
+          {
+            "type": "RadioButtonsGroup",
+            "name": "franja",
+            "label": "¿En qué horario?",
+            "required": true,
+            "data-source": [
+              { "id": "manana", "title": "Mañana", "description": "09:00 a 12:00" },
+              { "id": "tarde", "title": "Tarde", "description": "12:00 a 18:00 (sábado hasta 15:00)" },
+              { "id": "cualquiera", "title": "Cualquier hora" }
+            ]
+          },
+          {
+            "type": "OptIn",
+            "name": "acepta_whatsapp",
+            "label": "Acepto que EliDental use este chat para gestionar mi cita y enviarme recordatorios",
+            "required": true
+          },
+          {
+            "type": "Footer",
+            "label": "Ver turnos libres",
+            "on-click-action": {
+              "name": "complete",
+              "payload": {
+                "formulario": "agendar_cita_v1",
+                "para_quien": "${screen.DATOS.form.para_quien}",
+                "nombre": "${screen.DATOS.form.nombre}",
+                "edad": "${screen.DATOS.form.edad}",
+                "responsable": "${screen.DATOS.form.responsable}",
+                "motivo": "${screen.MOTIVO.form.motivo}",
+                "primera_vez": "${screen.MOTIVO.form.primera_vez}",
+                "info_sedacion": "${screen.MOTIVO.form.info_sedacion}",
+                "fecha": "${form.fecha}",
+                "franja": "${form.franja}",
+                "acepta_whatsapp": "${form.acepta_whatsapp}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

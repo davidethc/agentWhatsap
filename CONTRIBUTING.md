@@ -28,6 +28,7 @@ Cómo trabajar en este proyecto sin romper producción ni filtrar datos.
 │   ├── eli-dental.md       Diseño conversacional, datos de EliDental y recordatorios
 │   ├── comercial/          Guía de la reunión de venta
 │   └── adr/                Registros de decisiones
+├── flows/                  WhatsApp Flows (formularios) en JSON
 ├── workflows/              Exportaciones de n8n (producción, pruebas, legacy)
 └── supabase/               Integración opcional de la v2
 ```

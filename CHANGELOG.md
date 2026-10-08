@@ -6,6 +6,11 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- Formulario de cita (WhatsApp Flow) `flows/eli-agendar-cita.flow.json`, creado en Kapso como borrador
+  (Meta Flow ID 1972695790065650); `version4` lo envía cuando el paciente quiere agendar sin decir el
+  día, lee la respuesta (`nfm_reply`) y tiene respaldo por chat. Publicarlo está bloqueado por Meta
+  (facturación y nombre visible de la cuenta). Ver [docs/flow-agendar.md](docs/flow-agendar.md).
+- `scripts/check-flow.py`: validación local de Flow JSON.
 - Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
 
 ### Cambiado

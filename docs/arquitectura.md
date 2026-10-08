@@ -79,6 +79,9 @@ Todo vive en un solo workflow ([`workflows/eli-version4.json`](../workflows/eli-
    `reservar_cita`). Valida el pedido, lee Google Calendar, calcula turnos de 1 hora y crea el evento.
    Antes de reservar vuelve a comprobar que el turno siga libre.
 
+Después del agente, *Preparar respuesta* decide si se envía el formulario de cita (WhatsApp Flow) o
+un texto ([flow-agendar.md](flow-agendar.md)).
+
 El agente también tiene `buscar_mis_citas`, `mover_cita` y `cancelar_cita`, que son herramientas
 directas de Google Calendar.
 

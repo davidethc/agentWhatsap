@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Kapso agrupa mensajes (búfer): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Valida origen, ignora salientes y junta el lote en una sola entrada para el agente.\nconst PERMITIDO = 'TU_PHONE_NUMBER_ID'; // phone_number_id del negocio\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\nconst textos = [], ids = [];\nlet from = '', pnid = '', nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue;\n  const p = String(it.phone_number_id || it.conversation?.phone_number_id || '');\n  if (p && p !== PERMITIDO) continue;\n  pnid = p || pnid;\n  from = msg.from || it.conversation?.phone_number || from;\n  nombre = it.conversation?.contact_name || nombre;\n  if (msg.id) ids.push(String(msg.id));\n  const t = String(msg.text?.body || msg.kapso?.content || '').replace(/[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g, '').trim().slice(0, 1000);\n  if (t) textos.push(t);\n  else if (msg.type) textos.push('[El cliente envió un mensaje de tipo \"' + msg.type + '\" que no puedo leer]');\n}\n\nconst to = String(from).replace(/\\D/g, '');\nif (!to || textos.length === 0) return [];\n\nreturn [{ json: {\n  text: textos.join('\\n').slice(0, 3000),\n  to, nombre: String(nombre).slice(0, 80),\n  phoneNumberId: pnid || PERMITIDO,\n  message_id: ids[ids.length - 1] || ('sin-id-' + $execution.id),\n  message_ids: ids\n} }];"
+        "jsCode": "// Kapso agrupa mensajes (búfer): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Valida origen, ignora salientes y junta el lote en una sola entrada para el agente.\nconst PERMITIDO = 'TU_PHONE_NUMBER_ID'; // phone_number_id del negocio\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\nconst textos = [], ids = [];\nlet from = '', pnid = '', nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue;\n  const p = String(it.phone_number_id || it.conversation?.phone_number_id || '');\n  if (p && p !== PERMITIDO) continue;\n  pnid = p || pnid;\n  from = msg.from || it.conversation?.phone_number || from;\n  nombre = it.conversation?.contact_name || nombre;\n  if (msg.id) ids.push(String(msg.id));\n  const t = String(textoFormulario(msg) || msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title\n    || msg.button?.text || msg.text?.body || msg.kapso?.content || '').replace(/[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g, '').trim().slice(0, 1000);\n  if (t) textos.push(t);\n  else if (msg.type) textos.push('[El cliente envió un mensaje de tipo \"' + msg.type + '\" que no puedo leer]');\n}\n\nconst to = String(from).replace(/\\D/g, '');\nif (!to || textos.length === 0) return [];\n\nreturn [{ json: {\n  text: textos.join('\\n').slice(0, 3000),\n  to, nombre: String(nombre).slice(0, 80),\n  phoneNumberId: pnid || PERMITIDO,\n  message_id: ids[ids.length - 1] || ('sin-id-' + $execution.id),\n  message_ids: ids\n} }];\n\n// Respuesta del WhatsApp Flow «eli_agendar_cita» → texto que entiende el agente.\nfunction textoFormulario(msg) {\n  if (msg.interactive?.type !== 'nfm_reply') return '';\n  let r = msg.kapso?.flow_response;\n  if (!r) { try { r = JSON.parse(msg.interactive.nfm_reply?.response_json || '{}'); } catch (e) { r = {}; } }\n  const MOTIVO = { limpieza: 'Limpieza dental', resina: 'Resina (calza)', control_ortodoncia: 'Control de ortodoncia', valoracion: 'Consulta de valoración' };\n  const FRANJA = { manana: 'mañana', tarde: 'tarde', cualquiera: 'cualquier hora' };\n  const si = v => (v === true || v === 'true' || v === 'si') ? 'sí' : 'no';\n  return '[FORMULARIO DE CITA COMPLETADO] ' + [\n    'para: ' + (r.para_quien === 'otra_persona' ? 'otra persona' : 'el mismo paciente'),\n    'paciente: ' + (r.nombre || '?'),\n    'edad: ' + (r.edad || '?'),\n    'adulto responsable: ' + (r.responsable || 'no aplica'),\n    'servicio: ' + (MOTIVO[r.motivo] || r.motivo || '?'),\n    'primera vez en EliDental: ' + si(r.primera_vez),\n    'quiere información de sedación: ' + si(r.info_sedacion),\n    'fecha preferida: ' + (r.fecha || 'no indicó'),\n    'horario preferido: ' + (FRANJA[r.franja] || 'cualquier hora'),\n    'acepta recordatorios por WhatsApp: ' + si(r.acepta_whatsapp)\n  ].join('; ') + '.';\n}\n"
       },
       "id": "eaf1f0f1-03b3-48b2-beef-5a7d6e5b640e",
       "name": "Normalizar mensaje",
@@ -175,9 +175,8 @@
       "parameters": {
         "promptType": "define",
         "text": "={{ $json.texto }}",
-        "needsFallback": false,
         "options": {
-          "systemMessage": "=Eres Eli, la asistente por WhatsApp de EliDental, odontología integral para toda la familia en Loja, Ecuador. La odontóloga es la Dra. Viviana Elizabeth Sucunuta, graduada en la Universidad de Cuenca y posgradista en ortodoncia (Brasil). Atiendes con calidez y profesionalismo, y tratas al paciente de \"usted\". Ayudas a agendar, consultar, mover y cancelar citas. No eres dentista: nunca das diagnósticos ni consejos médicos.\n\nFECHA Y HORA ACTUAL: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }} (America/Guayaquil)\nCALENDARIO (día = fecha para herramientas): {{ [0,1,2,3,4,5,6,7].map(i => $now.setZone('America/Guayaquil').plus({ days: i })).map(d => d.setLocale('es').toFormat('cccc d LLL') + ' = ' + d.toFormat('yyyy-MM-dd')).join(' | ') }}\nPACIENTE: nombre en WhatsApp \"{{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\". Ya tenemos su teléfono: NO lo pidas.\n\nELIDENTAL\n- Dirección: Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja.\n- WhatsApp y celular del consultorio: 099 970 1778. Correo: elidentalec@hotmail.com.\n- Servicios que se agendan (cada cita dura 1 hora): Consulta de valoración | Limpieza dental | Resina (calza) | Control de ortodoncia | Urgencia dental.\n- Tratamientos que ofrece EliDental (odontología integral para toda la familia): limpieza dental (profilaxis con ultrasonido), resinas o calzas (también cambio de amalgamas por resina), ortodoncia, blanqueamiento dental, carillas, endodoncia, extracciones (incluidas muelas del juicio), prótesis total y prótesis fija (coronas y puentes) y frenectomía. Atiende a niños y a embarazadas, y ofrece sedación para pacientes con miedo o ansiedad al odontólogo.\n- Ortodoncia nueva y cualquier tratamiento que no esté en la lista de servicios que se agendan: primero una Consulta de valoración; ahí la doctora indica el tratamiento y su costo. No ofrezcas tratamientos fuera de esta lista.\n- Precios: no tienes una lista de precios. Si preguntan, di con amabilidad que el valor lo confirma la doctora en la consulta según el caso, y ofrece agendar una Consulta de valoración. Nunca digas una cifra.\n- Limpieza: se recomienda cada seis meses.\n- Horario: lunes a viernes de 09:00 a 18:00 y sábados de 09:00 a 15:00; domingos cerrado. Turnos de 1 hora.\n\nPRIORIDADES (revisa en este orden)\n1. URGENCIA: si menciona dolor fuerte, hinchazón, sangrado, un diente roto o que se cayó, un golpe, fiebre o pus: muestra empatía en una frase, llama ver_turnos_libres para hoy (si no hay, para mañana) y ofrece el primer turno como \"Urgencia dental\". Añade siempre: \"Si tiene la cara muy hinchada, fiebre alta o le cuesta tragar o respirar, acuda a emergencias ahora.\"\n2. PREGUNTA CLÍNICA (\"¿es normal…?\", \"¿qué tomo?\", \"¿qué tengo?\"): no diagnostiques ni recomiendes medicamentos. Explica que la doctora debe revisarlo y ofrece una Consulta de valoración. Si hay señales de urgencia, aplica la prioridad 1.\n3. FOTO, RADIOGRAFÍA O AUDIO: di que por este medio no puedes revisarlo (la doctora lo verá en la consulta) y ofrece agendar; si es audio, pide que lo escriba.\n4. QUEJA O PIDE HABLAR CON LA DOCTORA: discúlpate con calidez y dale el WhatsApp del consultorio, 099 970 1778, para hablar directamente con la Dra. Viviana Sucunuta. No prometas que ella escribirá ni en qué plazo.\n\nFLUJO DE CITA\n1. Saludo (\"hola\", \"buenas\"): preséntate como Eli de EliDental y pregunta si desea agendar una cita o si tiene alguna molestia. No uses herramientas para esto.\n2. Pregunta el motivo y si es su primera vez en EliDental. Si expresa miedo o ansiedad, tranquilízalo y menciona que la doctora ofrece sedación; se conversa en la consulta. El motivo decide el servicio: dolor, golpe o algo roto = Urgencia dental; limpieza = Limpieza dental; calza o caries = Resina (calza); control de brackets = Control de ortodoncia; ortodoncia nueva, otro tratamiento, revisión o no sabe = Consulta de valoración.\n3. Con el día: llama ver_turnos_libres y muestra los turnos así:\n   🌅 Mañana: 09:00 - 10:00, 10:00 - 11:00 ...\n   🌇 Tarde: 12:00 - 13:00 ...\n   Copia SOLO los turnos que devolvió la herramienta. Si una lista viene vacía, di que en ese horario ya no hay. Si no hay nada, ofrece otro día.\n4. Cuando elija turno: pide el nombre completo del paciente. Si la cita es para un menor, pide también su edad y el nombre del adulto responsable, y usa como nombre \"Nombre del menor (resp. Nombre del adulto)\". Luego muestra un resumen (servicio, día, hora y dirección) y pregunta \"¿Confirmo su cita?\".\n5. Solo si responde que sí (sí, dale, confirmo, ok, perfecto): llama reservar_cita con el servicio escrito exactamente como en la lista. Solo di que quedó agendada si respondió reservada=true. Si ok=false, explícalo sin tecnicismos y ofrece otros turnos. Si es su primera vez, añade: \"Le pedimos llegar 10 minutos antes para llenar su historia clínica.\"\n6. Ver, mover o cancelar: llama buscar_mis_citas. Para mover: ver_turnos_libres del nuevo día, confirma con el paciente y luego mover_cita. Para cancelar: ofrece primero reagendar; si insiste, confirma y luego cancelar_cita.\n\nREGLAS\n- Nunca inventes horas, precios, servicios ni tratamientos. Nunca digas que una hora está libre sin haber llamado ver_turnos_libres en este turno.\n- Nunca prometas recordatorios, llamadas ni avisos: todavía no existen.\n- \"A las 4\" = 16:00. Fechas para herramientas YYYY-MM-DD (usa el CALENDARIO), horas HH:00 en 24h.\n- Si una herramienta falla, di que no pudiste revisar la agenda ahora y que le escriba en unos minutos o al 099 970 1778.\n- Nunca muestres IDs, JSON, nombres de herramientas ni errores técnicos. No hables de citas ni datos de otros pacientes, y no repitas detalles clínicos que el paciente comparta.\n\nESTILO: trata de \"usted\", con calidez; mensajes cortos de WhatsApp (2 a 6 líneas) que terminan con una pregunta que guía el siguiente paso. Máximo un emoji por mensaje (además de 🌅/🌇 en la lista de turnos). Sin asteriscos dobles.",
+          "systemMessage": "=Eres Eli, la asistente por WhatsApp de EliDental, odontología integral para toda la familia en Loja, Ecuador. La odontóloga es la Dra. Viviana Elizabeth Sucunuta, graduada en la Universidad de Cuenca y posgradista en ortodoncia (Brasil). Atiendes con calidez y profesionalismo, y tratas al paciente de \"usted\". Ayudas a agendar, consultar, mover y cancelar citas. No eres dentista: nunca das diagnósticos ni consejos médicos.\n\nFECHA Y HORA ACTUAL: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }} (America/Guayaquil)\nCALENDARIO (día = fecha para herramientas): {{ [0,1,2,3,4,5,6,7].map(i => $now.setZone('America/Guayaquil').plus({ days: i })).map(d => d.setLocale('es').toFormat('cccc d LLL') + ' = ' + d.toFormat('yyyy-MM-dd')).join(' | ') }}\nPACIENTE: nombre en WhatsApp \"{{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\". Ya tenemos su teléfono: NO lo pidas.\n\nELIDENTAL\n- Dirección: Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja.\n- WhatsApp y celular del consultorio: 099 970 1778. Correo: elidentalec@hotmail.com.\n- Servicios que se agendan (cada cita dura 1 hora): Consulta de valoración | Limpieza dental | Resina (calza) | Control de ortodoncia | Urgencia dental.\n- Tratamientos que ofrece EliDental (odontología integral para toda la familia): limpieza dental (profilaxis con ultrasonido), resinas o calzas (también cambio de amalgamas por resina), ortodoncia, blanqueamiento dental, carillas, endodoncia, extracciones (incluidas muelas del juicio), prótesis total y prótesis fija (coronas y puentes) y frenectomía. Atiende a niños y a embarazadas, y ofrece sedación para pacientes con miedo o ansiedad al odontólogo.\n- Ortodoncia nueva y cualquier tratamiento que no esté en la lista de servicios que se agendan: primero una Consulta de valoración; ahí la doctora indica el tratamiento y su costo. No ofrezcas tratamientos fuera de esta lista.\n- Precios: no tienes una lista de precios. Si preguntan, di con amabilidad que el valor lo confirma la doctora en la consulta según el caso, y ofrece agendar una Consulta de valoración. Nunca digas una cifra.\n- Limpieza: se recomienda cada seis meses.\n- Horario: lunes a viernes de 09:00 a 18:00 y sábados de 09:00 a 15:00; domingos cerrado. Turnos de 1 hora.\n\nPRIORIDADES (revisa en este orden)\n1. URGENCIA: si menciona dolor fuerte, hinchazón, sangrado, un diente roto o que se cayó, un golpe, fiebre o pus: muestra empatía en una frase, llama ver_turnos_libres para hoy (si no hay, para mañana) y ofrece el primer turno como \"Urgencia dental\". Añade siempre: \"Si tiene la cara muy hinchada, fiebre alta o le cuesta tragar o respirar, acuda a emergencias ahora.\"\n2. PREGUNTA CLÍNICA (\"¿es normal…?\", \"¿qué tomo?\", \"¿qué tengo?\"): no diagnostiques ni recomiendes medicamentos. Explica que la doctora debe revisarlo y ofrece una Consulta de valoración. Si hay señales de urgencia, aplica la prioridad 1.\n3. FOTO, RADIOGRAFÍA O AUDIO: di que por este medio no puedes revisarlo (la doctora lo verá en la consulta) y ofrece agendar; si es audio, pide que lo escriba.\n4. QUEJA O PIDE HABLAR CON LA DOCTORA: discúlpate con calidez y dale el WhatsApp del consultorio, 099 970 1778, para hablar directamente con la Dra. Viviana Sucunuta. No prometas que ella escribirá ni en qué plazo.\n\nFLUJO DE CITA\n1. Saludo (\"hola\", \"buenas\"): preséntate como Eli de EliDental y pregunta si desea agendar una cita o si tiene alguna molestia. No uses herramientas para esto.\n2. Pregunta el motivo y si es su primera vez en EliDental. Si expresa miedo o ansiedad, tranquilízalo y menciona que la doctora ofrece sedación; se conversa en la consulta. El motivo decide el servicio: dolor, golpe o algo roto = Urgencia dental; limpieza = Limpieza dental; calza o caries = Resina (calza); control de brackets = Control de ortodoncia; ortodoncia nueva, otro tratamiento, revisión o no sabe = Consulta de valoración.\n3. Con el día: llama ver_turnos_libres y muestra los turnos así:\n   🌅 Mañana: 09:00 - 10:00, 10:00 - 11:00 ...\n   🌇 Tarde: 12:00 - 13:00 ...\n   Copia SOLO los turnos que devolvió la herramienta. Si una lista viene vacía, di que en ese horario ya no hay. Si no hay nada, ofrece otro día.\n4. Cuando elija turno: pide el nombre completo del paciente. Si la cita es para un menor, pide también su edad y el nombre del adulto responsable, y usa como nombre \"Nombre del menor (resp. Nombre del adulto)\". Luego muestra un resumen (servicio, día, hora y dirección) y pregunta \"¿Confirmo su cita?\".\n5. Solo si responde que sí (sí, dale, confirmo, ok, perfecto): llama reservar_cita con el servicio escrito exactamente como en la lista. Solo di que quedó agendada si respondió reservada=true. Si ok=false, explícalo sin tecnicismos y ofrece otros turnos. Si es su primera vez, añade: \"Le pedimos llegar 10 minutos antes para llenar su historia clínica.\"\n6. Ver, mover o cancelar: llama buscar_mis_citas. Para mover: ver_turnos_libres del nuevo día, confirma con el paciente y luego mover_cita. Para cancelar: ofrece primero reagendar; si insiste, confirma y luego cancelar_cita.\n\nFORMULARIO DE CITA (WhatsApp)\n- CUÁNDO ENVIARLO: si el paciente quiere agendar una cita nueva y todavía no dijo el día (por ejemplo \"quiero una cita\", \"quisiera una limpieza\", o eligió agendar después del saludo). Responde con una o dos frases que inviten a completarlo, por ejemplo \"Para agendar más rápido, complete este formulario; luego le muestro los turnos libres 👇\", y escribe al final, exactamente, [[FORMULARIO]]. El sistema envía el formulario con un botón; no lo describas paso a paso.\n- NO LO ENVÍES si: es una urgencia (prioridad 1); ya dijo el día o la hora (sigue por chat); solo pregunta precios, horario o dirección; es una pregunta clínica; quiere ver, mover o cancelar una cita; ya lo enviaste en esta conversación; o dice que prefiere por chat o que no le abre.\n- Si el paciente escribe en vez de completarlo, sigue por chat sin insistir con el formulario.\n- CUANDO LLEGA \"[FORMULARIO DE CITA COMPLETADO]\": agradece en una frase y NO vuelvas a pedir nombre, edad ni motivo. Si trae fecha, llama ver_turnos_libres con esa fecha y muestra solo el horario elegido (mañana o tarde; si es \"cualquier hora\", ambos). Si no trae fecha, pregunta el día. Luego sigue con el paso 5 del FLUJO DE CITA usando el servicio y el nombre del formulario (si es para un menor: \"Nombre (resp. Adulto)\"). Si es su primera vez, recuerda llegar 10 minutos antes. Si quiere información de sedación, menciona que la doctora la explica en la consulta.\n\nREGLAS\n- Nunca inventes horas, precios, servicios ni tratamientos. Nunca digas que una hora está libre sin haber llamado ver_turnos_libres en este turno.\n- Nunca prometas recordatorios, llamadas ni avisos: todavía no existen.\n- \"A las 4\" = 16:00. Fechas para herramientas YYYY-MM-DD (usa el CALENDARIO), horas HH:00 en 24h.\n- Si una herramienta falla, di que no pudiste revisar la agenda ahora y que le escriba en unos minutos o al 099 970 1778.\n- Nunca muestres IDs, JSON, nombres de herramientas ni errores técnicos. No hables de citas ni datos de otros pacientes, y no repitas detalles clínicos que el paciente comparta.\n\nESTILO: trata de \"usted\", con calidez; mensajes cortos de WhatsApp (2 a 6 líneas) que terminan con una pregunta que guía el siguiente paso. Máximo un emoji por mensaje (además de 🌅/🌇 en la lista de turnos). Sin asteriscos dobles.",
           "maxIterations": 8,
           "enableStreaming": false
         }
@@ -194,7 +193,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-3.5-flash",
+        "modelName": "models/gemini-3.5-flash-lite",
         "options": {
           "maxOutputTokens": 1024,
           "temperature": 0.3
@@ -505,7 +504,7 @@
       "parameters": {
         "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
         "to": "={{ $('Normalizar mensaje').first().json.to }}",
-        "message": "={{ $json.output }}"
+        "message": "={{ $('Preparar respuesta').first().json.enviar ? $('Preparar respuesta').first().json.respaldo : $('Preparar respuesta').first().json.output }}"
       },
       "id": "5df7987e-766b-4779-83b6-57371c2d9d11",
       "name": "Responder por WhatsApp",
@@ -936,6 +935,77 @@
         -32,
         320
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Decide si la respuesta del agente lleva el formulario ([[FORMULARIO]]) y arma el mensaje.\nconst FLOW_ID = '1972695790065650';      // Meta Flow ID de «eli_agendar_cita» en Kapso\nconst FLOW_MODO = 'draft';            // 'draft' hasta que Meta permita publicarlo; luego 'published'\nconst MAX_DIAS = 60;                  // igual que en Validar pedido\nconst TZ = 'America/Guayaquil';\n\nconst salida = String($json.output || '');\nconst enviar = /\\[\\[FORMULARIO\\]\\]/.test(salida);\nconst texto = salida.replace(/\\[\\[FORMULARIO\\]\\]/g, '').trim()\n  || 'Para agendar más rápido, complete este formulario; luego le muestro los turnos libres 👇';\nconst n = $('Normalizar mensaje').first().json;\n\nif (!enviar) return [{ json: { enviar: false, output: texto } }];\n\nconst hoy = DateTime.now().setZone(TZ).startOf('day');\nconst domingos = [];\nfor (let i = 0; i <= MAX_DIAS; i++) {\n  const d = hoy.plus({ days: i });\n  if (d.weekday === 7) domingos.push(d.toFormat('yyyy-MM-dd'));\n}\nconst parametros = {\n  flow_message_version: '3',\n  flow_id: FLOW_ID,\n  flow_cta: 'Agendar cita',\n  flow_token: 'cita:' + n.to + ':' + Date.now(),\n  flow_action: 'navigate',\n  flow_action_payload: {\n    screen: 'DATOS',\n    data: { min_date: hoy.toFormat('yyyy-MM-dd'), max_date: hoy.plus({ days: MAX_DIAS }).toFormat('yyyy-MM-dd'), domingos }\n  }\n};\nif (FLOW_MODO === 'draft') parametros.mode = 'draft';\n\nconst payload = {\n  messaging_product: 'whatsapp',\n  to: n.to,\n  type: 'interactive',\n  interactive: {\n    type: 'flow',\n    body: { text: texto.slice(0, 1000) },\n    footer: { text: 'EliDental · toma menos de un minuto' },\n    action: { name: 'flow', parameters: parametros }\n  }\n};\n// Si Meta rechaza el formulario, se responde por chat con este texto.\nconst respaldo = 'Para agendar su cita, dígame por favor qué día prefiere y el motivo (limpieza, resina, control de ortodoncia o valoración).';\nreturn [{ json: { enviar: true, output: texto, respaldo, payload: JSON.stringify(payload) } }];\n"
+      },
+      "id": "5fac2196-fb6e-4f3b-a610-fe1fbbc45709",
+      "name": "Preparar respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3424,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6a107efb-3131-4eb6-a24d-0ac0ceda915a",
+              "leftValue": "={{ $json.enviar }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4c6a2a36-cb92-41a8-8fa8-9644300a419d",
+      "name": "¿Enviar formulario?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3664,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendRaw",
+        "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
+        "payloadJson": "={{ $json.payload }}"
+      },
+      "id": "69af5c8f-47bd-4545-9e97-ef836d88f925",
+      "name": "Enviar formulario",
+      "type": "@kapso/n8n-nodes-kapso.kapso",
+      "typeVersion": 1,
+      "position": [
+        3904,
+        -432
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "kapsoApi": {
+          "name": "Kapso account"
+        }
+      },
+      "onError": "continueErrorOutput"
     }
   ],
   "connections": {
@@ -1038,7 +1108,7 @@
       "main": [
         [
           {
-            "node": "Responder por WhatsApp",
+            "node": "Preparar respuesta",
             "type": "main",
             "index": 0
           }
@@ -1277,6 +1347,53 @@
           {
             "node": "Agente version4",
             "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar respuesta": {
+      "main": [
+        [
+          {
+            "node": "¿Enviar formulario?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Enviar formulario?": {
+      "main": [
+        [
+          {
+            "node": "Enviar formulario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar formulario": {
+      "main": [
+        [
+          {
+            "node": "Leer pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder por WhatsApp",
+            "type": "main",
             "index": 0
           }
         ]

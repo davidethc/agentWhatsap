@@ -1,9 +1,9 @@
 import { workflow, node, trigger, sticky, ifElse, languageModel, memory, tool, fromAi, expr } from '@n8n/workflow-sdk';
 
-const REDIS = { redis: { id: 'FnjqRrvN9HEkaW8H', name: 'Redis account' } };
-const KAPSO = { kapsoApi: { id: 'OaRk3Pa2Y75dao1H', name: 'Kapso account' } };
-const GCAL = { googleCalendarOAuth2Api: { id: 'cHPuJsGrmnIOE2X5', name: 'Google Calendar account' } };
-const CAL = { __rl: true, mode: 'list', value: 'davidecondet@gmail.com', cachedResultName: 'davidecondet@gmail.com' };
+const REDIS = { redis: { id: 'TU_ID_CREDENCIAL', name: 'Redis account' } };
+const KAPSO = { kapsoApi: { id: 'TU_ID_CREDENCIAL', name: 'Kapso account' } };
+const GCAL = { googleCalendarOAuth2Api: { id: 'TU_ID_CREDENCIAL', name: 'Google Calendar account' } };
+const CAL = { __rl: true, mode: 'list', value: 'TU_CALENDARIO@gmail.com', cachedResultName: 'TU_CALENDARIO@gmail.com' };
 const SELF = { __rl: true, mode: 'id', value: '={{ $workflow.id }}' };
 const IFOPTS = { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 };
 const TOOL_SCHEMA = [
@@ -18,13 +18,13 @@ const TOOL_SCHEMA = [
 const webhookKapso = trigger({
   type: 'n8n-nodes-base.webhook', version: 2.1,
   config: { name: 'Webhook Kapso', parameters: { httpMethod: 'POST', path: '815c58df-43f7-4f91-bde5-6935b562214c', options: {} }, position: [0, 0] },
-  output: [{ body: { data: [{ message: { id: 'wamid.1', from: '593900000000', type: 'text', text: { body: 'hola' }, kapso: { direction: 'inbound' } }, conversation: { phone_number: '593900000000', contact_name: 'Ana' }, phone_number_id: '1347989838397545' }] } }]
+  output: [{ body: { data: [{ message: { id: 'wamid.1', from: '593900000000', type: 'text', text: { body: 'hola' }, kapso: { direction: 'inbound' } }, conversation: { phone_number: '593900000000', contact_name: 'Ana' }, phone_number_id: 'TU_PHONE_NUMBER_ID' }] } }]
 });
 
 const normalizar = node({
   type: 'n8n-nodes-base.code', version: 2,
-  config: { name: 'Normalizar mensaje', parameters: { jsCode: "// Kapso agrupa mensajes (búfer): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Valida origen, ignora salientes y junta el lote en una sola entrada para el agente.\nconst PERMITIDO = '1347989838397545'; // phone_number_id del negocio\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\nconst textos = [], ids = [];\nlet from = '', pnid = '', nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue;\n  const p = String(it.phone_number_id || it.conversation?.phone_number_id || '');\n  if (p && p !== PERMITIDO) continue;\n  pnid = p || pnid;\n  from = msg.from || it.conversation?.phone_number || from;\n  nombre = it.conversation?.contact_name || nombre;\n  if (msg.id) ids.push(String(msg.id));\n  const t = String(msg.text?.body || msg.kapso?.content || '').replace(/[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g, '').trim().slice(0, 1000);\n  if (t) textos.push(t);\n  else if (msg.type) textos.push('[El cliente envió un mensaje de tipo \"' + msg.type + '\" que no puedo leer]');\n}\n\nconst to = String(from).replace(/\\D/g, '');\nif (!to || textos.length === 0) return [];\n\nreturn [{ json: {\n  text: textos.join('\\n').slice(0, 3000),\n  to, nombre: String(nombre).slice(0, 80),\n  phoneNumberId: pnid || PERMITIDO,\n  message_id: ids[ids.length - 1] || ('sin-id-' + $execution.id),\n  message_ids: ids\n} }];" }, position: [224, 0] },
-  output: [{ text: 'hola', to: '593900000000', nombre: 'Ana', phoneNumberId: '1347989838397545', message_id: 'wamid.1', message_ids: ['wamid.1'] }]
+  config: { name: 'Normalizar mensaje', parameters: { jsCode: "// Kapso agrupa mensajes (búfer): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Valida origen, ignora salientes y junta el lote en una sola entrada para el agente.\nconst PERMITIDO = 'TU_PHONE_NUMBER_ID'; // phone_number_id del negocio\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\nconst textos = [], ids = [];\nlet from = '', pnid = '', nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue;\n  const p = String(it.phone_number_id || it.conversation?.phone_number_id || '');\n  if (p && p !== PERMITIDO) continue;\n  pnid = p || pnid;\n  from = msg.from || it.conversation?.phone_number || from;\n  nombre = it.conversation?.contact_name || nombre;\n  if (msg.id) ids.push(String(msg.id));\n  const t = String(msg.text?.body || msg.kapso?.content || '').replace(/[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g, '').trim().slice(0, 1000);\n  if (t) textos.push(t);\n  else if (msg.type) textos.push('[El cliente envió un mensaje de tipo \"' + msg.type + '\" que no puedo leer]');\n}\n\nconst to = String(from).replace(/\\D/g, '');\nif (!to || textos.length === 0) return [];\n\nreturn [{ json: {\n  text: textos.join('\\n').slice(0, 3000),\n  to, nombre: String(nombre).slice(0, 80),\n  phoneNumberId: pnid || PERMITIDO,\n  message_id: ids[ids.length - 1] || ('sin-id-' + $execution.id),\n  message_ids: ids\n} }];" }, position: [224, 0] },
+  output: [{ text: 'hola', to: '593900000000', nombre: 'Ana', phoneNumberId: 'TU_PHONE_NUMBER_ID', message_id: 'wamid.1', message_ids: ['wamid.1'] }]
 });
 
 const dedup = node({
@@ -69,12 +69,12 @@ const preparar = node({
 
 const openRouter = languageModel({
   type: '@n8n/n8n-nodes-langchain.lmChatOpenRouter', version: 1,
-  config: { name: 'OpenRouter', parameters: { model: 'openrouter/free', options: { maxTokens: 800, temperature: 0.3, timeout: 45000, maxRetries: 1 } }, credentials: { openRouterApi: { id: 'lvm7ktHmLa07CR16', name: 'OpenRouter account' } }, position: [1600, 240] }
+  config: { name: 'OpenRouter', parameters: { model: 'openrouter/free', options: { maxTokens: 800, temperature: 0.3, timeout: 45000, maxRetries: 1 } }, credentials: { openRouterApi: { id: 'TU_ID_CREDENCIAL', name: 'OpenRouter account' } }, position: [1600, 240] }
 });
 
 const gemini = languageModel({
   type: '@n8n/n8n-nodes-langchain.lmChatGoogleGemini', version: 1.2,
-  config: { name: 'Gemini respaldo', parameters: { options: { maxOutputTokens: 1024, temperature: 0.3 } }, credentials: { googlePalmApi: { id: 'JswUKrV5wi0zoGRR', name: 'Google Gemini(PaLM) Api account' } }, position: [1744, 240] }
+  config: { name: 'Gemini respaldo', parameters: { options: { maxOutputTokens: 1024, temperature: 0.3 } }, credentials: { googlePalmApi: { id: 'TU_ID_CREDENCIAL', name: 'Google Gemini(PaLM) Api account' } }, position: [1744, 240] }
 });
 
 const memoria = memory({

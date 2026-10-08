@@ -1,0 +1,1292 @@
+{
+  "name": "version4",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "815c58df-43f7-4f91-bde5-6935b562214c",
+        "options": {}
+      },
+      "id": "3b87eb5f-e7ee-4c82-9f10-e135832940c9",
+      "name": "Webhook Kapso",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "e5899809-5f47-4060-8dc4-a4339ca003f8"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Kapso agrupa mensajes (búfer): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Valida origen, ignora salientes y junta el lote en una sola entrada para el agente.\nconst PERMITIDO = 'TU_PHONE_NUMBER_ID'; // phone_number_id del negocio\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\nconst textos = [], ids = [];\nlet from = '', pnid = '', nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue;\n  const p = String(it.phone_number_id || it.conversation?.phone_number_id || '');\n  if (p && p !== PERMITIDO) continue;\n  pnid = p || pnid;\n  from = msg.from || it.conversation?.phone_number || from;\n  nombre = it.conversation?.contact_name || nombre;\n  if (msg.id) ids.push(String(msg.id));\n  const t = String(msg.text?.body || msg.kapso?.content || '').replace(/[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g, '').trim().slice(0, 1000);\n  if (t) textos.push(t);\n  else if (msg.type) textos.push('[El cliente envió un mensaje de tipo \"' + msg.type + '\" que no puedo leer]');\n}\n\nconst to = String(from).replace(/\\D/g, '');\nif (!to || textos.length === 0) return [];\n\nreturn [{ json: {\n  text: textos.join('\\n').slice(0, 3000),\n  to, nombre: String(nombre).slice(0, 80),\n  phoneNumberId: pnid || PERMITIDO,\n  message_id: ids[ids.length - 1] || ('sin-id-' + $execution.id),\n  message_ids: ids\n} }];"
+      },
+      "id": "eaf1f0f1-03b3-48b2-beef-5a7d6e5b640e",
+      "name": "Normalizar mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "incr",
+        "key": "={{ 'v4:dedup:' + $json.message_id }}",
+        "expire": true,
+        "ttl": 86400
+      },
+      "id": "ea56eb06-b026-422f-a023-4a9d2a3e7de2",
+      "name": "Dedup mensaje",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Number(Object.values($json)[0]) }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              },
+              "rightValue": 1
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "910556b9-7bdd-4e2f-917e-3bacded6d178",
+      "name": "¿Mensaje nuevo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "incr",
+        "key": "={{ 'v4:lock:' + $('Normalizar mensaje').first().json.to }}",
+        "expire": true,
+        "ttl": 120
+      },
+      "id": "91620607-69e3-4e06-a222-b8961b823b59",
+      "name": "Lock conversación",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Number(Object.values($json)[0]) }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              },
+              "rightValue": 1
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "685a996c-0b14-4fc3-a188-471c5e711b69",
+      "name": "¿Conversación libre?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1104,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
+        "messageId": "={{ $('Normalizar mensaje').first().json.message_id }}",
+        "typingIndicator": true
+      },
+      "id": "f4676c45-79e1-48a7-9288-a069cd5932c7",
+      "name": "Marcar leído (escribiendo…)",
+      "type": "@kapso/n8n-nodes-kapso.kapso",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        -96
+      ],
+      "credentials": {
+        "kapsoApi": {
+          "name": "Kapso account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Texto para el agente: el lote original o los mensajes que llegaron mientras respondía.\nconst p = $input.first().json.pendientes;\nconst texto = Array.isArray(p) && p.length ? p.join('\\n') : $('Normalizar mensaje').first().json.text;\nreturn [{ json: { texto } }];"
+      },
+      "id": "80ebd1fa-9a50-4656-9c6e-3a9521a7a0f7",
+      "name": "Preparar turno",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2064,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.texto }}",
+        "needsFallback": false,
+        "options": {
+          "systemMessage": "=Eres Sofi, la asistente por WhatsApp de Exclusive Barber Shop (Milagro, Ecuador). Atiendes con calidez, como una persona real, y ayudas a reservar, consultar, mover y cancelar citas.\n\nFECHA Y HORA ACTUAL: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }} (America/Guayaquil)\nCALENDARIO (día = fecha para herramientas): {{ [0,1,2,3,4,5,6,7].map(i => $now.setZone('America/Guayaquil').plus({ days: i })).map(d => d.setLocale('es').toFormat('cccc d LLL') + ' = ' + d.toFormat('yyyy-MM-dd')).join(' | ') }}\nCLIENTE: nombre en WhatsApp \"{{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\". Ya tenemos su teléfono: NO lo pidas.\n\nNEGOCIO\n- Servicios: Corte clásico $5 | Corte degradado $6 | Cejas $2. Cada cita dura 1 hora.\n- Atención: turnos de 1 hora de 07:00 a 19:00. Mañana: 07:00 a 12:00. Tarde: 12:00 a 19:00.\n- Dirección: Milagro, Ecuador.\n\nFLUJO DE CONVERSACIÓN\n1. Saludo o charla (\"hola\", \"qué tal\", \"buenas\"): responde natural y amable, preséntate como Sofi y pregunta en qué le ayudas. No uses herramientas para esto.\n2. Si pide servicios, precios o una cita: muestra los servicios con precio y pregunta para qué día (si no lo dijo).\n3. Con el día: llama ver_turnos_libres y muestra los turnos así:\n   🌅 Mañana: 07:00 - 08:00, 08:00 - 09:00 ...\n   🌇 Tarde: 13:00 - 14:00 ...\n   Copia SOLO los turnos que devolvió la herramienta. Si una lista viene vacía di que en ese horario ya no hay. Si no hay nada, ofrece otro día.\n4. Cuando elija turno: pide el nombre de quien asistirá (si no lo tienes) y el servicio. Luego muestra un resumen (servicio, día, hora, precio) y pregunta \"¿Confirmo tu cita?\".\n5. Solo si responde que sí (sí, dale, confirmo, ok, perfecto): llama reservar_cita. Solo di que quedó agendada si respondió reservada=true. Si ok=false, explica sin tecnicismos y ofrece otros turnos.\n6. Ver/mover/cancelar: llama buscar_mis_citas. Para mover: ver_turnos_libres del nuevo día, confirma con el cliente y luego mover_cita. Para cancelar: confirma y luego cancelar_cita.\n\nREGLAS\n- Nunca inventes horas, precios ni servicios. Nunca digas que una hora está libre sin haber llamado ver_turnos_libres en este turno.\n- \"A las 4\" = 16:00. Fechas para herramientas YYYY-MM-DD (usa el CALENDARIO), horas HH:00 en 24h.\n- Si una herramienta falla, di que no pudiste revisar la agenda ahora y que te escriba en unos minutos.\n- Nunca muestres IDs, JSON, nombres de herramientas ni errores técnicos. No hables de citas de otros clientes.\n- Audio, imagen o mensaje vacío: pide amablemente que lo escriba.\n\nESTILO: tutea, mensajes cortos de WhatsApp (2 a 6 líneas), termina con una pregunta que guíe el siguiente paso. Máximo un emoji por mensaje (además de 🌅/🌇 en la lista de turnos). Sin asteriscos dobles.",
+          "maxIterations": 8,
+          "enableStreaming": false
+        }
+      },
+      "id": "d2d7529f-c68a-4d7d-bbd8-1fd27ee9af28",
+      "name": "Agente version4",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2288,
+        -208
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {
+          "maxOutputTokens": 1024,
+          "temperature": 0.3
+        }
+      },
+      "id": "0545b66c-9bc6-4f17-aca8-539073cf44c9",
+      "name": "Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        2256,
+        128
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ 'v4:chat:' + $('Normalizar mensaje').first().json.to }}",
+        "sessionTTL": 86400,
+        "contextWindowLength": 12
+      },
+      "id": "f199af11-c3d7-4651-ba2c-4b7fe9525992",
+      "name": "Memoria Redis",
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.6,
+      "position": [
+        2400,
+        128
+      ],
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Devuelve los turnos LIBRES de 1 hora (07:00-19:00) de un día, separados en \"manana\" y \"tarde\", leyendo Google Calendar. Úsala SIEMPRE antes de mencionar horas. Si ok=false lee \"mensaje\".",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $workflow.id }}"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false,
+          "schema": [
+            {
+              "id": "accion",
+              "displayName": "accion",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "hora",
+              "displayName": "hora",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "servicio",
+              "displayName": "servicio",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": false,
+              "display": true,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "accion": "turnos",
+            "fecha": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fecha', 'Día en formato YYYY-MM-DD (usa el CALENDARIO del prompt)') }}",
+            "hora": "",
+            "servicio": "",
+            "nombre": "",
+            "telefono": "={{ $('Normalizar mensaje').first().json.to }}"
+          }
+        }
+      },
+      "id": "4cd7f956-8232-4f74-83e7-7790872db16a",
+      "name": "ver_turnos_libres",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2544,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Crea la cita en Google Calendar. Úsala SOLO después de que el cliente confirmó con un sí. Vuelve a verificar que la hora siga libre. Devuelve reservada=true si se creó; si ok=false NO se creó.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $workflow.id }}"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false,
+          "schema": [
+            {
+              "id": "accion",
+              "displayName": "accion",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "hora",
+              "displayName": "hora",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "servicio",
+              "displayName": "servicio",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": false,
+              "display": true,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "accion": "reservar",
+            "fecha": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fecha', 'Día en formato YYYY-MM-DD') }}",
+            "hora": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('hora', 'Hora de inicio HH:00 en 24h, una de los turnos libres (ej. 15:00)') }}",
+            "servicio": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('servicio', 'Nombre exacto del servicio de la lista') }}",
+            "nombre": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('nombre', 'Nombre de quien asistirá a la cita') }}",
+            "telefono": "={{ $('Normalizar mensaje').first().json.to }}"
+          }
+        }
+      },
+      "id": "734acaaf-68aa-4021-80a9-7626d2833f34",
+      "name": "reservar_cita",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2688,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Lista las próximas citas de ESTE cliente (de hoy a 60 días). Devuelve id (event_id), summary y start. Úsala antes de mover o cancelar.",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "limit": 10,
+        "timeMin": "={{ $now.toISO() }}",
+        "timeMax": "={{ $now.plus({ days: 60 }).toISO() }}",
+        "options": {
+          "fields": "items(id,summary,start,end)",
+          "orderBy": "startTime",
+          "query": "={{ $('Normalizar mensaje').first().json.to }}"
+        }
+      },
+      "id": "2fd218e1-f1e7-4e86-9436-772d37b50293",
+      "name": "buscar_mis_citas",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2832,
+        128
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Mueve una cita del cliente a otro día/hora (1 hora). Usa el event_id de buscar_mis_citas y una hora que salió libre en ver_turnos_libres. Solo después de que el cliente confirme.",
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('event_id', 'id del evento devuelto por buscar_mis_citas') }}",
+        "updateFields": {
+          "end": "={{ DateTime.fromISO($fromAI('nueva_fecha', 'Nuevo día YYYY-MM-DD', 'string') + 'T' + $fromAI('nueva_hora', 'Nueva hora HH:00 24h', 'string'), { zone: 'America/Guayaquil' }).plus({ hours: 1 }).toISO() }}",
+          "start": "={{ DateTime.fromISO($fromAI('nueva_fecha', 'Nuevo día YYYY-MM-DD', 'string') + 'T' + $fromAI('nueva_hora', 'Nueva hora HH:00 24h', 'string'), { zone: 'America/Guayaquil' }).toISO() }}"
+        }
+      },
+      "id": "1bbe7d6c-4fd0-4de0-b03d-e592aa804803",
+      "name": "mover_cita",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2976,
+        128
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Cancela (elimina) una cita del cliente. Usa el event_id de buscar_mis_citas. Solo después de que el cliente confirme.",
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('event_id', 'id del evento devuelto por buscar_mis_citas') }}",
+        "options": {}
+      },
+      "id": "762ff0f8-67c1-4c47-89f5-e7417a7cb72d",
+      "name": "cancelar_cita",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        3120,
+        128
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ 'v4:pending:' + $('Normalizar mensaje').first().json.to }}",
+        "messageData": "={{ $('Normalizar mensaje').first().json.text }}",
+        "tail": true
+      },
+      "id": "cfd97de4-2d25-42c0-9b76-6390291c82f9",
+      "name": "Encolar pendiente",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        208
+      ],
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
+        "to": "={{ $('Normalizar mensaje').first().json.to }}",
+        "message": "={{ $json.output }}"
+      },
+      "id": "5df7987e-766b-4779-83b6-57371c2d9d11",
+      "name": "Responder por WhatsApp",
+      "type": "@kapso/n8n-nodes-kapso.kapso",
+      "typeVersion": 1,
+      "position": [
+        3904,
+        -208
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "kapsoApi": {
+          "name": "Kapso account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "pendientes",
+        "key": "={{ 'v4:pending:' + $('Normalizar mensaje').first().json.to }}",
+        "keyType": "list",
+        "options": {}
+      },
+      "id": "c060c5a4-9cfd-4db9-aa8c-395a0874685c",
+      "name": "Leer pendientes",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        4112,
+        -208
+      ],
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'v4:pending:' + $('Normalizar mensaje').first().json.to }}"
+      },
+      "id": "05de85fa-1288-4b33-9c22-d1254811517b",
+      "name": "Borrar pendientes",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        4336,
+        -208
+      ],
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Array.isArray($('Leer pendientes').first().json.pendientes) && $('Leer pendientes').first().json.pendientes.length > 0 }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2ce62f9f-5e08-4528-b555-613088597f7b",
+      "name": "¿Hay pendientes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4560,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'v4:lock:' + $('Normalizar mensaje').first().json.to }}"
+      },
+      "id": "2f55ac85-6f15-43f8-8740-63597e1c1b5e",
+      "name": "Liberar lock",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        4784,
+        -96
+      ],
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
+        "to": "={{ $('Normalizar mensaje').first().json.to }}",
+        "message": "¡Hola! En este momento tengo muchos mensajes y no pude responderte bien. Escríbeme de nuevo en unos minutos, por favor 🙏"
+      },
+      "id": "6b0db3b5-2d44-4f02-965c-86fb5720e122",
+      "name": "Avisar error al cliente",
+      "type": "@kapso/n8n-nodes-kapso.kapso",
+      "typeVersion": 1,
+      "position": [
+        3904,
+        32
+      ],
+      "credentials": {
+        "kapsoApi": {
+          "name": "Kapso account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "accion"
+            },
+            {
+              "name": "fecha"
+            },
+            {
+              "name": "hora"
+            },
+            {
+              "name": "servicio"
+            },
+            {
+              "name": "nombre"
+            },
+            {
+              "name": "telefono"
+            }
+          ]
+        }
+      },
+      "id": "99766751-37b5-4cea-a328-f2c411d83ac2",
+      "name": "Agenda (entrada interna)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// CONFIGURACIÓN DEL NEGOCIO (editar aquí)\nconst TZ = 'America/Guayaquil';\nconst APERTURA = 7;            // primer turno 07:00\nconst CIERRE = 19;             // último turno termina 19:00\nconst DIAS_CERRADOS = [];      // ej. ['lunes'] para no atender lunes\nconst MAX_DIAS = 60;\nconst SERVICIOS = [\n  { nombre: 'Corte clásico', precio: 5 },\n  { nombre: 'Corte degradado', precio: 6 },\n  { nombre: 'Cejas', precio: 2 }\n];\n\nconst inp = $('Agenda (entrada interna)').first().json;\nconst fail = (error, mensaje) => [{ json: { valido: false, ok: false, error, mensaje } }];\nconst accion = String(inp.accion || 'turnos').trim().toLowerCase();\nif (!['turnos', 'reservar'].includes(accion)) return fail('ACCION_INVALIDA', 'accion debe ser turnos o reservar');\n\nconst fecha = String(inp.fecha || '').trim();\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(fecha)) return fail('FECHA_INVALIDA', 'La fecha debe tener formato YYYY-MM-DD');\nconst dia = DateTime.fromISO(fecha, { zone: TZ });\nif (!dia.isValid) return fail('FECHA_INVALIDA', 'Esa fecha no existe');\nconst hoy = DateTime.now().setZone(TZ).startOf('day');\nif (dia < hoy) return fail('FECHA_PASADA', 'Esa fecha ya pasó');\nif (dia > hoy.plus({ days: MAX_DIAS })) return fail('FECHA_MUY_LEJANA', 'Solo agendamos hasta ' + MAX_DIAS + ' días adelante');\nconst nombreDia = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo'][dia.weekday - 1];\nif (DIAS_CERRADOS.includes(nombreDia)) return fail('DIA_CERRADO', 'El ' + nombreDia + ' no atendemos');\n\nlet servicio = null, hora = '', nombre = '';\nif (accion === 'reservar') {\n  const q = String(inp.servicio || '').trim().toLowerCase();\n  servicio = SERVICIOS.find(s => s.nombre.toLowerCase() === q) || SERVICIOS.find(s => q && (s.nombre.toLowerCase().includes(q) || q.includes(s.nombre.toLowerCase())));\n  if (!servicio) return fail('SERVICIO_INVALIDO', 'Servicios: ' + SERVICIOS.map(s => s.nombre).join(', '));\n  hora = String(inp.hora || '').trim().slice(0, 5);\n  if (/^\\d:\\d{2}$/.test(hora)) hora = '0' + hora;\n  if (!/^([01]\\d|2[0-3]):00$/.test(hora)) return fail('HORA_INVALIDA', 'La hora debe ser en punto, formato HH:00 (24h)');\n  nombre = String(inp.nombre || '').trim().slice(0, 80);\n  if (nombre.length < 2) return fail('FALTA_NOMBRE', 'Falta el nombre de quien asistirá');\n}\n\nreturn [{ json: {\n  valido: true, accion, fecha, dia: nombreDia, apertura: APERTURA, cierre: CIERRE,\n  desde: dia.set({ hour: APERTURA }).toISO(), hasta: dia.set({ hour: CIERRE }).toISO(),\n  hora, nombre, servicio: servicio?.nombre || '', precio: servicio?.precio ?? null,\n  telefono: String(inp.telefono || '').replace(/\\D/g, '')\n} }];"
+      },
+      "id": "c991f129-c66c-4b93-9232-3b9437da64ec",
+      "name": "Validar pedido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valido }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "470e04b3-c266-4458-acf7-e652d34ae581",
+      "name": "¿Pedido válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        912,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json.desde }}",
+        "timeMax": "={{ $json.hasta }}",
+        "options": {
+          "orderBy": "startTime"
+        }
+      },
+      "id": "3dbbe9ed-aca1-4b19-8d5a-57fa1eb294e8",
+      "name": "Leer Google Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1136,
+        800
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turnos de 1 hora (07-08, 08-09 ... 18-19) que no chocan con eventos de Google Calendar.\nconst TZ = 'America/Guayaquil';\nconst req = $('Validar pedido').first().json;\nconst dia = DateTime.fromISO(req.fecha, { zone: TZ });\nconst minimo = DateTime.now().setZone(TZ).plus({ minutes: 15 });\n\nconst ocupados = [];\nfor (const it of $input.all()) {\n  const ev = it.json || {};\n  if (!ev.start || ev.status === 'cancelled' || ev.transparency === 'transparent') continue;\n  const ini = ev.start.dateTime ? DateTime.fromISO(ev.start.dateTime) : DateTime.fromISO(ev.start.date, { zone: TZ });\n  const fin = ev.end?.dateTime ? DateTime.fromISO(ev.end.dateTime) : DateTime.fromISO(ev.end?.date || ev.start.date, { zone: TZ }).plus(ev.end?.date ? {} : { days: 1 });\n  if (ini.isValid && fin.isValid) ocupados.push([ini, fin]);\n}\n\nconst manana = [], tarde = [], libres = [];\nfor (let h = req.apertura; h < req.cierre; h++) {\n  const t = dia.set({ hour: h, minute: 0, second: 0, millisecond: 0 });\n  const f = t.plus({ hours: 1 });\n  if (t < minimo) continue;\n  if (ocupados.some(([a, b]) => t < b && f > a)) continue;\n  libres.push(t.toFormat('HH:mm'));\n  (h < 12 ? manana : tarde).push(t.toFormat('HH:mm') + ' - ' + f.toFormat('HH:mm'));\n}\n\nconst base = { fecha: req.fecha, dia: req.dia, manana, tarde };\nif (req.accion === 'turnos') {\n  return [{ json: { ok: true, crear: false, ...base, total: libres.length,\n    mensaje: libres.length ? 'Turnos libres de 1 hora' : 'No hay turnos libres ese día' } }];\n}\nif (!libres.includes(req.hora)) {\n  return [{ json: { ok: false, crear: false, error: 'HORA_NO_DISPONIBLE', ...base,\n    mensaje: 'Esa hora ya no está libre. Ofrece otra de manana/tarde.' } }];\n}\nconst inicio = dia.set({ hour: Number(req.hora.slice(0, 2)), minute: 0 });\nreturn [{ json: { ok: true, crear: true, fecha: req.fecha, dia: req.dia, hora: req.hora,\n  inicio: inicio.toISO(), fin: inicio.plus({ hours: 1 }).toISO(),\n  titulo: '💈 ' + req.servicio + ' - ' + req.nombre,\n  descripcion: 'Cliente: ' + req.nombre + '\\nTel: ' + req.telefono + '\\nServicio: ' + req.servicio + ' ($' + req.precio + ')\\nAgendado por WhatsApp (version4)',\n  servicio: req.servicio, precio: req.precio, nombre: req.nombre } }];"
+      },
+      "id": "fdee3e3f-7912-42e1-a857-947254876deb",
+      "name": "Calcular turnos (mañana / tarde)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.crear }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2303153a-4119-4510-b99a-d19bf6b7aae4",
+      "name": "¿Crear cita?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1584,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "start": "={{ $json.inicio }}",
+        "end": "={{ $json.fin }}",
+        "additionalFields": {
+          "description": "={{ $json.descripcion }}",
+          "location": "Exclusive Barber Shop, Milagro",
+          "summary": "={{ $json.titulo }}"
+        }
+      },
+      "id": "8599c916-f62a-4a77-b037-d2ad60a807ea",
+      "name": "Crear evento",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1808,
+        720
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ok",
+              "name": "ok",
+              "value": "={{ !!$json.id }}",
+              "type": "boolean"
+            },
+            {
+              "id": "reservada",
+              "name": "reservada",
+              "value": "={{ !!$json.id }}",
+              "type": "boolean"
+            },
+            {
+              "id": "event_id",
+              "name": "event_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "fecha",
+              "name": "fecha",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.fecha }}",
+              "type": "string"
+            },
+            {
+              "id": "dia",
+              "name": "dia",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.dia }}",
+              "type": "string"
+            },
+            {
+              "id": "hora",
+              "name": "hora",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.hora }}",
+              "type": "string"
+            },
+            {
+              "id": "servicio",
+              "name": "servicio",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.servicio }}",
+              "type": "string"
+            },
+            {
+              "id": "precio",
+              "name": "precio",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.precio }}",
+              "type": "number"
+            },
+            {
+              "id": "nombre",
+              "name": "nombre",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.nombre }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "18c962e8-6783-4630-ab1e-a8f617ddd4b8",
+      "name": "Cita reservada",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2032,
+        720
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fd752fef-e012-4ec9-b89b-0457dea4a042",
+      "name": "Respuesta turnos",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1808,
+        896
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "87fc1dea-775f-4f86-abac-bc65f5845163",
+      "name": "Respuesta pedido inválido",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        992
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## version4 · Bot WhatsApp en UN solo flujo\n**Arriba (Webhook Kapso):** normaliza el lote → dedup Redis → lock por conversación → agente Sofi (Gemini, memoria Redis) → responde por Kapso → procesa pendientes → libera lock.\n\n**Abajo (Agenda interna):** el propio flujo se llama a sí mismo como herramienta. `turnos` = turnos libres de 1h 07:00-19:00 (mañana / tarde) desde Google Calendar. `reservar` = re-chequea y crea el evento (sin doble reserva).\n\nHorario, días cerrados y servicios: nodo **Validar pedido**.",
+        "height": 260,
+        "width": 620,
+        "color": 5
+      },
+      "id": "0f6f6138-d99a-4f45-8fbd-6103e88ac4c1",
+      "name": "Sticky Note 5f2e1c3e",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Kapso": {
+      "main": [
+        [
+          {
+            "node": "Normalizar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar mensaje": {
+      "main": [
+        [
+          {
+            "node": "Dedup mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup mensaje": {
+      "main": [
+        [
+          {
+            "node": "¿Mensaje nuevo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Mensaje nuevo?": {
+      "main": [
+        [
+          {
+            "node": "Lock conversación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lock conversación": {
+      "main": [
+        [
+          {
+            "node": "¿Conversación libre?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Conversación libre?": {
+      "main": [
+        [
+          {
+            "node": "Marcar leído (escribiendo…)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Encolar pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar leído (escribiendo…)": {
+      "main": [
+        [
+          {
+            "node": "Preparar turno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar turno": {
+      "main": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente version4": {
+      "main": [
+        [
+          {
+            "node": "Responder por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar error al cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Redis": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ver_turnos_libres": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reservar_cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_mis_citas": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mover_cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar_cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder por WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Leer pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer pendientes": {
+      "main": [
+        [
+          {
+            "node": "Borrar pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar pendientes": {
+      "main": [
+        [
+          {
+            "node": "¿Hay pendientes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay pendientes?": {
+      "main": [
+        [
+          {
+            "node": "Preparar turno",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Liberar lock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar error al cliente": {
+      "main": [
+        [
+          {
+            "node": "Liberar lock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agenda (entrada interna)": {
+      "main": [
+        [
+          {
+            "node": "Validar pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar pedido": {
+      "main": [
+        [
+          {
+            "node": "¿Pedido válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Pedido válido?": {
+      "main": [
+        [
+          {
+            "node": "Leer Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta pedido inválido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Calcular turnos (mañana / tarde)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular turnos (mañana / tarde)": {
+      "main": [
+        [
+          {
+            "node": "¿Crear cita?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Crear cita?": {
+      "main": [
+        [
+          {
+            "node": "Crear evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta turnos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear evento": {
+      "main": [
+        [
+          {
+            "node": "Cita reservada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "description": "Bot WhatsApp v4 en UN solo flujo: webhook Kapso → agente Sofi (Gemini, memoria Redis) + agenda Google Calendar interna (turnos 1h 07-19 mañana/tarde, reservar, mover, cancelar)."
+}

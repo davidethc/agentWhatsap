@@ -1,0 +1,95 @@
+{
+  "name": "ZZ · Redis local self-test (inocuo)",
+  "nodes": [
+    {
+      "id": "b1b2c3d4-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "6e1d4c2f-8b62-4d3f-ae9f-1f2a3b4c5d6e",
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "redis-selftest-4b8e2d",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "b1b2c3d4-0000-4000-8000-000000000002",
+      "name": "Guardar",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "operation": "set",
+        "key": "selftest:queue",
+        "value": "ok-local",
+        "keyType": "string",
+        "expire": true,
+        "ttl": 300
+      },
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      }
+    },
+    {
+      "id": "b1b2c3d4-0000-4000-8000-000000000003",
+      "name": "Leer",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "operation": "get",
+        "propertyName": "valor",
+        "key": "selftest:queue",
+        "keyType": "string",
+        "options": {}
+      },
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Guardar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar": {
+      "main": [
+        [
+          {
+            "node": "Leer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "description": null
+}

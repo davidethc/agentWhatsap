@@ -16,7 +16,7 @@ TRUE = {"type": "boolean", "operation": "true", "singleValue": True}
 
 normalizar = r"""// Kapso agrupa mensajes (búfer): body.data = [ { message, conversation, phone_number_id }, ... ]
 // Valida origen, ignora salientes y junta el lote en una sola entrada para el agente.
-const PERMITIDO = '1347989838397545'; // phone_number_id del negocio (bot_settings.allowed_phone_number_id)
+const PERMITIDO = 'TU_PHONE_NUMBER_ID'; // phone_number_id del negocio (bot_settings.allowed_phone_number_id)
 const body = $json.body ?? $json;
 const items = Array.isArray(body.data) ? body.data : [body];
 const textos = [], ids = [];

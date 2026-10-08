@@ -46,6 +46,7 @@ Después: abre n8n, crea las credenciales (Kapso, Gemini, Google Calendar, Redis
 | [docs/seguridad.md](docs/seguridad.md) | Todos | Secretos y datos de pacientes |
 | [docs/eli-dental.md](docs/eli-dental.md) | Producto | Conversación para dentistas, reglas, urgencias, recordatorios, costos y pendientes |
 | [docs/adr/](docs/adr/) | Quien decide | Por qué el sistema es como es |
+| [docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md) | Ventas | Guía de la reunión con EliDental: gancho, demo, preguntas, objeciones y propuesta |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Quien contribuye | Normas, ramas, cómo cambiar un workflow, definición de terminado |
 | [CHANGELOG.md](CHANGELOG.md) | Todos | Historial de versiones |
 | [workflows/README.md](workflows/README.md) | Quien desarrolla | Catálogo de workflows |

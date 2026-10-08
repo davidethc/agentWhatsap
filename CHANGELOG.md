@@ -5,6 +5,9 @@ Ecuador.
 
 ## [Sin publicar]
 
+### Agregado
+- Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
+
 ### Cambiado
 - La asistente se llama **Eli** y atiende a **EliDental** (Loja, Dra. Viviana Sucunuta) con los
   datos públicos de su Facebook: dirección, WhatsApp 099 970 1778, correo y servicios (valoración,

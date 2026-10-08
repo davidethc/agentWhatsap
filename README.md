@@ -6,8 +6,8 @@ cancela citas en Google Calendar. Está construida con **n8n** (en modo queue, d
 
 | | |
 |---|---|
-| **En producción** | `version4`, configurada para una barbería ([workflow](workflows/sofi-version4.json)) |
-| **Siguiente paso** | Adaptarla a consultorios dentales, con recordatorios de cita ([diseño](docs/sofi-dentista.md)) |
+| **En producción** | `version4`, configurada para un consultorio dental con **datos provisionales** ([workflow](workflows/sofi-version4.json)) |
+| **Siguiente paso** | Datos reales del consultorio, reglas antes que la IA y recordatorios de cita ([diseño](docs/sofi-dentista.md)) |
 | **Stack** | n8n 2.41.5 (main + worker + runners) · PostgreSQL 18 · Redis 7 · Kapso · Gemini · Google Calendar · ngrok |
 
 ```mermaid

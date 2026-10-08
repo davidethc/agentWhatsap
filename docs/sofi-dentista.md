@@ -1,10 +1,14 @@
 # Sofi para consultorios dentales
 
-Diseño conversacional y técnico para adaptar Sofi (hoy configurada para una barbería en `version4`) a
-un consultorio dental. Se basa en la encuesta a una odontóloga y en cómo se agenda en Latinoamérica.
+Diseño conversacional y técnico de Sofi para un consultorio dental. Se basa en la encuesta a una odontóloga y en cómo se agenda en Latinoamérica.
 
-**Estado:** diseño aprobado para construir. `version4` ya resuelve la reserva con IA y Google Calendar.
-Lo nuevo es esto: reglas antes que la IA, urgencias, derivación a la doctora y **recordatorios de cita**.
+**Estado (2026-10-07):** `version4` ya está en producción con el contexto dental y **datos
+provisionales**: Consultorio Dental Sonrisa Sana, Dra. Andrea Morales, lunes a sábado de 09:00 a
+18:00, trato de usted y servicios Consulta de valoración $20, Limpieza dental $30, Control de
+ortodoncia $25 y Urgencia dental $25. Las prioridades de urgencia, pregunta clínica, foto y queja
+están hoy **en el prompt de la IA**. Falta construir: reglas fijas antes de la IA, botones, aviso real
+a la doctora y **recordatorios de cita**. Mientras tanto, el prompt prohíbe prometer recordatorios o
+avisos.
 
 ## 1. Lo que pide la dentista
 
@@ -158,7 +162,7 @@ Hola {{nombre}}, te recordamos tu cita en {{consultorio}} mañana {{dia}} a las 
 El evento de Google Calendar es la fuente de verdad. `version4` ya escribe en la descripción:
 
 ```
-Cliente: <nombre>
+Paciente: <nombre>
 Tel: <teléfono>
 Servicio: <servicio> ($<precio>)
 ```

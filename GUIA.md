@@ -210,7 +210,7 @@ Si Google dice «Google no verificó esta app»: *Configuración avanzada → Ir
    | **Normalizar mensaje** | En el código, `TU_PHONE_NUMBER_ID` → el Phone Number ID de tu número (paso 5). Solo se atienden mensajes de ese número |
    | **buscar_mis_citas, mover_cita, cancelar_cita, Leer Google Calendar, Crear evento** | Calendar: elígelo **de la lista** (no en modo ID ni con `primary`) |
    | **Validar pedido** | Horario (`APERTURA`, `CIERRE`), `DIAS_CERRADOS` y `SERVICIOS` con precios |
-   | **Agente version4** | En el *system message*: nombre del negocio, servicios, precios, dirección y estilo |
+   | **Agente version4** | En el *system message*: nombre del consultorio y de la doctora, servicios, precios, horario, dirección y estilo (hoy son datos provisionales) |
    | Nodos con credencial | Si alguno marca credencial en rojo, elige la del paso 8 |
 
 3. Pulsa **Save** y luego **Publish**.
@@ -236,11 +236,12 @@ Si Google dice «Google no verificó esta app»: *Configuración avanzada → Ir
    - `https://TU-DOMINIO.ngrok-free.dev/webhook/redis-selftest-4b8e2d` → `{"valor":"ok-local"}`
 
    Después desactívalos.
-2. **Desde tu propio teléfono**, escribe al número, un mensaje a la vez: `hola`, `qué servicios
-   tienen?`, `quiero una cita mañana a las 4`, `sí, confirmo`.
+2. **Desde tu propio teléfono**, escribe al número, un mensaje a la vez: `hola`, `cuánto cuesta una
+   limpieza?`, `quiero una limpieza mañana a las 10`, `sí, confirmo`. Para probar la urgencia:
+   `me duele mucho una muela`.
 3. Cada respuesta tarda de 5 a 20 segundos (5 s del búfer de Kapso más la IA).
 4. En n8n, pestaña **Executions**: verde está bien; en rojo, abre la ejecución y mira el nodo que falló.
-5. En Google Calendar debe aparecer `💈 <Servicio> - <Nombre>`, con el teléfono en la descripción.
+5. En Google Calendar debe aparecer `🦷 <Servicio> - <Nombre>`, con el teléfono en la descripción.
 
 ---
 

@@ -82,8 +82,8 @@ Todo vive en un solo workflow ([`workflows/sofi-version4.json`](../workflows/sof
 El agente también tiene `buscar_mis_citas`, `mover_cita` y `cancelar_cita`, que son herramientas
 directas de Google Calendar.
 
-Los datos del negocio (horario, días cerrados, servicios y precios) se editan en el nodo **Validar
-pedido**. La personalidad y las reglas de Sofi están en el *system message* del nodo **Agente version4**.
+Los datos del consultorio (horario 09:00–18:00, domingo cerrado, servicios y precios, hoy
+provisionales) se editan en el nodo **Validar pedido**. La personalidad y las reglas de Sofi están en el *system message* del nodo **Agente version4**.
 
 ## Claves de Redis (DB 1)
 

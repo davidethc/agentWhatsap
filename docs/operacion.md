@@ -1,6 +1,6 @@
 # Operación
 
-Procedimientos para mantener Sofi funcionando. Todos los comandos se ejecutan en la carpeta del
+Procedimientos para mantener Eli funcionando. Todos los comandos se ejecutan en la carpeta del
 proyecto.
 
 ## Encender y apagar
@@ -49,7 +49,7 @@ Por CLI (importar un archivo):
 
 ```bash
 scripts/backup.sh
-docker compose cp workflows/sofi-version4.json n8n:/tmp/wf.json
+docker compose cp workflows/eli-version4.json n8n:/tmp/wf.json
 docker compose exec n8n n8n import:workflow --input=/tmp/wf.json
 docker compose exec n8n n8n publish:workflow --id=<ID>
 docker compose restart n8n           # obligatorio: el CLI no avisa al proceso que ya está corriendo

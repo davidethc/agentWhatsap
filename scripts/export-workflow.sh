@@ -30,7 +30,10 @@ jq '(if type == "array" then .[0] else . end)
   | sed -E "s/(PERMITIDO = ')[0-9]+(')/\1TU_PHONE_NUMBER_ID\2/" > "$dest"
 
 # Última revisión: no debe quedar ningún correo ni número largo.
-leaks="$(grep -oE "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}|['\" =:][0-9]{12,}['\" ,]" "$dest" | grep -v '^TU_CALENDARIO@gmail.com$' || true)"
+allow="workflows/.datos-publicos"   # contacto público del negocio, permitido
+leaks="$(grep -oE "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}|['\" =:][0-9]{12,}['\" ,]" "$dest" \
+  | grep -v '^TU_CALENDARIO@gmail.com$' \
+  | { if [ -f "$allow" ]; then grep -vxF -f <(grep -v '^#' "$allow"); else cat; fi; } || true)"
 if [ -n "$leaks" ]; then
   echo "AVISO: revisa estos posibles datos privados en $dest antes de hacer commit:" >&2
   echo "$leaks" | sort -u >&2

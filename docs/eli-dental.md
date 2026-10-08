@@ -1,16 +1,34 @@
-# Sofi para consultorios dentales
+# Eli: asistente de EliDental
 
-Diseño conversacional y técnico de Sofi para un consultorio dental. Se basa en la encuesta a una odontóloga y en cómo se agenda en Latinoamérica.
+Diseño conversacional y técnico de Eli, la asistente por WhatsApp de **EliDental** (Loja, Ecuador).
+Se basa en la encuesta a la doctora, en sus páginas públicas y en cómo se agenda en Latinoamérica.
 
-**Estado (2026-10-07):** `version4` ya está en producción con el contexto dental y **datos
-provisionales**: Consultorio Dental Sonrisa Sana, Dra. Andrea Morales, lunes a sábado de 09:00 a
-18:00, trato de usted y servicios Consulta de valoración $20, Limpieza dental $30, Control de
-ortodoncia $25 y Urgencia dental $25. Las prioridades de urgencia, pregunta clínica, foto y queja
-están hoy **en el prompt de la IA**. Falta construir: reglas fijas antes de la IA, botones, aviso real
-a la doctora y **recordatorios de cita**. Mientras tanto, el prompt prohíbe prometer recordatorios o
-avisos.
+**Estado (2026-10-07):** `version4` está en producción como Eli, con los datos públicos de EliDental.
+Las prioridades de urgencia, pregunta clínica, foto y queja están hoy **en el prompt de la IA**. Falta
+construir: reglas fijas antes de la IA, botones, aviso a la doctora y **recordatorios de cita**.
+Mientras tanto, el prompt prohíbe prometer recordatorios o avisos, y deriva a la doctora a través del
+WhatsApp del consultorio.
 
-## 1. Lo que pide la dentista
+## 0. EliDental
+
+Datos tomados de su [página de Facebook](https://www.facebook.com/EliDentalec) el 2026-10-07. El
+[Instagram](https://www.instagram.com/elidentalec/) es un perfil restringido y no se pudo leer sin
+iniciar sesión.
+
+| Dato | Valor | Fuente |
+|---|---|---|
+| Nombre | EliDental, «Odontología integral para toda la familia» | Facebook |
+| Odontóloga | Dra. Viviana Sucunuta | Indicado por el equipo (confirmar la ortografía) |
+| Dirección | Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja | Facebook |
+| WhatsApp y celular | 099 970 1778 | Facebook |
+| Correo | elidentalec@hotmail.com | Facebook |
+| Fundación | 30 de abril de 2021 | Facebook |
+| Servicios publicados | Ortodoncia, resinas (cambio de amalgama por resina), limpieza dental cada 6 meses | Publicaciones de Facebook |
+| Servicios que agenda Eli | Consulta de valoración, Limpieza dental, Resina (calza), Control de ortodoncia, Urgencia dental | Definido para el bot |
+| Precios | No publicados (rango «$$»). Eli no da cifras: el valor lo confirma la doctora en la consulta | Facebook |
+| Horario | **Provisional:** lunes a sábado, 09:00 a 18:00. El horario de Facebook solo se ve con sesión iniciada | Por confirmar |
+
+## 1. Lo que pide la doctora
 
 Encuesta del 17/9/2026 (una respuesta):
 
@@ -40,7 +58,7 @@ Consecuencias de diseño:
   Una revisión sistemática citada por
   [VioletWave](https://www.violetwaveai.com/blog/chatbot-whatsapp-turnos-odontologia) (McLean et al.,
   2016) encontró que los recordatorios mejoran la asistencia en torno a un 34 %.
-- Buenas prácticas de recepción que Sofi debe copiar: preguntar primero si es urgencia; en la primera
+- Buenas prácticas de recepción que Eli debe copiar: preguntar primero si es urgencia; en la primera
   visita, pedir llegar 10 minutos antes para la historia clínica
   ([Leadsales](https://leadsales.io/blog/whatsapp-para-consultorios-y-clinicas/)); confirmar con día,
   hora, profesional y dirección ([Medesk](https://www.medesk.net/es/blog/plantillas-de-comunicacion-para-clinicas/));
@@ -53,11 +71,11 @@ Consecuencias de diseño:
 
 Sí, de tres formas:
 
-1. **Aparece una segunda entrada**, programada por horario: Sofi escribe primero, sin que el paciente
+1. **Aparece una segunda entrada**, programada por horario: Eli escribe primero, sin que el paciente
    haya escrito.
 2. **Llegan respuestas de botón** («Confirmo», «Necesito cambiar»). *Normalizar mensaje* hoy solo lee
    texto, y debe leer también el código del botón.
-3. **Sofi necesita contexto:** si el paciente responde «sí» a un recordatorio, ese «sí» confirma la cita
+3. **Eli necesita contexto:** si el paciente responde «sí» a un recordatorio, ese «sí» confirma la cita
    del recordatorio, no una reserva nueva.
 
 ```mermaid
@@ -110,7 +128,7 @@ flowchart TB
 ## 5. Reglas fijas
 
 **Urgencia.** Disparadores: dolor fuerte, «me duele mucho», hinchado, sangra, se rompió, se cayó
-(diente o corona), golpe, fiebre, pus. Sofi responde:
+(diente o corona), golpe, fiebre, pus. Eli responde:
 
 > Lamento que estés con molestias. Ya le aviso a la doctora. El primer turno de urgencia es [día y
 > hora], ¿te lo reservo? Si tienes la cara muy hinchada, fiebre alta o te cuesta tragar o respirar, ve a
@@ -193,7 +211,7 @@ recordatorio y aparecen como «sin teléfono» en el resumen.
 | Al confirmar una cita nueva | «Te enviaremos un recordatorio por WhatsApp el día anterior» (consentimiento) |
 | Día anterior, 18:00 | Plantilla a cada cita de mañana con teléfono y sin recordatorio enviado |
 | Toca **Confirmo** | `Estado: confirmada`, evento en verde, «¡Gracias! Te esperamos mañana a las [hora]» |
-| Toca **Necesito cambiar** | `Estado: cambio pedido`; Sofi ofrece turnos para otro día; al reservar el nuevo turno, borra el anterior |
+| Toca **Necesito cambiar** | `Estado: cambio pedido`; Eli ofrece turnos para otro día; al reservar el nuevo turno, borra el anterior |
 | Responde con texto | Si hay un `v4:reminder:<teléfono>`, «sí» confirma y «no puedo» abre el cambio; lo ambiguo va a la IA con ese contexto |
 | Mismo día, 07:00 | Resumen a la doctora: confirmadas, sin respuesta, cambios pedidos y citas sin teléfono |
 | Opcional, 2 h antes | Segundo aviso solo a las que siguen sin confirmar (cuesta otro mensaje) |
@@ -205,7 +223,7 @@ recordatorio y aparecen como «sin teléfono» en el resumen.
    Comprobar el formato exacto con un mensaje real en **Executions**.
 2. **Rama «¿Tocó un botón?»** antes del agente: `confirmar:<id>` actualiza el evento y responde;
    `cambiar:<id>` guarda el contexto y pasa al agente con «el paciente quiere cambiar la cita <id>».
-3. **Workflow nuevo `Sofi · Recordatorios`:** *Schedule Trigger* (18:00) → *Google Calendar: Get Many*
+3. **Workflow nuevo `Eli · Recordatorios`:** *Schedule Trigger* (18:00) → *Google Calendar: Get Many*
    (mañana) → *Code*: extraer `Tel:` y filtrar → *Redis*: ¿ya enviado? → *Kapso: Send Template* →
    *Google Calendar: Update* (descripción) → *Redis*: marcar enviado.
 4. **Resumen de la mañana:** *Schedule Trigger* (07:00) → citas de hoy → *Code*: agrupar por estado →
@@ -215,7 +233,7 @@ recordatorio y aparecen como «sin teléfono» en el resumen.
 
 ## 7. Qué pasa si…
 
-| Si el paciente… | Sofi… |
+| Si el paciente… | Eli… |
 |---|---|
 | No responde al recordatorio | Queda «sin respuesta» en el resumen de la doctora; opcional, segundo aviso 2 h antes |
 | Cancela el mismo día | Libera el turno y ofrece reagendar |
@@ -245,10 +263,11 @@ cierran.
 
 ## 9. Decisiones pendientes con la doctora
 
-- [ ] Horario de atención y días que no atiende
-- [ ] Duración de cada tipo de cita (valoración, limpieza, control, urgencia)
+- [ ] Horario de atención real y días que no atiende (hoy es provisional)
+- [ ] Ortografía del apellido de la doctora (Sucunuta)
+- [ ] Duración de cada tipo de cita (valoración, limpieza, resina, control, urgencia)
 - [ ] Cuántos turnos de urgencia reserva por día, y en qué horas
-- [ ] Precios fijos que el bot puede dar, y valor de la consulta de valoración
+- [ ] Si Eli puede dar algún precio (hoy no da ninguno), por ejemplo el de la consulta de valoración
 - [ ] Seguros que acepta
 - [ ] Si atiende niños, y desde qué edad
 - [ ] Datos de un paciente nuevo (nombre y edad; ¿cédula?)
@@ -256,7 +275,6 @@ cierran.
 - [ ] Hora del recordatorio (propuesta: 18:00 del día anterior) y si se envía el segundo aviso
 - [ ] Si se escribe al paciente que no llegó
 - [ ] Recordatorios de control cada 6 meses
-- [ ] Tuteo o «usted» (en salud suele preferirse «usted»)
 - [ ] Qué calendario usa, para que todo turno quede en el mismo lugar
 - [ ] Dónde corre el bot: un servidor pequeño en la nube, para cumplir el 24/7 dentro de $20 al mes
 

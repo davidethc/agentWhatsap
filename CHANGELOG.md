@@ -6,13 +6,19 @@ Ecuador.
 ## [Sin publicar]
 
 ### Cambiado
+- La asistente se llama **Eli** y atiende a **EliDental** (Loja, Dra. Viviana Sucunuta) con los
+  datos públicos de su Facebook: dirección, WhatsApp 099 970 1778, correo y servicios (valoración,
+  limpieza, resina, control de ortodoncia, urgencia). Sin precios; horario provisional. Deriva quejas
+  y pedidos de hablar con la doctora al WhatsApp del consultorio.
+- `workflows/sofi-version4.json` → `workflows/eli-version4.json`, `docs/sofi-dentista.md` → `docs/eli-dental.md`.
+- `scripts/export-workflow.sh` admite contacto público del negocio (`workflows/.datos-publicos`).
 - `version4` en producción con contexto de consultorio dental y datos provisionales: prompt de Sofi
   (trato de usted, urgencias, sin consejos médicos, sin prometer recordatorios), servicios y precios,
   horario 09:00–18:00 de lunes a sábado, eventos `🦷 <Servicio> - <Paciente>`.
 
 ### Diseño
 - Sofi para consultorios dentales: reglas antes que la IA, urgencias, derivación a la doctora y
-  recordatorios de cita con plantilla de Meta ([docs/sofi-dentista.md](docs/sofi-dentista.md),
+  recordatorios de cita con plantilla de Meta ([docs/eli-dental.md](docs/eli-dental.md),
   [ADR 0005](docs/adr/0005-reglas-antes-que-ia.md)).
 
 ## 2026-10-07

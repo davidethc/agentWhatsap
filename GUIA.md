@@ -1,6 +1,6 @@
-# Guía paso a paso: instalar Sofi desde cero
+# Guía paso a paso: instalar Eli desde cero
 
-Al terminar esta guía tendrás a Sofi respondiendo por WhatsApp, agendando en Google Calendar, con n8n
+Al terminar esta guía tendrás a Eli respondiendo por WhatsApp, agendando en Google Calendar, con n8n
 en modo queue dentro de Docker en tu computador.
 
 ```
@@ -178,7 +178,7 @@ internet).
 ## 7. Gemini: la IA
 
 1. https://aistudio.google.com/apikey → **Create API key** y cópiala.
-2. El modelo debe admitir herramientas (*tools*), porque el agente consulta el calendario. Sofi usa
+2. El modelo debe admitir herramientas (*tools*), porque el agente consulta el calendario. Eli usa
    `models/gemini-3.5-flash`. Si Google lo retira, elige otro modelo *Flash* de la lista del nodo.
 
 ---
@@ -202,7 +202,7 @@ Si Google dice «Google no verificó esta app»: *Configuración avanzada → Ir
 ## 9. Importar y configurar el workflow
 
 1. n8n → **Create workflow** → menú **⋯** → **Import from File** →
-   [`workflows/sofi-version4.json`](workflows/sofi-version4.json).
+   [`workflows/eli-version4.json`](workflows/eli-version4.json).
 2. Configura estos nodos:
 
    | Nodo | Qué cambiar |

@@ -1,13 +1,13 @@
-# Sofi: asistente de citas por WhatsApp
+# Eli: asistente de citas por WhatsApp para EliDental
 
-Sofi atiende por WhatsApp, entiende lo que pide el cliente, consulta la agenda y reserva, mueve o
+Eli atiende por WhatsApp, entiende lo que pide el cliente, consulta la agenda y reserva, mueve o
 cancela citas en Google Calendar. Está construida con **n8n** (en modo queue, dentro de Docker),
 **Kapso** como puente con WhatsApp y **Gemini** como modelo de IA.
 
 | | |
 |---|---|
-| **En producción** | `version4`, configurada para un consultorio dental con **datos provisionales** ([workflow](workflows/sofi-version4.json)) |
-| **Siguiente paso** | Datos reales del consultorio, reglas antes que la IA y recordatorios de cita ([diseño](docs/sofi-dentista.md)) |
+| **En producción** | `version4` como **Eli**, asistente de [EliDental](https://www.facebook.com/EliDentalec) (Loja), con sus datos públicos; horario provisional ([workflow](workflows/eli-version4.json)) |
+| **Siguiente paso** | Horario real, reglas antes que la IA y recordatorios de cita ([diseño](docs/eli-dental.md)) |
 | **Stack** | n8n 2.41.5 (main + worker + runners) · PostgreSQL 18 · Redis 7 · Kapso · Gemini · Google Calendar · ngrok |
 
 ```mermaid
@@ -34,7 +34,7 @@ scripts/check.sh             # todo debe salir OK
 ```
 
 Después: abre n8n, crea las credenciales (Kapso, Gemini, Google Calendar, Redis local) e importa
-`workflows/sofi-version4.json` ([GUIA, pasos 8 y 9](GUIA.md#8-credenciales-en-n8n)).
+`workflows/eli-version4.json` ([GUIA, pasos 8 y 9](GUIA.md#8-credenciales-en-n8n)).
 
 ## Documentación
 
@@ -44,7 +44,7 @@ Después: abre n8n, crea las credenciales (Kapso, Gemini, Google Calendar, Redis
 | [docs/arquitectura.md](docs/arquitectura.md) | Quien desarrolla | Componentes, recorrido de un mensaje, claves de Redis, decisiones y límites |
 | [docs/operacion.md](docs/operacion.md) | Quien mantiene | Encender, revisar, publicar, respaldar, restaurar, migrar y problemas conocidos |
 | [docs/seguridad.md](docs/seguridad.md) | Todos | Secretos y datos de pacientes |
-| [docs/sofi-dentista.md](docs/sofi-dentista.md) | Producto | Conversación para dentistas, reglas, urgencias, recordatorios, costos y pendientes |
+| [docs/eli-dental.md](docs/eli-dental.md) | Producto | Conversación para dentistas, reglas, urgencias, recordatorios, costos y pendientes |
 | [docs/adr/](docs/adr/) | Quien decide | Por qué el sistema es como es |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Quien contribuye | Normas, ramas, cómo cambiar un workflow, definición de terminado |
 | [CHANGELOG.md](CHANGELOG.md) | Todos | Historial de versiones |
@@ -64,7 +64,7 @@ Después: abre n8n, crea las credenciales (Kapso, Gemini, Google Calendar, Redis
 
 ## Límites actuales
 
-- Corre en un computador personal: si se apaga o se suspende, Sofi no responde. Para 24/7 hace falta
+- Corre en un computador personal: si se apaga o se suspende, Eli no responde. Para 24/7 hace falta
   un servidor.
 - Solo WhatsApp (Kapso). Instagram y Messenger no están integrados.
-- Desde octubre de 2026, Meta cobra cada mensaje enviado ([costos](docs/sofi-dentista.md#8-costos)).
+- Desde octubre de 2026, Meta cobra cada mensaje enviado ([costos](docs/eli-dental.md#8-costos)).

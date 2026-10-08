@@ -4,7 +4,7 @@ Cómo trabajar en este proyecto sin romper producción ni filtrar datos.
 
 ## Principios
 
-1. **Producción primero:** Sofi atiende personas reales. Nada se prueba con pacientes ni con su número.
+1. **Producción primero:** Eli atiende personas reales. Nada se prueba con pacientes ni con su número.
 2. **Nada privado en Git:** ni secretos, ni teléfonos, ni conversaciones, ni el calendario real (ver
    [docs/seguridad.md](docs/seguridad.md)).
 3. **Todo cambio se puede deshacer:** respaldo antes de tocar, y lo anterior va a `legacy/`, no se borra.
@@ -25,7 +25,7 @@ Cómo trabajar en este proyecto sin romper producción ni filtrar datos.
 │   ├── arquitectura.md     Componentes, recorrido de un mensaje, claves de Redis
 │   ├── operacion.md        Runbook: publicar, respaldar, restaurar, problemas
 │   ├── seguridad.md        Secretos y datos de pacientes
-│   ├── sofi-dentista.md    Diseño conversacional y recordatorios
+│   ├── eli-dental.md       Diseño conversacional, datos de EliDental y recordatorios
 │   └── adr/                Registros de decisiones
 ├── workflows/              Exportaciones de n8n (producción, pruebas, legacy)
 └── supabase/               Integración opcional de la v2
@@ -48,7 +48,7 @@ Cómo trabajar en este proyecto sin romper producción ni filtrar datos.
 4. **Save** y **Publish**. Revisa **Executions** y `docker compose logs n8n-worker`.
 5. Exporta: `scripts/export-workflow.sh <ID> workflows/<archivo>.json`. Si el script avisa de datos
    privados, corrígelo antes de seguir.
-6. Actualiza la documentación afectada (`docs/arquitectura.md`, `docs/sofi-dentista.md`) y el CHANGELOG.
+6. Actualiza la documentación afectada (`docs/arquitectura.md`, `docs/eli-dental.md`) y el CHANGELOG.
 7. Abre el PR con: qué cambia, por qué, cómo se probó y cómo se vuelve atrás.
 
 ## Cambiar la infraestructura

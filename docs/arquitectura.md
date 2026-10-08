@@ -1,6 +1,6 @@
 # Arquitectura
 
-Sofi es una asistente de WhatsApp que agenda citas. Corre en **n8n en modo queue** dentro de Docker. La
+Eli es una asistente de WhatsApp que agenda citas. Corre en **n8n en modo queue** dentro de Docker. La
 instancia principal recibe los mensajes y un worker los procesa. PostgreSQL guarda los datos y Redis
 lleva la cola y el estado de cada conversación.
 
@@ -70,7 +70,7 @@ sequenceDiagram
 
 ## El workflow de producción: `version4`
 
-Todo vive en un solo workflow ([`workflows/sofi-version4.json`](../workflows/sofi-version4.json)). Tiene dos entradas:
+Todo vive en un solo workflow ([`workflows/eli-version4.json`](../workflows/eli-version4.json)). Tiene dos entradas:
 
 1. **Webhook Kapso.** Recibe los mensajes del paciente: normaliza el texto, descarta repetidos, toma un
    lock de la conversación, consulta al agente, responde y, al final, procesa los mensajes que llegaron
@@ -82,8 +82,8 @@ Todo vive en un solo workflow ([`workflows/sofi-version4.json`](../workflows/sof
 El agente también tiene `buscar_mis_citas`, `mover_cita` y `cancelar_cita`, que son herramientas
 directas de Google Calendar.
 
-Los datos del consultorio (horario 09:00–18:00, domingo cerrado, servicios y precios, hoy
-provisionales) se editan en el nodo **Validar pedido**. La personalidad y las reglas de Sofi están en el *system message* del nodo **Agente version4**.
+Los datos del consultorio (horario 09:00–18:00 provisional, domingo cerrado y servicios; sin
+precios) se editan en el nodo **Validar pedido**. La personalidad y las reglas de Eli están en el *system message* del nodo **Agente version4**.
 
 ## Claves de Redis (DB 1)
 
@@ -91,7 +91,7 @@ provisionales) se editan en el nodo **Validar pedido**. La personalidad y las re
 |---|---|---|---|
 | `v4:dedup:<message_id>` | contador | 24 h | Ignorar el mismo mensaje entregado dos veces |
 | `v4:lock:<teléfono>` | contador | 120 s | Una sola respuesta a la vez por conversación |
-| `v4:pending:<teléfono>` | lista | hasta procesarse | Mensajes que llegaron mientras Sofi respondía |
+| `v4:pending:<teléfono>` | lista | hasta procesarse | Mensajes que llegaron mientras Eli respondía |
 | `v4:chat:<teléfono>` | memoria | 24 h, últimos 12 mensajes | Historial que lee la IA |
 
 La DB 0 es de n8n (claves `bull:*`): no se toca a mano.
@@ -114,6 +114,6 @@ Cada decisión importante tiene su registro (ADR) en [`docs/adr/`](adr/):
   despertar, n8n se reconecta solo. Para atender 24/7 hace falta un servidor siempre encendido.
 - **ngrok gratuito** usa un dominio fijo, pero el túnel muere si se cierra la terminal.
 - **Dos reservas simultáneas del mismo turno** pueden crear dos eventos: `version4` revisa el turno
-  justo antes de crear el evento, pero no lo bloquea. Ver [sofi-dentista.md](sofi-dentista.md).
+  justo antes de crear el evento, pero no lo bloquea. Ver [eli-dental.md](eli-dental.md).
 - **Costo de Meta:** desde el 1 de octubre de 2026, Meta cobra cada mensaje enviado, también dentro de
-  la ventana de 24 horas. Ver [sofi-dentista.md](sofi-dentista.md#8-costos).
+  la ventana de 24 horas. Ver [eli-dental.md](eli-dental.md#8-costos).

@@ -1,6 +1,6 @@
 # Seguridad y datos
 
-Sofi maneja teléfonos, nombres y citas de pacientes. Estas reglas son obligatorias para cualquier
+Eli maneja teléfonos, nombres y citas de pacientes. Estas reglas son obligatorias para cualquier
 persona que trabaje en el proyecto.
 
 ## Secretos
@@ -26,6 +26,8 @@ persona que trabaje en el proyecto.
 
 ## Datos de pacientes
 
+- **Contacto público del negocio:** la dirección, el WhatsApp y el correo de EliDental son públicos y
+  pueden ir en el prompt. Los correos permitidos se listan en `workflows/.datos-publicos`.
 - **No subas datos reales al repositorio:** ni teléfonos, nombres, conversaciones, exportaciones de
   ejecuciones, el calendario real ni el `phone_number_id`. `scripts/export-workflow.sh` reemplaza el
   calendario y el `phone_number_id` por marcadores y avisa si encuentra correos o números largos.

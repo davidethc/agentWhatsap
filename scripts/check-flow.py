@@ -5,7 +5,7 @@ Uso: scripts/check-flow.py flows/<archivo>.flow.json
 
 No reemplaza la validación de Meta (el editor de Kapso la hace al guardar), pero
 atrapa los errores más comunes: propiedades desconocidas, referencias a campos o
-pantallas que no existen, pantallas sin salida y límites por pantalla.
+pantallas que no existen, pantallas sin salida, límites por pantalla y largo de textos.
 """
 import json
 import re
@@ -34,6 +34,28 @@ ALLOWED = {
                "right-caption"},
 }
 MAX_PER_SCREEN = {"Footer": 1, "OptIn": 5, "EmbeddedLink": 2, "Image": 3}
+# Máximo de caracteres por componente y propiedad. Fuente: referencia oficial de Meta,
+# "WhatsApp Flows > Reference > Components", tablas "Limits and restrictions"
+# (developers.facebook.com/documentation/business-messaging/whatsapp/flows/reference/components).
+# "option.<prop>" aplica a cada elemento de data-source. Meta no publica límite para el
+# title de la pantalla, por eso no se revisa aquí.
+LIMITS = {
+    "TextHeading": {"text": 80},
+    "TextSubheading": {"text": 80},
+    "TextBody": {"text": 4096},
+    "TextCaption": {"text": 409},
+    "TextInput": {"label": 20, "helper-text": 80, "error-message": 30},
+    "TextArea": {"label": 20, "helper-text": 80},
+    "RadioButtonsGroup": {"label": 30, "option.title": 30, "option.description": 300,
+                          "option.metadata": 20},
+    "CheckboxGroup": {"label": 30, "option.title": 30, "option.description": 300,
+                      "option.metadata": 20},
+    "Dropdown": {"label": 20, "option.title": 30, "option.description": 300,
+                 "option.metadata": 20},
+    "DatePicker": {"label": 40, "helper-text": 80, "error-message": 80},
+    "OptIn": {"label": 120},
+    "Footer": {"label": 35, "left-caption": 15, "center-caption": 15, "right-caption": 15},
+}
 INPUTS = {"TextInput", "TextArea", "RadioButtonsGroup", "CheckboxGroup", "Dropdown", "DatePicker", "OptIn"}
 
 errors = []
@@ -59,6 +81,17 @@ for sid, s in screens.items():
         for ds in c.get("data-source", []) if isinstance(c.get("data-source"), list) else []:
             if set(ds) - {"id", "title", "description", "metadata", "enabled", "image", "alt-text"}:
                 errors.append(f"{sid}/{c['name']}: opción con propiedades no permitidas {ds}")
+        for prop, limit in LIMITS.get(t, {}).items():
+            if prop.startswith("option."):
+                opts = c.get("data-source") if isinstance(c.get("data-source"), list) else []
+                values = [(f"opción {o.get('id')}.{prop[7:]}", o.get(prop[7:])) for o in opts]
+            else:
+                values = [(prop, c.get(prop))]
+            for where, value in values:
+                # Los textos dinámicos ("${data.x}") se miden en tiempo de ejecución, no aquí.
+                if isinstance(value, str) and "${" not in value and len(value) > limit:
+                    errors.append(f"{sid}/{c.get('name', t)}: {where} tiene {len(value)} "
+                                  f"caracteres, máximo {limit}: «{value}»")
         text = json.dumps(c, ensure_ascii=False)
         for key in re.findall(r"\$\{data\.([a-z_]+)\}", text):
             if key not in s.get("data", {}):

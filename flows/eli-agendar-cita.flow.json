@@ -24,7 +24,14 @@
               { "id": "otra_persona", "title": "Para otra persona" }
             ]
           },
-          { "type": "TextInput", "name": "nombre", "label": "Nombre completo del paciente", "input-type": "text", "required": true },
+          {
+            "type": "TextInput",
+            "name": "nombre",
+            "label": "Nombre completo",
+            "input-type": "text",
+            "required": true,
+            "helper-text": "Nombres y apellidos del paciente"
+          },
           { "type": "TextInput", "name": "edad", "label": "Edad del paciente", "input-type": "number", "required": true },
           {
             "type": "TextInput",
@@ -73,7 +80,7 @@
           {
             "type": "RadioButtonsGroup",
             "name": "primera_vez",
-            "label": "¿Es su primera vez en EliDental?",
+            "label": "¿Nos visita por primera vez?",
             "required": true,
             "data-source": [
               { "id": "si", "title": "Sí" },

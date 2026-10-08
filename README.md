@@ -6,8 +6,8 @@ cancela citas en Google Calendar. Está construida con **n8n** (en modo queue, d
 
 | | |
 |---|---|
-| **En producción** | `version4` como **Eli**, asistente de [EliDental](https://www.facebook.com/EliDentalec) (Loja), con sus datos públicos; horario provisional ([workflow](workflows/eli-version4.json)) |
-| **Siguiente paso** | Horario real, reglas antes que la IA y recordatorios de cita ([diseño](docs/eli-dental.md)) |
+| **En producción** | `version4` como **Eli**, asistente de [EliDental](https://www.facebook.com/EliDentalec) (Loja), con sus datos públicos de Facebook e Instagram ([workflow](workflows/eli-version4.json)) |
+| **Siguiente paso** | Reglas antes que la IA y recordatorios de cita ([diseño](docs/eli-dental.md)) |
 | **Stack** | n8n 2.41.5 (main + worker + runners) · PostgreSQL 18 · Redis 7 · Kapso · Gemini · Google Calendar · ngrok |
 
 ```mermaid

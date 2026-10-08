@@ -11,22 +11,22 @@ WhatsApp del consultorio.
 
 ## 0. EliDental
 
-Datos tomados de su [página de Facebook](https://www.facebook.com/EliDentalec) el 2026-10-07. El
-[Instagram](https://www.instagram.com/elidentalec/) es un perfil restringido y no se pudo leer sin
-iniciar sesión.
+Datos tomados el 2026-10-07 de su [Facebook](https://www.facebook.com/EliDentalec) y de su
+[Instagram](https://www.instagram.com/elidentalec/) (biografía y las 64 publicaciones). Las publicaciones
+anteriores a septiembre de 2024 tienen la dirección antigua (Mercadillo y Av. Universitaria).
 
 | Dato | Valor | Fuente |
 |---|---|---|
 | Nombre | EliDental, «Odontología integral para toda la familia» | Facebook |
-| Odontóloga | Dra. Viviana Sucunuta | Indicado por el equipo (confirmar la ortografía) |
+| Odontóloga | Dra. Viviana Elizabeth Sucunuta (@viviana_sucunuta), Universidad de Cuenca, posgradista en ortodoncia (Brasil) | Instagram |
 | Dirección | Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja | Facebook |
 | WhatsApp y celular | 099 970 1778 | Facebook |
 | Correo | elidentalec@hotmail.com | Facebook |
 | Fundación | 30 de abril de 2021 | Facebook |
-| Servicios publicados | Ortodoncia, resinas (cambio de amalgama por resina), limpieza dental cada 6 meses | Publicaciones de Facebook |
+| Servicios publicados | Limpieza (profilaxis con ultrasonido), resinas y cambio de amalgamas, ortodoncia, blanqueamiento, carillas, endodoncia, extracciones y muelas del juicio, prótesis total y fija (coronas, puentes), frenectomía; atención a niños y embarazadas; sedación para pacientes con miedo | Publicaciones de Instagram y Facebook |
 | Servicios que agenda Eli | Consulta de valoración, Limpieza dental, Resina (calza), Control de ortodoncia, Urgencia dental | Definido para el bot |
-| Precios | No publicados (rango «$$»). Eli no da cifras: el valor lo confirma la doctora en la consulta | Facebook |
-| Horario | **Provisional (horario común):** lunes a viernes de 09:00 a 13:00 y de 15:00 a 19:00, sábado de 09:00 a 13:00; domingo cerrado. El horario de Facebook solo se ve con sesión iniciada | Por confirmar |
+| Precios | No publicados (rango «$$»; solo promociones antiguas, como 20 % en limpieza para parejas). Eli no da cifras: el valor lo confirma la doctora en la consulta | Facebook, Instagram |
+| Horario | Lunes a viernes de 09:00 a 18:00, sábado de 09:00 a 15:00, domingo cerrado | Instagram, publicación de la mudanza (21/9/2024) |
 
 ## 1. Lo que pide la doctora
 
@@ -263,8 +263,7 @@ cierran.
 
 ## 9. Decisiones pendientes con la doctora
 
-- [ ] Horario de atención real y días que no atiende (hoy es provisional)
-- [ ] Ortografía del apellido de la doctora (Sucunuta)
+- [ ] Confirmar que el horario publicado en 2024 sigue vigente y si hay pausa de almuerzo
 - [ ] Duración de cada tipo de cita (valoración, limpieza, resina, control, urgencia)
 - [ ] Cuántos turnos de urgencia reserva por día, y en qué horas
 - [ ] Si Eli puede dar algún precio (hoy no da ninguno), por ejemplo el de la consulta de valoración

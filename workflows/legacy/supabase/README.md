@@ -2,7 +2,7 @@
 
 > **Histórico (v2, opcional).** `version4` agenda solo en Google Calendar y no usa Supabase. Estos
 > scripts sirven si se vuelve a conectar el bot a la app `barberia-reservas`. Ver
-> [workflows/legacy/](../workflows/legacy/).
+> [workflows/legacy/](../).
 
 El agente usa la base de datos de la app **barberia-reservas** como fuente de verdad:
 servicios, precios, horarios, barberos, turnos libres y citas.

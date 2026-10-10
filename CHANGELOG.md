@@ -27,19 +27,29 @@ Ecuador.
 
 ### Diseño
 - Sofi para consultorios dentales: reglas antes que la IA, urgencias, derivación a la doctora y
-  recordatorios de cita con plantilla de Meta ([docs/eli-dental.md](docs/eli-dental.md),
+  recordatorios de cita con plantilla de Meta ([docs/eli-dental.md](docs/elidental.md),
   [ADR 0005](docs/adr/0005-reglas-antes-que-ia.md)).
 
 ## 2026-10-10
 
 ### Agregado
+- `docs/como-funciona.md`: explicación sin tecnicismos (piezas, qué hace Eli, Kapso, costos, glosario).
+- [ADR 0007](docs/adr/0007-kapso.md): Kapso como puente con WhatsApp y modelo de cobro sin tarjeta del cliente.
+- Guía de la documentación en el README: qué leer según lo que se necesite.
+
+### Reorganizado
+- `docs/conversacion-natural.md` + `docs/embudo-elidental.md` → **`docs/conversacion.md`** (un solo documento).
+- `docs/eli-dental.md` → **`docs/elidental.md`**, sin lo que repetía la conversación.
+- `supabase/` → `workflows/legacy/supabase/` (histórico de la v2).
+- Las preguntas clínicas en la documentación se alinean con el prompt: Eli ofrece una valoración; las
+  quejas van al WhatsApp del consultorio.
 - **Conversación natural sin botones** ([ADR 0006](docs/adr/0006-conversacion-natural.md)): nuevo prompt de
   Eli con saludo humano, información breve, honestidad si le preguntan si es un bot, límite ante
   groserías, siempre dos turnos concretos y alternativas cercanas si la hora pedida está ocupada.
-  Referencia en [docs/conversacion-natural.md](docs/conversacion-natural.md).
+  Referencia en [docs/conversacion-natural.md](docs/conversacion.md).
 - Embudo de conversación de Eli por etapas (bienvenida, urgencia, conversación, cita, atendido,
   retención), con mensajes reales, esperas dentro de la ventana de 24 h y plantillas de Meta
-  ([docs/embudo-elidental.md](docs/embudo-elidental.md)).
+  ([docs/embudo-elidental.md](docs/conversacion.md)).
 - Guía de instalación en Windows ([docs/instalacion-windows.md](docs/instalacion-windows.md)).
 
 ### Cambiado

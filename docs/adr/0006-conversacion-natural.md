@@ -25,7 +25,7 @@ revisarlo con el dueño del proyecto:
 - El formulario de cita queda guardado en la rama git `feat/flow-formulario` y como borrador en Kapso,
   por si más adelante se quiere retomar.
 
-Detalle: [conversacion-natural.md](../conversacion-natural.md).
+Detalle: [conversacion.md](../conversacion.md).
 
 ## Consecuencias
 
@@ -35,4 +35,4 @@ Detalle: [conversacion-natural.md](../conversacion-natural.md).
 - Las urgencias se detectan por la IA y no por palabras clave. Hay que revisarlo con conversaciones
   reales.
 - Los cambios de comportamiento se hacen en el prompt: hay que exportar el workflow y actualizar
-  `conversacion-natural.md` en el mismo cambio.
+  `conversacion.md` en el mismo cambio.

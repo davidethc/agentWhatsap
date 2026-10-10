@@ -25,11 +25,12 @@ Cómo trabajar en este proyecto sin romper producción ni filtrar datos.
 │   ├── arquitectura.md     Componentes, recorrido de un mensaje, claves de Redis
 │   ├── operacion.md        Runbook: publicar, respaldar, restaurar, problemas
 │   ├── seguridad.md        Secretos y datos de pacientes
-│   ├── eli-dental.md       Diseño conversacional, datos de EliDental y recordatorios
+│   ├── como-funciona.md    Explicación sin tecnicismos: piezas, qué hace, costos
+│   ├── conversacion.md     Qué responde Eli, cómo busca horarios, embudo por etapas
+│   ├── elidental.md        Datos del cliente, recordatorios, costos y pendientes
 │   ├── comercial/          Guía de la reunión de venta
 │   └── adr/                Registros de decisiones
-├── workflows/              Exportaciones de n8n (producción, pruebas, legacy)
-└── supabase/               Integración opcional de la v2
+└── workflows/              Exportaciones de n8n (producción, pruebas, legacy e integración Supabase v2)
 ```
 
 ## Ramas y commits
@@ -49,7 +50,7 @@ Cómo trabajar en este proyecto sin romper producción ni filtrar datos.
 4. **Save** y **Publish**. Revisa **Executions** y `docker compose logs n8n-worker`.
 5. Exporta: `scripts/export-workflow.sh <ID> workflows/<archivo>.json`. Si el script avisa de datos
    privados, corrígelo antes de seguir.
-6. Actualiza la documentación afectada (`docs/arquitectura.md`, `docs/eli-dental.md`) y el CHANGELOG.
+6. Actualiza la documentación afectada (`docs/arquitectura.md`, `docs/conversacion.md` o `docs/elidental.md`) y el CHANGELOG.
 7. Abre el PR con: qué cambia, por qué, cómo se probó y cómo se vuelve atrás.
 
 ## Cambiar la infraestructura

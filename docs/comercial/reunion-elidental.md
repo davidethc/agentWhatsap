@@ -5,7 +5,7 @@
 - **Objetivo:** que pruebe a Eli en su propio teléfono, tener respondidas las preguntas de esta guía y
   salir con un **piloto de 30 días acordado**, con fecha de inicio.
 
-Datos de partida: su [encuesta](../eli-dental.md#1-lo-que-pide-la-doctora), su Facebook y su Instagram
+Datos de partida: su [encuesta](../elidental.md#lo-que-pide-la-doctora), su Facebook y su Instagram
 (revisados el 2026-10-07).
 
 ---
@@ -188,7 +188,7 @@ de Kapso, de la API de Gemini, de Meta (por mensaje en Ecuador) y del servidor.
 
 Cuidado con el margen: con $20 al mes hay que cubrir el servidor, la IA y los mensajes de Meta. Desde
 el 1 de octubre de 2026, Meta cobra cada mensaje
-([detalle](../eli-dental.md#8-costos)). Con 10 a 25 citas por semana son unos 40 a 100 recordatorios
+([detalle](../elidental.md#costos)). Con 10 a 25 citas por semana son unos 40 a 100 recordatorios
 al mes. Si no cierra, ofrece los costos de Meta e IA aparte, o un plan de $25 a $30 con recordatorios
 incluidos.
 
@@ -218,6 +218,6 @@ incluidos.
 
 ## 8. Después de la reunión
 
-- [ ] Pasar sus respuestas a [docs/eli-dental.md](../eli-dental.md) (decisiones pendientes).
+- [ ] Pasar sus respuestas a [docs/elidental.md](../elidental.md) (decisiones pendientes).
 - [ ] Actualizar el prompt y `Validar pedido` (horario, duraciones, precios).
 - [ ] Planificar los recordatorios y el servidor 24/7.

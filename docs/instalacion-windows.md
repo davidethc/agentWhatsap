@@ -370,7 +370,7 @@ frecuencia: si un menú no tiene exactamente el nombre indicado, busca uno parec
 ### 6.3 Cobros de mensajes (Meta) y créditos de Kapso
 
 - Desde el **1 de octubre de 2026**, Meta cobra por cada mensaje enviado, también las respuestas
-  dentro de la ventana de 24 horas (ver [eli-dental.md, Costos](eli-dental.md#8-costos)).
+  dentro de la ventana de 24 horas (ver [elidental.md, Costos](elidental.md#costos)).
 - Al conectar el número, Kapso pregunta cómo se pagan esos mensajes. En general hay dos modos:
   - **Créditos de Kapso:** recargas saldo en Kapso y Kapso paga a Meta por ti.
   - **Tarjeta propia en Meta:** agregas un método de pago en Meta Business (WhatsApp Manager) y Meta

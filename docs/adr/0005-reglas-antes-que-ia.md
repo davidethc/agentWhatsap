@@ -25,7 +25,7 @@ Cada mensaje se revisa en este orden, y responde el primero que acierta:
 
 Además, se agrega una **segunda entrada programada** para los recordatorios de cita.
 
-El diseño completo está en [eli-dental.md](../eli-dental.md).
+El diseño completo está en [elidental.md](../elidental.md).
 
 ## Consecuencias
 

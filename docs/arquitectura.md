@@ -108,6 +108,7 @@ Cada decisión importante tiene su registro (ADR) en [`docs/adr/`](adr/):
 | [0004](adr/0004-un-solo-workflow.md) | Un solo workflow con la agenda como entrada interna | Aceptada |
 | [0005](adr/0005-reglas-antes-que-ia.md) | Reglas fijas y botones antes que la IA (diseño para dentistas) | Reemplazada |
 | [0006](adr/0006-conversacion-natural.md) | Conversación natural, sin botones ni formularios | Aceptada |
+| [0007](adr/0007-kapso.md) | Kapso como puente con WhatsApp y como modelo de cobro | Aceptada |
 
 ## Límites conocidos
 
@@ -115,6 +116,6 @@ Cada decisión importante tiene su registro (ADR) en [`docs/adr/`](adr/):
   despertar, n8n se reconecta solo. Para atender 24/7 hace falta un servidor siempre encendido.
 - **ngrok gratuito** usa un dominio fijo, pero el túnel muere si se cierra la terminal.
 - **Dos reservas simultáneas del mismo turno** pueden crear dos eventos: `version4` revisa el turno
-  justo antes de crear el evento, pero no lo bloquea. Ver [eli-dental.md](eli-dental.md).
+  justo antes de crear el evento, pero no lo bloquea. Ver [conversacion.md](conversacion.md).
 - **Costo de Meta:** desde el 1 de octubre de 2026, Meta cobra cada mensaje enviado, también dentro de
-  la ventana de 24 horas. Ver [eli-dental.md](eli-dental.md#8-costos).
+  la ventana de 24 horas. Ver [elidental.md](elidental.md#costos).

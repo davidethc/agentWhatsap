@@ -1,0 +1,54 @@
+/*
+ * Eli Panel — tokens de color (ÚNICO archivo de paleta).
+ * Estilo clínico limpio: fondo blanco, acento turquesa suave, grises fríos.
+ * Para cambiar colores de toda la app, se edita solo este archivo.
+ * Nombres semánticos de shadcn; globals.css los expone a Tailwind.
+ */
+:root {
+  /* Superficies */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.22 0.02 215);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.02 215);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.02 215);
+
+  /* Acento turquesa (primary = botones principales; contraste 4.5:1 con blanco) */
+  --primary: oklch(0.54 0.09 200);
+  --primary-foreground: oklch(0.99 0.005 200);
+  --secondary: oklch(0.96 0.015 200);
+  --secondary-foreground: oklch(0.32 0.06 205);
+  --accent: oklch(0.955 0.025 195);
+  --accent-foreground: oklch(0.32 0.06 205);
+
+  /* Neutros fríos */
+  --muted: oklch(0.97 0.006 215);
+  --muted-foreground: oklch(0.5 0.02 215);
+  --border: oklch(0.92 0.008 215);
+  --input: oklch(0.9 0.01 215);
+  --ring: oklch(0.7 0.09 195);
+
+  /* Estados */
+  --destructive: oklch(0.577 0.22 27);
+  --success: oklch(0.55 0.12 160);
+  --warning: oklch(0.72 0.14 75);
+
+  /* Gráficos (turquesa → azul → cálido suave) */
+  --chart-1: oklch(0.65 0.1 195);
+  --chart-2: oklch(0.55 0.1 235);
+  --chart-3: oklch(0.75 0.09 165);
+  --chart-4: oklch(0.78 0.11 80);
+  --chart-5: oklch(0.65 0.12 20);
+
+  /* Menú lateral */
+  --sidebar: oklch(0.985 0.006 200);
+  --sidebar-foreground: oklch(0.3 0.03 215);
+  --sidebar-primary: oklch(0.54 0.09 200);
+  --sidebar-primary-foreground: oklch(0.99 0.005 200);
+  --sidebar-accent: oklch(0.945 0.03 195);
+  --sidebar-accent-foreground: oklch(0.3 0.07 205);
+  --sidebar-border: oklch(0.92 0.008 215);
+  --sidebar-ring: oklch(0.7 0.09 195);
+
+  --radius: 0.75rem;
+}

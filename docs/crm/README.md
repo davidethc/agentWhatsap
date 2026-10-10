@@ -9,9 +9,9 @@ Esta carpeta es su espejo: cada documento se copia aquí cuando el usuario lo ap
 | Documento | Estado |
 |---|---|
 | [constitution.md](constitution.md) | Escrita (10-oct-2026) |
-| `spec.md` | Pendiente: se copia al aprobar la Spec |
-| `plan.md` | Pendiente: se copia al aprobar el Plan |
-| `tasks.md` | Pendiente: se copia al aprobar las Tareas |
+| [spec.md](spec.md) | Aprobada (10-oct-2026): 14 historias |
+| [plan.md](plan.md) | Aprobado (10-oct-2026): arquitectura, datos, contrato Eli → CRM, Calendar, pantallas |
+| [tasks.md](tasks.md) | Aprobadas (10-oct-2026): TK-1 a TK-40 en Ready |
 | `integracion.md` | La escribe el orquestador durante la construcción |
 
 ## Agentes (`.claude/agents/`)

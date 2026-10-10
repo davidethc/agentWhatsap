@@ -7,6 +7,7 @@ personales: las credenciales van solo por nombre, y el calendario y el número u
 | Archivo | Estado | Qué es |
 |---|---|---|
 | [`eli-version4.json`](eli-version4.json) | **Producción** | Eli: webhook Kapso, agente Gemini con memoria en Redis y agenda interna en Google Calendar (ver [arquitectura](../docs/arquitectura.md)) |
+| [`eli-seguimiento.json`](eli-seguimiento.json) | **Producción** | Cada 15 min escribe a quien dejó de responder (dentro de 24 h), con textos fijos y turnos reales ([conversacion.md](../docs/conversacion.md)) |
 | [`pruebas/queue-selftest.json`](pruebas/queue-selftest.json) | Prueba | Webhook GET + Code: comprueba cola → worker → runner |
 | [`pruebas/redis-selftest.json`](pruebas/redis-selftest.json) | Prueba | Webhook GET + Redis set/get: comprueba la credencial `Redis local` |
 | [`legacy/v2-bot-supabase.json`](legacy/v2-bot-supabase.json) | Histórico | Bot v2 integrado con Supabase (`barberia-reservas`), ver [`legacy/supabase/`](legacy/supabase/) |

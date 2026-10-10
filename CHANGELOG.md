@@ -6,6 +6,14 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Seguimientos automáticos** (workflow `Eli · Seguimiento`, cada 15 min, 08:00–20:00): escribe a quien
+  no respondió el saludo (3 h) o dejó la conversación (2 h), y un último mensaje desde las 20 h, siempre
+  dentro de la ventana de 24 h. Textos fijos con turnos reales, sin usar la IA. `version4` guarda el
+  estado en Redis (`v4:seg:<tel>`) y detecta si se agendó.
+- Prompt: usar el nombre del paciente, no insistir ante «no gracias» y continuar si el paciente elige un
+  turno de un seguimiento.
+
+### Agregado
 - Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
 
 ### Cambiado

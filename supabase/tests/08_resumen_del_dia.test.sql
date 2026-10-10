@@ -1,6 +1,12 @@
 -- TK-10 · resumen_del_dia(fecha). Fecha de prueba: miércoles 2026-10-14; semana lun 12 – dom 18.
 -- Hora de Guayaquil (-05). Datos inventados.
 begin;
+-- Aislar del seed.sql: se vacía dentro de la transacción (el rollback final lo deja como estaba).
+-- auditoria no se puede vaciar: las pruebas la filtran por fila.
+delete from auth.users where email like '%@ejemplo.test';
+delete from public.personal;
+truncate public.mensajes, public.citas, public.cambios_etapa, public.datos_clinicos,
+         public.pacientes, public.conversaciones, public.errores_integracion, public.sync_calendario;
 select plan(17);
 
 insert into auth.users (id, email) values

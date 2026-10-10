@@ -1,6 +1,12 @@
 -- TK-6 · crear_paciente, guardar_cita y cancelar_cita. Datos inventados.
 -- Fechas: lunes 2026-10-12, domingo 2026-10-11, sábado 2026-10-17 (hora de Guayaquil, -05).
 begin;
+-- Aislar del seed.sql: se vacía dentro de la transacción (el rollback final lo deja como estaba).
+-- auditoria no se puede vaciar: las pruebas la filtran por fila.
+delete from auth.users where email like '%@ejemplo.test';
+delete from public.personal;
+truncate public.mensajes, public.citas, public.cambios_etapa, public.datos_clinicos,
+         public.pacientes, public.conversaciones, public.errores_integracion, public.sync_calendario;
 select plan(37);
 
 insert into auth.users (id, email) values

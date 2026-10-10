@@ -1,5 +1,11 @@
 -- TK-7 · registrar_evento_eli: contrato Eli → CRM (plan §5). Datos inventados.
 begin;
+-- Aislar del seed.sql: se vacía dentro de la transacción (el rollback final lo deja como estaba).
+-- auditoria no se puede vaciar: las pruebas la filtran por fila.
+delete from auth.users where email like '%@ejemplo.test';
+delete from public.personal;
+truncate public.mensajes, public.citas, public.cambios_etapa, public.datos_clinicos,
+         public.pacientes, public.conversaciones, public.errores_integracion, public.sync_calendario;
 select plan(31);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000d1', 'doctora@ejemplo.test');

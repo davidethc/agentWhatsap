@@ -1,6 +1,12 @@
 -- TK-9 · private.perdidos_por_silencio(): sin cita futura y 24 h sin escribir → Perdido (no_respondio).
 -- Fechas simuladas con p_ahora = 2026-10-12 12:00 (-05). Datos inventados.
 begin;
+-- Aislar del seed.sql: se vacía dentro de la transacción (el rollback final lo deja como estaba).
+-- auditoria no se puede vaciar: las pruebas la filtran por fila.
+delete from auth.users where email like '%@ejemplo.test';
+delete from public.personal;
+truncate public.mensajes, public.citas, public.cambios_etapa, public.datos_clinicos,
+         public.pacientes, public.conversaciones, public.errores_integracion, public.sync_calendario;
 select plan(12);
 
 insert into public.conversaciones (id, telefono, ultimo_entrante_en, turnos_entrantes) overriding system value values

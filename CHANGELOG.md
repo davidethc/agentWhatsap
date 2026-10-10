@@ -6,6 +6,11 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli Panel (CRM), fase de planificación con SDD** ([docs/crm/](docs/crm/README.md)): hub en
+  Notion como fuente de verdad (constitución, spec en borrador con 14 historias, clarificaciones,
+  flujos y tablero de tareas), `CLAUDE.md` con las reglas del proyecto, 6 agentes en
+  `.claude/agents/` (planificador, orquestador y 4 compañeros en paneles de tmux), permisos que
+  bloquean `git push` y `.env`, y skills de skills.sh instaladas en el proyecto. Se descartó Twenty CRM.
 - Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
 
 ### Cambiado

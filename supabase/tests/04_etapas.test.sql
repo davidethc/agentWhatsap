@@ -1,5 +1,11 @@
 -- TK-5 · mover_etapa y marcar_asistencia; historial en cambios_etapa. Datos inventados.
 begin;
+-- Aislar del seed.sql: se vacía dentro de la transacción (el rollback final lo deja como estaba).
+-- auditoria no se puede vaciar: las pruebas la filtran por fila.
+delete from auth.users where email like '%@ejemplo.test';
+delete from public.personal;
+truncate public.mensajes, public.citas, public.cambios_etapa, public.datos_clinicos,
+         public.pacientes, public.conversaciones, public.errores_integracion, public.sync_calendario;
 select plan(26);
 
 insert into auth.users (id, email) values

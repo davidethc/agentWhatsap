@@ -1,5 +1,11 @@
 -- TK-4 · Auditoría por trigger y consentimiento para datos clínicos. Datos inventados.
 begin;
+-- Aislar del seed.sql: se vacía dentro de la transacción (el rollback final lo deja como estaba).
+-- auditoria no se puede vaciar: las pruebas la filtran por fila.
+delete from auth.users where email like '%@ejemplo.test';
+delete from public.personal;
+truncate public.mensajes, public.citas, public.cambios_etapa, public.datos_clinicos,
+         public.pacientes, public.conversaciones, public.errores_integracion, public.sync_calendario;
 select plan(20);
 
 insert into auth.users (id, email) values
@@ -43,11 +49,11 @@ select results_eq(
   $$values ('penicilina', 'ninguna', 'personal')$$,
   'editar datos clínicos deja antes, después y actor');
 select is((select count(*)::int from public.auditoria
-            where tabla = 'datos_clinicos' and accion = 'insert'), 1, 'la creación también se audita');
+            where tabla = 'datos_clinicos' and fila_id = 900001 and accion = 'insert'), 1, 'la creación también se audita');
 
 -- Un update sin cambios reales no ensucia la auditoría
 update public.pacientes set cedula = '1111111111' where id = 900001;
-select is((select count(*)::int from public.auditoria where tabla = 'pacientes' and accion = 'update'),
+select is((select count(*)::int from public.auditoria where tabla = 'pacientes' and fila_id = 900001 and accion = 'update'),
   1, 'update sin cambios no se audita');
 
 -- Consentimiento

@@ -12,6 +12,7 @@ Ecuador.
   `.claude/agents/` (planificador, orquestador y 4 compañeros en paneles de tmux), permisos que
   bloquean `git push` y `.env`, y skills de skills.sh instaladas en el proyecto. Se descartó Twenty CRM.
 - **Eli Panel: Spec, Plan y Tareas aprobados** (10-oct-2026, puntos de control 1 y 2): [spec.md](docs/crm/spec.md), [plan.md](docs/crm/plan.md) y [tasks.md](docs/crm/tasks.md) (TK-1 a TK-40). ADR [0008](docs/adr/0008-crm-supabase-eventos.md) (Supabase aparte + eventos de Eli sin esperar), [0009](docs/adr/0009-sync-google-calendar.md) (Calendar desde Supabase con cuenta de servicio), [0010](docs/adr/0010-netlify.md) (Netlify en vez de Vercel Hobby) y [0011](docs/adr/0011-reglas-embudo-en-la-base.md) (reglas del embudo en la base).
+- **Guía de Google Calendar (TK-14)** ([docs/crm/google-calendar.md](docs/crm/google-calendar.md)): paso a paso sin tarjeta para crear la cuenta de servicio, la clave JSON y un calendario de PRUEBA; `scripts/gcal-prueba.mjs` (lectura de prueba, solo Node) y `.gitignore` para que la clave nunca entre a git.
 - Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
 
 ### Cambiado

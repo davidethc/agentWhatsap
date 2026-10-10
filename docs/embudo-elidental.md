@@ -1,7 +1,7 @@
 # Embudo de conversación de Eli (EliDental)
 
 Recorrido de un paciente por WhatsApp, desde el primer mensaje hasta volver a la limpieza de los 6
-meses. Eli conversa como una persona del consultorio. La diferencia es que sabe qué responder y qué no,
+meses. Eli conversa como una persona del consultorio, **sin botones**: qué responde a cada mensaje y cómo busca horarios está en [conversacion-natural.md](conversacion-natural.md). La diferencia es que sabe qué responder y qué no,
 con la información real de EliDental. Cada etapa tiene sus mensajes, sus esperas y cuándo se da por
 perdido o por ganado.
 
@@ -47,9 +47,9 @@ flowchart TB
     direction TB
     A1[/"ELI CONFIRMACIÓN:<br>¡Listo! Su cita de [Limpieza dental]<br>es el [jueves 10] a las [10:00]<br>en Av. Manuel Agustín Aguirre 343-39,<br>entre Miguel Riofrío y Azuay.<br>Si es su primera vez, llegue 10 min antes"/]
     AW1("⏳ 🔧 Día anterior, 18:00")
-    A2[/"🔧 PLANTILLA RECORDATORIO (utility):<br>Hola [Nombre], le recordamos su cita<br>mañana a las [hora] en EliDental.<br>¿Nos confirma su asistencia?<br>[Confirmo] [Necesito cambiar]"/]
-    AC{{"⚡ Botón Confirmo"}}
-    AX{{"⚡ Botón Necesito cambiar"}}
+    A2[/"🔧 PLANTILLA RECORDATORIO (utility):<br>Hola [Nombre], le recordamos su cita<br>mañana a las [hora] en EliDental.<br>¿Nos confirma su asistencia?<br>Si necesita cambiarla, respóndame aquí"/]
+    AC{{"⚡ Responde: sí, ahí estaré"}}
+    AX{{"⚡ Responde: no puedo,<br>quiero cambiar"}}
     AR("🟩 IA reagenda<br>y libera el turno anterior")
     AN("🔧 Sin respuesta:<br>va al resumen de la doctora 07:00")
     AW2("⏳ 🔧 Pasada la hora de la cita<br>sin marcar asistencia")
@@ -171,8 +171,8 @@ flowchart TB
 | | |
 |---|---|
 | Confirmación | Servicio, día, hora y dirección completa. Si es su primera vez, llegar 10 minutos antes |
-| Recordatorio | Día anterior a las 18:00, **plantilla de Meta** con botones «Confirmo» y «Necesito cambiar» |
-| Necesito cambiar | Eli ofrece otros turnos, reserva el nuevo y libera el anterior |
+| Recordatorio | Día anterior a las 18:00, **plantilla de Meta** de solo texto. El paciente responde con sus palabras («sí», «no puedo») |
+| No puede o quiere cambiar | Eli ofrece 2 turnos cercanos, reserva el nuevo y libera el anterior |
 | Sin respuesta | Aparece en el resumen de las 07:00 para la doctora |
 | No asistió | Al día siguiente, plantilla «¿Todo bien? ¿Le busco otro turno?». Si no responde, perdido |
 | Hoy | ✅ Confirmación. 🔧 Recordatorio, resumen y «no asistió» (diseño en [eli-dental.md](eli-dental.md#6-recordatorios)) |
@@ -208,19 +208,21 @@ flowchart TB
 
 | Situación | Qué se puede enviar | Costo |
 |---|---|---|
-| Hasta 24 h después del último mensaje del paciente | Cualquier mensaje (texto, botones) | Respuestas de servicio: 1.000 gratis al mes por número, después se cobran |
+| Hasta 24 h después del último mensaje del paciente | Cualquier mensaje de texto | Respuestas de servicio: 1.000 gratis al mes por número, después se cobran |
 | Más de 24 h | Solo **plantillas aprobadas por Meta** | Se cobran por mensaje |
 
 Por eso los seguimientos de las etapas 1 y 2 terminan **antes de las 23 h**: son los últimos mensajes
 libres y gratis. Todo lo de las etapas 3 a 5 (recordatorio, no asistió, seguimiento, recall) son
 plantillas:
 
-| Plantilla | Categoría | Botones |
-|---|---|---|
-| `recordatorio_cita` | Utility | Confirmo · Necesito cambiar |
-| `cita_no_asistio` | Utility | Buscar otro turno |
-| `seguimiento_tratamiento` | Utility | — |
-| `recall_limpieza` | Marketing (requiere permiso del paciente) | Agendar |
+| Plantilla | Categoría |
+|---|---|
+| `recordatorio_cita` | Utility |
+| `cita_no_asistio` | Utility |
+| `seguimiento_tratamiento` | Utility |
+| `recall_limpieza` | Marketing (requiere permiso del paciente) |
+
+Todas son de **solo texto, sin botones**: el paciente responde con sus palabras y la IA lo interpreta.
 
 ## Cómo se construye en n8n
 
@@ -229,7 +231,7 @@ plantillas:
 | `version4` (webhook) | Bienvenida, conversación, urgencia, reserva, derivación | ✅ En producción |
 | Estado en Redis | `v4:stage:<tel>` (bienvenida, conversación, agendado, atendido), `v4:last_in:<tel>` (hora del último mensaje del paciente), `v4:nudge:<tel>` (seguimientos enviados) | 🔧 |
 | Workflow `Eli · Seguimiento` | Cada 15 min revisa las conversaciones sin respuesta y envía el seguimiento de su etapa (3 h y 23 h en bienvenida; 2 h y 23 h en conversación). Para si el paciente respondió | 🔧 |
-| Workflow `Eli · Recordatorios` | Día anterior a las 18:00: plantilla con botones; 07:00: resumen a la doctora | 🔧 Diseño listo |
+| Workflow `Eli · Recordatorios` | Día anterior a las 18:00: plantilla de texto; 07:00: resumen a la doctora | 🔧 Diseño listo |
 | Workflow `Eli · Después de la cita` | No asistió, seguimiento, reseña y recall | 🔧 |
 | Aviso a la doctora | Urgencias, quejas, preguntas clínicas | 🔧 |
 

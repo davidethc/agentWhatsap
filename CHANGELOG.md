@@ -33,6 +33,10 @@ Ecuador.
 ## 2026-10-10
 
 ### Agregado
+- **Conversación natural sin botones** ([ADR 0006](docs/adr/0006-conversacion-natural.md)): nuevo prompt de
+  Eli con saludo humano, información breve, honestidad si le preguntan si es un bot, límite ante
+  groserías, siempre dos turnos concretos y alternativas cercanas si la hora pedida está ocupada.
+  Referencia en [docs/conversacion-natural.md](docs/conversacion-natural.md).
 - Embudo de conversación de Eli por etapas (bienvenida, urgencia, conversación, cita, atendido,
   retención), con mensajes reales, esperas dentro de la ventana de 24 h y plantillas de Meta
   ([docs/embudo-elidental.md](docs/embudo-elidental.md)).

@@ -106,7 +106,8 @@ Cada decisión importante tiene su registro (ADR) en [`docs/adr/`](adr/):
 | [0002](adr/0002-redis-local.md) | Redis local (DB 1) para el estado del bot, en vez de Redis Cloud | Aceptada |
 | [0003](adr/0003-gemini.md) | Gemini como único modelo de IA | Aceptada |
 | [0004](adr/0004-un-solo-workflow.md) | Un solo workflow con la agenda como entrada interna | Aceptada |
-| [0005](adr/0005-reglas-antes-que-ia.md) | Reglas fijas y botones antes que la IA (diseño para dentistas) | Propuesta |
+| [0005](adr/0005-reglas-antes-que-ia.md) | Reglas fijas y botones antes que la IA (diseño para dentistas) | Reemplazada |
+| [0006](adr/0006-conversacion-natural.md) | Conversación natural, sin botones ni formularios | Aceptada |
 
 ## Límites conocidos
 

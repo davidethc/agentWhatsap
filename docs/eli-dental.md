@@ -3,11 +3,11 @@
 Diseño conversacional y técnico de Eli, la asistente por WhatsApp de **EliDental** (Loja, Ecuador).
 Se basa en la encuesta a la doctora, en sus páginas públicas y en cómo se agenda en Latinoamérica.
 
-**Estado (2026-10-07):** `version4` está en producción como Eli, con los datos públicos de EliDental.
-Las prioridades de urgencia, pregunta clínica, foto y queja están hoy **en el prompt de la IA**. Falta
-construir: reglas fijas antes de la IA, botones, aviso a la doctora y **recordatorios de cita**.
-Mientras tanto, el prompt prohíbe prometer recordatorios o avisos, y deriva a la doctora a través del
-WhatsApp del consultorio.
+**Estado (2026-10-10):** `version4` está en producción como Eli, con los datos públicos de EliDental y
+**conversación natural, sin botones ni formularios**: el paciente escribe como quiere y Eli lo lleva a
+una cita. La lógica de cada tipo de mensaje y de la agenda está en
+[conversacion-natural.md](conversacion-natural.md). Falta construir: los seguimientos por tiempo, el
+aviso a la doctora y los **recordatorios de cita** ([embudo-elidental.md](embudo-elidental.md)).
 
 ## 0. EliDental
 
@@ -65,79 +65,51 @@ Consecuencias de diseño:
   visita, pedir llegar 10 minutos antes para la historia clínica
   ([Leadsales](https://leadsales.io/blog/whatsapp-para-consultorios-y-clinicas/)); confirmar con día,
   hora, profesional y dirección ([Medesk](https://www.medesk.net/es/blog/plantillas-de-comunicacion-para-clinicas/));
-  recordar la cita el día anterior con un botón para confirmar; derivar a la doctora urgencias,
+  recordar la cita el día anterior y pedir que confirme respondiendo; derivar a la doctora urgencias,
   necesidades especiales y reclamos.
 - Por WhatsApp solo se envía logística, nunca diagnósticos
   ([Gestión Dental](https://gestiondental.org/whatsapp-confirmar-citas-dentales-ventajas-limites-buenas-practicas/)).
 
-## 3. ¿Los recordatorios cambian el flujo?
+## 3. Conversación natural (sin botones)
 
-Sí, de tres formas:
+Decisión del 2026-10-10 ([ADR 0006](adr/0006-conversacion-natural.md)): **no hay botones ni
+formularios**. El paciente escribe «hola», «quiero info», «necesito agendar», «¿cómo está?» o lo que sea,
+y Eli lo entiende con la IA, responde como una persona del consultorio y lo lleva a una cita.
 
-1. **Aparece una segunda entrada**, programada por horario: Eli escribe primero, sin que el paciente
-   haya escrito.
-2. **Llegan respuestas de botón** («Confirmo», «Necesito cambiar»). *Normalizar mensaje* hoy solo lee
-   texto, y debe leer también el código del botón.
-3. **Eli necesita contexto:** si el paciente responde «sí» a un recordatorio, ese «sí» confirma la cita
-   del recordatorio, no una reserva nueva.
+- **Qué responde a cada tipo de mensaje** (saludo, información, precio, agendar, urgencia, temas
+  clínicos, su cita, «¿eres un bot?», groserías, audios) y **cómo busca horarios** (libre, ocupado, día
+  lleno, domingo): [conversacion-natural.md](conversacion-natural.md).
+- **El recorrido completo, con seguimientos y recordatorios:** [embudo-elidental.md](embudo-elidental.md).
 
-```mermaid
-flowchart TB
-  subgraph E1["Entrada 1: mensaje del paciente (ya existe)"]
-    M[Webhook Kapso] --> F[Filtros: repetidos, seguidos, audio]
-    F --> U{Palabras de urgencia?}
-    U -- sí --> UR[Urgencia: avisa a la doctora<br/>y ofrece turno de urgencia]
-    U -- no --> B{Tocó un botón?}
-    B -- sí --> BR[Respuesta del botón<br/>agendar · precios · confirmar · cambiar]
-    B -- no --> RS{Va a mitad de una reserva<br/>o respondiendo un recordatorio?}
-    RS -- sí --> NX[Siguiente paso según el estado]
-    RS -- no --> CL{Clínico, foto o queja?}
-    CL -- sí --> DR[Avisa a la doctora<br/>el bot no opina sobre salud]
-    CL -- no --> KW{Mensaje corto con palabra clave?}
-    KW -- sí --> FX[Respuesta fija<br/>precios · horario · seguros · ubicación]
-    KW -- no --> AI[IA Gemini + herramientas de agenda]
-    AI -- no pudo --> DR
-    AI -- pudo --> R[Responde y pregunta el siguiente paso]
-  end
-  subgraph E2["Entrada 2: recordatorios (nueva)"]
-    S[Cada día a las 18:00] --> L[Lee las citas de mañana<br/>en Google Calendar]
-    L --> T{Tiene teléfono y no se le<br/>envió recordatorio?}
-    T -- sí --> P[Envía la plantilla con botones<br/>Confirmo · Necesito cambiar]
-    P --> MK[Marca el evento y guarda<br/>el estado en Redis]
-    S2[Cada día a las 07:00] --> RES[Resumen a la doctora:<br/>confirmadas, sin respuesta, cambios]
-  end
-  P -. el paciente toca un botón .-> M
-```
+Los recordatorios, cuando se construyan, también serán texto: el paciente responde «sí», «ahí estaré» o
+«no puedo», y la IA lo interpreta con el contexto de esa cita.
 
-## 4. Cómo escribe el paciente y quién responde
+## 4. Quién responde cada tipo de mensaje
 
 | Tipo de mensaje | Ejemplos | Responde | Qué hace |
 |---|---|---|---|
-| Saludo | «hola doctora», «buenas tardes» | Regla fija | Saluda y muestra botones: Agendar cita · Tengo dolor · Precios y servicios |
-| Urgencia | «me duele mucho una muela», «se me rompió un diente», «tengo la cara hinchada» | Persona | Avisa a la doctora al instante y ofrece el primer turno de urgencia |
-| Primera cita | «quiero una cita», «quisiera una limpieza» | Botones | Pregunta si es primera vez, nombre, motivo, día y turno; confirma; pide llegar 10 min antes |
-| Paciente que vuelve, con detalles | «el jueves en la tarde para mi control de ortodoncia» | IA | Entiende día, franja y motivo, revisa la agenda y pide confirmar |
-| Precio | «cuánto cuesta una limpieza», «precio de brackets» | Regla fija | Precio fijo si existe; si no, el valor de la consulta y que el resto se define en la evaluación |
-| Seguro | «aceptan mi seguro?» | Regla fija | Lista de seguros aceptados |
-| Horario o ubicación | «a qué hora atienden», «dónde queda» | Regla fija | Horario, dirección y Google Maps |
-| Ver, mover o cancelar | «no voy a poder ir mañana» | IA | Busca su cita y ofrece reagendar antes de cancelar |
-| Respuesta al recordatorio | botón Confirmo / Necesito cambiar, o «sí», «no puedo» | Botones | Confirma, o abre el cambio de cita y libera el turno |
-| Pregunta clínica | «es normal que sangre después de la extracción?» | Persona | No da consejos médicos; avisa a la doctora; si hay señales de alarma, trata el caso como urgencia |
-| Foto de la boca o radiografía | imagen | Persona | La guarda para la doctora; la IA no la interpreta |
-| Audio o sticker | nota de voz | Filtro | Pide que lo escriba |
-| Cita para otra persona | «cita para mi hijo de 6 años» | IA | Pide nombre y edad del paciente y, si es menor, el nombre del adulto responsable |
-| Queja o pide a la doctora | «quiero hablar con la doctora» | Persona | Avisa a la doctora y el bot se calla en esa conversación |
+| Saludo o charla | «hola», «buenas tardes», «¿cómo está?» | IA | Responde el saludo como persona y pregunta en qué ayuda |
+| Información general | «quiero información», «¿qué hacen?» | IA | Resume EliDental y pregunta qué le gustaría atender |
+| Precio, horario, ubicación | «cuánto cuesta una limpieza», «dónde quedan» | IA | Responde el dato (el precio lo confirma la doctora) y ofrece 2 turnos |
+| Agendar | «necesito agendar», «quiero una limpieza el jueves» | IA + agenda | Pregunta el motivo si falta y ofrece turnos reales; si está ocupado, alternativas cercanas |
+| Urgencia | «me duele mucho una muela», «se me rompió un diente» | IA + agenda | Empatía, primer turno libre e indicación de emergencias |
+| Ver, mover o cancelar | «no voy a poder ir mañana» | IA + agenda | Busca su cita y ofrece reagendar antes de cancelar |
+| Respuesta al recordatorio (🔧) | «sí», «ahí estaré», «no puedo» | IA con contexto | Confirma, o busca otro turno y libera el anterior |
+| Pregunta clínica, foto o queja | «¿es normal que sangre?», imagen | Doctora | No opina de salud: WhatsApp 099 970 1778 |
+| «¿Eres un bot?» | «¿hablo con una persona?» | IA | Con honestidad: es la asistente virtual; la doctora atiende en persona |
+| Groserías o spam | insultos, mensajes sin sentido | IA | Una respuesta breve y respetuosa; si sigue, no discute |
+| Audio o sticker | nota de voz | IA | Pide que lo escriba |
+| Cita para otra persona | «cita para mi hijo de 6 años» | IA | Pide nombre y edad del paciente y el nombre del adulto responsable |
 
 ## 5. Reglas fijas
 
 **Urgencia.** Disparadores: dolor fuerte, «me duele mucho», hinchado, sangra, se rompió, se cayó
 (diente o corona), golpe, fiebre, pus. Eli responde:
 
-> Lamento que estés con molestias. Ya le aviso a la doctora. El primer turno de urgencia es [día y
-> hora], ¿te lo reservo? Si tienes la cara muy hinchada, fiebre alta o te cuesta tragar o respirar, ve a
-> emergencias ahora.
+> Lamento que esté con molestias. El primer turno libre es [día y hora], ¿se lo reservo? Si tiene la
+> cara muy hinchada, fiebre alta o le cuesta tragar o respirar, acuda a emergencias ahora.
 
-La doctora recibe el aviso por WhatsApp aunque sea fuera de horario.
+🔧 Por construir: que la doctora reciba además un aviso por WhatsApp, aunque sea fuera de horario.
 
 **Tipo de cita según el motivo.**
 
@@ -166,13 +138,13 @@ responderá a partir de las [hora]».
 Nombre propuesto: `recordatorio_cita`
 
 ```
-Hola {{nombre}}, te recordamos tu cita en {{consultorio}} mañana {{dia}} a las {{hora}}.
-¿Nos confirmas tu asistencia?
-[Confirmo]  [Necesito cambiar]
+Hola {{nombre}}, le recordamos su cita en EliDental mañana {{dia}} a las {{hora}}
+(Av. Manuel Agustín Aguirre 343-39). ¿Nos confirma su asistencia?
+Si necesita cambiarla, respóndame por aquí.
 ```
 
-- Los botones son *quick reply*, con payload `confirmar:<eventId>` y `cambiar:<eventId>`. Así la
-  respuesta dice exactamente a qué cita se refiere.
+- **Solo texto, sin botones.** El paciente responde con sus palabras y la IA lo interpreta con el
+  contexto guardado en Redis (`v4:reminder:<teléfono>`).
 - La plantilla se crea en Kapso o en Meta y **debe aprobarla Meta** antes de usarse. Solo lleva
   logística, para que la clasifiquen como UTILITY y no como MARKETING.
 - Se envía con el nodo Kapso, operación **Send Template**
@@ -204,7 +176,6 @@ recordatorio y aparecen como «sin teléfono» en el resumen.
 |---|---|---|---|
 | `v4:reminder:sent:<eventId>` | `1` | 3 días | No enviar dos veces el mismo recordatorio |
 | `v4:reminder:<teléfono>` | `<eventId>` | 36 h | Si el paciente responde con texto («sí», «no puedo»), saber a qué cita se refiere |
-| `v4:state:<teléfono>` | paso de la reserva | 2 h | Reserva guiada con botones |
 | `v4:handoff:<teléfono>` | `1` | lo decide la doctora | El bot no responde mientras la doctora atiende |
 
 ### Cuándo y a quién
@@ -213,19 +184,18 @@ recordatorio y aparecen como «sin teléfono» en el resumen.
 |---|---|
 | Al confirmar una cita nueva | «Te enviaremos un recordatorio por WhatsApp el día anterior» (consentimiento) |
 | Día anterior, 18:00 | Plantilla a cada cita de mañana con teléfono y sin recordatorio enviado |
-| Toca **Confirmo** | `Estado: confirmada`, evento en verde, «¡Gracias! Te esperamos mañana a las [hora]» |
-| Toca **Necesito cambiar** | `Estado: cambio pedido`; Eli ofrece turnos para otro día; al reservar el nuevo turno, borra el anterior |
-| Responde con texto | Si hay un `v4:reminder:<teléfono>`, «sí» confirma y «no puedo» abre el cambio; lo ambiguo va a la IA con ese contexto |
+| Responde que asistirá («sí», «ahí estaré») | `Estado: confirmada`, evento en verde, «¡Gracias! Le esperamos mañana a las [hora]» |
+| Responde que no puede o quiere cambiar | `Estado: cambio pedido`; Eli ofrece 2 turnos cercanos; al reservar el nuevo, borra el anterior |
+| Respuesta ambigua | La IA la interpreta con el contexto de `v4:reminder:<teléfono>` y pregunta si hace falta |
 | Mismo día, 07:00 | Resumen a la doctora: confirmadas, sin respuesta, cambios pedidos y citas sin teléfono |
 | Opcional, 2 h antes | Segundo aviso solo a las que siguen sin confirmar (cuesta otro mensaje) |
 
 ### Construcción en n8n
 
-1. **Normalizar mensaje:** además de `text.body`, leer el payload del botón de una plantilla
-   (`message.button.payload`) y de un botón interactivo (`message.interactive.button_reply.id`).
-   Comprobar el formato exacto con un mensaje real en **Executions**.
-2. **Rama «¿Tocó un botón?»** antes del agente: `confirmar:<id>` actualiza el evento y responde;
-   `cambiar:<id>` guarda el contexto y pasa al agente con «el paciente quiere cambiar la cita <id>».
+1. **Contexto para la IA:** cuando llega un mensaje y existe `v4:reminder:<teléfono>`, *Preparar turno*
+   agrega al texto «(el paciente responde al recordatorio de su cita del [día] a las [hora])».
+2. **Prompt:** una sección *RESPUESTA AL RECORDATORIO* con qué hacer si confirma, si no puede o si es
+   ambiguo, usando `buscar_mis_citas` y `mover_cita`.
 3. **Workflow nuevo `Eli · Recordatorios`:** *Schedule Trigger* (18:00) → *Google Calendar: Get Many*
    (mañana) → *Code*: extraer `Tel:` y filtrar → *Redis*: ¿ya enviado? → *Kapso: Send Template* →
    *Google Calendar: Update* (descripción) → *Redis*: marcar enviado.
@@ -288,4 +258,4 @@ cierran.
 - [Gestión Dental: ventajas y límites de WhatsApp](https://gestiondental.org/whatsapp-confirmar-citas-dentales-ventajas-limites-buenas-practicas/)
 - [Leadsales: WhatsApp para consultorios](https://leadsales.io/blog/whatsapp-para-consultorios-y-clinicas/)
 - [Medesk: plantillas de comunicación](https://www.medesk.net/es/blog/plantillas-de-comunicacion-para-clinicas/)
-- [Kapso: n8n](https://docs.kapso.ai/docs/whatsapp/n8n) y [plantillas con botones](https://docs.kapso.ai/docs/whatsapp/templates/buttons)
+- [Kapso: n8n](https://docs.kapso.ai/docs/whatsapp/n8n)

@@ -1,6 +1,6 @@
 # ADR 0005: Reglas fijas y botones antes que la IA
 
-- **Estado:** Propuesta (diseño para consultorios dentales; aún no implementada)
+- **Estado:** Reemplazada por la [ADR 0006](0006-conversacion-natural.md) (2026-10-10)
 - **Fecha:** 2026-10-07
 
 ## Contexto

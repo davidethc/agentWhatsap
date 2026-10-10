@@ -44,6 +44,7 @@ Después: abre n8n, crea las credenciales (Kapso, Gemini, Google Calendar, Redis
 | [docs/instalacion-windows.md](docs/instalacion-windows.md) | Quien instala en Windows | Instalación paso a paso en Windows 10/11 con WSL 2 y Docker Desktop, hasta que Eli responde |
 | [docs/arquitectura.md](docs/arquitectura.md) | Quien desarrolla | Componentes, recorrido de un mensaje, claves de Redis, decisiones y límites |
 | [docs/operacion.md](docs/operacion.md) | Quien mantiene | Encender, revisar, publicar, respaldar, restaurar, migrar y problemas conocidos |
+| [docs/conversacion-natural.md](docs/conversacion-natural.md) | Producto | Qué responde Eli a cada mensaje, cómo busca horarios (libre, ocupado, lleno) y cómo cierra la cita |
 | [docs/embudo-elidental.md](docs/embudo-elidental.md) | Producto y ventas | Embudo de conversación por etapas: mensajes reales, esperas, perdido y ganado, qué falta construir |
 | [docs/seguridad.md](docs/seguridad.md) | Todos | Secretos y datos de pacientes |
 | [docs/eli-dental.md](docs/eli-dental.md) | Producto | Conversación para dentistas, reglas, urgencias, recordatorios, costos y pendientes |

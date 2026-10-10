@@ -32,6 +32,12 @@ Ecuador.
 
 ## 2026-10-10
 
+### Agregado
+- Embudo de conversación de Eli por etapas (bienvenida, urgencia, conversación, cita, atendido,
+  retención), con mensajes reales, esperas dentro de la ventana de 24 h y plantillas de Meta
+  ([docs/embudo-elidental.md](docs/embudo-elidental.md)).
+- Guía de instalación en Windows ([docs/instalacion-windows.md](docs/instalacion-windows.md)).
+
 ### Cambiado
 - `version4` vuelve a la **conversación natural** (sin formulario): el formulario WhatsApp Flow queda
   guardado en la rama `feat/flow-formulario` hasta que Meta permita publicarlo.

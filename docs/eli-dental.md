@@ -28,6 +28,9 @@ anteriores a septiembre de 2024 tienen la dirección antigua (Mercadillo y Av. U
 | Precios | No publicados (rango «$$»; solo promociones antiguas, como 20 % en limpieza para parejas). Eli no da cifras: el valor lo confirma la doctora en la consulta | Facebook, Instagram |
 | Horario | Lunes a viernes de 09:00 a 18:00, sábado de 09:00 a 15:00, domingo cerrado | Instagram, publicación de la mudanza (21/9/2024) |
 
+> El recorrido completo del paciente, por etapas y con los mensajes reales, está en
+> [embudo-elidental.md](embudo-elidental.md).
+
 ## 1. Lo que pide la doctora
 
 Encuesta del 17/9/2026 (una respuesta):

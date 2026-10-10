@@ -13,6 +13,9 @@ Paciente en WhatsApp → Meta → Kapso → ngrok → n8n (Docker en tu computad
 
 Tiempo estimado: 1 a 2 horas la primera vez, sobre todo por Google Cloud.
 
+> **¿Usas Windows?** Sigue [docs/instalacion-windows.md](docs/instalacion-windows.md): es esta misma
+> guía detallada para Windows 10/11 con WSL 2 y Docker Desktop.
+
 > **Nunca subas claves a GitHub.** Las API keys van en las credenciales de n8n y los secretos del
 > sistema en `.env`, que Git ignora. Lee [docs/seguridad.md](docs/seguridad.md).
 
@@ -59,6 +62,8 @@ Tiempo estimado: 1 a 2 horas la primera vez, sobre todo por Google Cloud.
 4. Con [Homebrew](https://brew.sh): `brew install git jq ngrok`.
 
 ### Windows
+
+Guía completa para Windows: [docs/instalacion-windows.md](docs/instalacion-windows.md). Resumen:
 
 1. En PowerShell como administrador: `wsl --install`, y reinicia.
 2. Instala Docker Desktop con la opción **Use WSL 2**.
@@ -179,7 +184,7 @@ internet).
 
 1. https://aistudio.google.com/apikey → **Create API key** y cópiala.
 2. El modelo debe admitir herramientas (*tools*), porque el agente consulta el calendario. Eli usa
-   `models/gemini-3.5-flash`. Si Google lo retira, elige otro modelo *Flash* de la lista del nodo.
+   `models/gemini-3.5-flash-lite`. Si Google lo retira, elige otro modelo *Flash* de la lista del nodo.
 
 ---
 

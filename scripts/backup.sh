@@ -6,6 +6,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker no está corriendo: abre Docker Desktop (open -a Docker) y vuelve a intentar." >&2
+  exit 1
+fi
+
 set -a; . ./.env; set +a
 dest="backups/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$dest"

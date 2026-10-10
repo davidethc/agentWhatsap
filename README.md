@@ -41,6 +41,7 @@ Después: abre n8n, crea las credenciales (Kapso, Gemini, Google Calendar, Redis
 | Documento | Para quién | Contenido |
 |---|---|---|
 | [GUIA.md](GUIA.md) | Quien instala | Instalación desde cero: cuentas, Docker, ngrok, Kapso, Google, Gemini, workflow, pruebas |
+| [docs/instalacion-windows.md](docs/instalacion-windows.md) | Quien instala en Windows | Instalación paso a paso en Windows 10/11 con WSL 2 y Docker Desktop, hasta que Eli responde |
 | [docs/arquitectura.md](docs/arquitectura.md) | Quien desarrolla | Componentes, recorrido de un mensaje, claves de Redis, decisiones y límites |
 | [docs/operacion.md](docs/operacion.md) | Quien mantiene | Encender, revisar, publicar, respaldar, restaurar, migrar y problemas conocidos |
 | [docs/seguridad.md](docs/seguridad.md) | Todos | Secretos y datos de pacientes |

@@ -20,6 +20,23 @@ Para apagar sin perder datos: `docker compose stop` (o `docker compose down`).
 Al arrancar, n8n tarda alrededor de 1 minuto en terminar de instalar Kapso: `/healthz` responde antes
 de que todo esté listo. Espera a ver `Editor is now accessible` en `docker compose logs n8n`.
 
+## Después de reiniciar el computador
+
+Si el Mac se reinició o se cerró Docker, **nada responde**: ni n8n, ni ngrok, ni Eli. Para levantar todo:
+
+```bash
+open -a Docker                                   # espera a que la ballena quede quieta
+cd ~/agentWhatsap
+docker compose up -d                             # los 6 servicios
+nohup ngrok http --url=TU-DOMINIO.ngrok-free.dev 5678 > local-files/ngrok.log 2>&1 &
+scripts/check.sh                                 # todo OK, incluido «Túnel»
+```
+
+- `nohup … &` deja ngrok corriendo aunque cierres la terminal. Para detenerlo: `pkill -f "ngrok http"`.
+- Para que Docker arranque solo al iniciar sesión: Docker Desktop → *Settings → General* → **Start
+  Docker Desktop when you sign in**.
+- Si `scripts/check.sh` marca «ngrok no está activo», repite la línea de ngrok.
+
 ## Revisar la salud
 
 `scripts/check.sh` revisa los 6 servicios, PostgreSQL, Redis, `/healthz`, que las versiones coincidan,

@@ -30,6 +30,15 @@ Ecuador.
   recordatorios de cita con plantilla de Meta ([docs/eli-dental.md](docs/eli-dental.md),
   [ADR 0005](docs/adr/0005-reglas-antes-que-ia.md)).
 
+## 2026-10-10
+
+### Cambiado
+- `version4` vuelve a la **conversación natural** (sin formulario): el formulario WhatsApp Flow queda
+  guardado en la rama `feat/flow-formulario` hasta que Meta permita publicarlo.
+- Modelo del agente: `gemini-3.5-flash-lite` (cambiado en el editor de n8n).
+- `docs/operacion.md`: cómo levantar todo después de reiniciar el computador.
+- `scripts/backup.sh` avisa si Docker no está corriendo.
+
 ## 2026-10-07
 
 ### Cambiado

@@ -19,7 +19,8 @@ línea cuando la empieces.
   (https://app.notion.com/p/c39bd425ea3e4c388f23a5a0f90717b2, data source
   `collection://a93fc3f2-1ecf-4a07-b2cb-c4324fa3e2ed`). Los IDs de tarea son `TK-n` y los de historia `HU-n`.
 - **El repositorio es el espejo.** Cuando el usuario aprueba una fase, copias esa página a
-  `docs/crm/` (`constitution.md`, `spec.md`, `plan.md`, `tasks.md`) con un commit local en `feat/crm`.
+  `docs/crm/` (`constitution.md`, `spec.md`, `plan.md`, `tasks.md`) con un commit local en `feat/crm`,
+  **dentro del worktree `/Users/d/agentWhatsap-crm`** (la carpeta `/Users/d/agentWhatsap` es `main`).
 - Usa el MCP de Notion para leer y escribir. Antes de editar una página, léela (`notion-fetch`) para
   no pisar cambios del usuario.
 

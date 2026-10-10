@@ -19,7 +19,7 @@ Esta carpeta es su espejo: cada documento se copia aquí cuando el usuario lo ap
 | Agente | Modelo | Rama / worktree | Para qué |
 |---|---|---|---|
 | `crm-planificador` | opus | `feat/crm` | Preguntas, Spec, Plan y Tareas en Notion. No programa |
-| `crm-orquestador` | opus | `feat/crm` | Líder: lanza compañeros, revisa, integra y actualiza Notion |
+| `crm-orquestador` | opus | `feat/crm` | Líder: abre un panel de herdr por agente, revisa, integra y actualiza Notion |
 | `crm-datos` | opus | `feat/crm-datos` · `../agentWhatsap-crm-datos` | Supabase: tablas, RLS, auditoría, login |
 | `crm-frontend` | sonnet | `feat/crm-frontend` · `../agentWhatsap-crm-frontend` | Next.js: resumen, kanban, ficha, citas |
 | `crm-n8n` | sonnet | `feat/crm-n8n` · `../agentWhatsap-crm-n8n` | Eli → CRM y Google Calendar, sin romper Eli |
@@ -34,9 +34,10 @@ Para verlos en Claude Code: `/agents`.
 claude --agent crm-planificador
 #   ✋ apruebas la Spec  →  ✋ apruebas el Plan + Tareas
 
-# Fase B: construir (un panel de tmux por agente)
-tmux new -s eli-crm
-claude --agent crm-orquestador --teammate-mode tmux
+# Fase B: construir (un panel de herdr por agente)
+# En herdr, en una pestaña nueva con la carpeta /Users/d/agentWhatsap-crm:
+claude --agent crm-orquestador
+#   el orquestador abre los paneles datos, frontend, n8n y qa con `herdr agent start`
 #   ✋ apruebas antes de tocar Eli en producción
 
 # Al final (tú): pasar feat/crm a main y hacer git push
@@ -45,9 +46,11 @@ claude --agent crm-orquestador --teammate-mode tmux
 ## Configuración
 
 - `CLAUDE.md`: reglas para todas las sesiones.
-- `.claude/settings.json`: equipos de agentes activados (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`,
-  `teammateMode: tmux`) y comandos bloqueados (`git push`, `reset --hard`, `rebase`, `branch -D`,
+- `.claude/settings.json`: comandos bloqueados (`git push`, `reset --hard`, `rebase`, `branch -D`,
   cambiar a `main` y leer `.env`).
+- Carpetas: `/Users/d/agentWhatsap` = `main` (Eli y otras sesiones); `/Users/d/agentWhatsap-crm` =
+  worktree de `feat/crm` (planificador y orquestador); `/Users/d/agentWhatsap-crm-<agente>` =
+  worktree de cada agente.
 - `.claude/skills/` → `.agents/skills/` + `skills-lock.json`: skills de skills.sh
   (`mattpocock/skills`, `obra/superpowers`, `vercel-labs/agent-skills`), revisadas antes de
   instalarlas. Para reinstalarlas: `npx skills experimental_install`.

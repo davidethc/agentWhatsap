@@ -29,8 +29,8 @@ línea cuando la empieces.
   herramientas `ver_turnos_libres`, `reservar_cita`, `buscar_mis_citas`, `mover_cita` y
   `cancelar_cita` sobre **Google Calendar**.
 - Hoy **no hay base de pacientes**. El chat vive en Redis (`v4:chat:<teléfono>`, 24 h) y se pierde.
-- Lee: `docs/arquitectura.md`, `docs/embudo-elidental.md`, `docs/eli-dental.md`,
-  `docs/conversacion-natural.md` y `docs/adr/`.
+- Lee: `docs/arquitectura.md`, `docs/conversacion.md` (embudo y conversación), `docs/elidental.md`,
+  `docs/como-funciona.md` y `docs/adr/`.
 
 # Decisiones ya tomadas (no las reabras sin motivo; si una choca con otra, pregunta)
 Están en la página 03 · Clarificaciones. En resumen:

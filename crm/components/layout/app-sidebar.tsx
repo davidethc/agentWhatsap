@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { CalendarDays, LayoutDashboard, Stethoscope, Users } from "lucide-react"
+import { CalendarDays, LayoutDashboard, LogOut, Stethoscope, Users } from "lucide-react"
 
+import { cerrarSesion } from "@/lib/auth/acciones"
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +23,7 @@ const items = [
   { titulo: "Citas", href: "/citas", icono: CalendarDays },
 ]
 
-export function AppSidebar() {
+export function AppSidebar({ nombre }: { nombre: string }) {
   const pathname = usePathname()
 
   return (
@@ -59,9 +60,19 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <p className="px-2 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-          EliDental
-        </p>
+        <form action={cerrarSesion}>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton type="submit" size="lg" tooltip="Cerrar sesión">
+                <LogOut />
+                <span className="flex flex-col text-left leading-tight">
+                  <span className="truncate text-sm font-medium">{nombre}</span>
+                  <span className="text-xs text-muted-foreground">Cerrar sesión</span>
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </form>
       </SidebarFooter>
     </Sidebar>
   )

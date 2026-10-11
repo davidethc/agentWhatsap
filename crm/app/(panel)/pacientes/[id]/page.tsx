@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
 import { CitasDelPaciente } from "@/components/ficha/citas-del-paciente"
+import { DatosClinicosFicha } from "@/components/ficha/datos-clinicos"
 import { DatosBasicos } from "@/components/ficha/datos-basicos"
 import { Encabezado } from "@/components/ficha/encabezado"
 import { HistorialEtapas } from "@/components/ficha/historial-etapas"
@@ -36,6 +37,12 @@ async function Ficha({ params }: { params: Promise<{ id: string }> }) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         <div className="flex flex-col gap-6">
           <DatosBasicos key={JSON.stringify([ficha.paciente.id, ficha.paciente.nombre, ficha.paciente.cedula, ficha.paciente.fechaNacimiento, ficha.paciente.correo])} paciente={ficha.paciente} />
+          <DatosClinicosFicha
+            key={JSON.stringify([ficha.paciente.id, ficha.paciente.consentimientoFirmadoEn, ficha.datosClinicos])}
+            pacienteId={ficha.paciente.id}
+            consentimientoFirmadoEn={ficha.paciente.consentimientoFirmadoEn}
+            datosClinicos={ficha.datosClinicos}
+          />
           <CitasDelPaciente
             citas={ficha.citas}
             paciente={{ id: ficha.paciente.id, nombre: ficha.paciente.nombre, telefono: ficha.paciente.telefono }}

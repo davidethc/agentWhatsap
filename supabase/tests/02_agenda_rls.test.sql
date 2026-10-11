@@ -78,11 +78,12 @@ select ok((select count(*) from public.cambios_etapa) >= 1, 'personal lee cambio
 select ok((select count(*) from public.horario) = 6, 'personal lee horario');
 select ok((select count(*) from public.errores_integracion) = 1, 'personal lee errores_integracion');
 select ok((select count(*) from public.sync_calendario) = 1, 'personal lee sync_calendario');
--- Escribe citas y horario
-select lives_ok($$insert into public.citas (paciente_id, inicia_en, termina_en, origen)
-  values (900001, '2026-10-14 10:00-05', '2026-10-14 11:00-05', 'panel')$$, 'personal inserta citas');
-with u as (update public.citas set servicio = 'Limpieza' where gcal_event_id = 'gcal-prueba-1' returning 1)
-select is((select count(*)::int from u), 1, 'personal actualiza citas');
+-- Citas solo con guardar_cita / cancelar_cita (TK-39, ver 09_permisos); horario sí directo
+select throws_ok($$insert into public.citas (paciente_id, inicia_en, termina_en, origen)
+  values (900001, '2026-10-14 10:00-05', '2026-10-14 11:00-05', 'panel')$$, '42501', null,
+  'personal no inserta citas directo');
+select throws_ok($$update public.citas set servicio = 'Limpieza' where gcal_event_id = 'gcal-prueba-1'$$,
+  '42501', null, 'personal no edita citas directo');
 with u as (update public.horario set cierra = '17:00' where dia_semana = 5 returning 1)
 select is((select count(*)::int from u), 1, 'personal actualiza horario');
 -- Solo lectura: mensajes, cambios_etapa, errores_integracion, sync_calendario
@@ -105,16 +106,12 @@ select is((select count(*)::int from public.horario), 0, 'ajeno: 0 horario');
 select is((select count(*)::int from public.errores_integracion), 0, 'ajeno: 0 errores_integracion');
 select is((select count(*)::int from public.sync_calendario), 0, 'ajeno: 0 sync_calendario');
 
--- anon: 0 filas en las 6 tablas
+-- anon: sin privilegio de tabla en las 6 (TK-39), ni siquiera puede consultar
 reset role;
 set local role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
-select is((select count(*)::int from public.mensajes), 0, 'anon: 0 mensajes');
-select is((select count(*)::int from public.citas), 0, 'anon: 0 citas');
-select is((select count(*)::int from public.cambios_etapa), 0, 'anon: 0 cambios_etapa');
-select is((select count(*)::int from public.horario), 0, 'anon: 0 horario');
-select is((select count(*)::int from public.errores_integracion), 0, 'anon: 0 errores_integracion');
-select is((select count(*)::int from public.sync_calendario), 0, 'anon: 0 sync_calendario');
+select throws_ok(format('select count(*) from public.%I', t), '42501', null, 'anon no consulta ' || t)
+  from unnest(array['mensajes','citas','cambios_etapa','horario','errores_integracion','sync_calendario']) t;
 reset role;
 
 select * from finish();

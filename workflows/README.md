@@ -7,6 +7,8 @@ personales: las credenciales van solo por nombre, y el calendario y el número u
 | Archivo | Estado | Qué es |
 |---|---|---|
 | [`eli-version4.json`](eli-version4.json) | **Producción** | Eli: webhook Kapso, agente Gemini con memoria en Redis y agenda interna en Google Calendar (ver [arquitectura](../docs/arquitectura.md)) |
+| [`eli-crm.json`](eli-crm.json) | **Nuevo, inactivo** (TK-18) | Sub-workflow `Eli → CRM`: POST a la Edge Function `eli-evento` (timeout 5 s, 2 reintentos); si falla guarda la entrada en la lista Redis local `v4:crm:errores` (máx. 200) y termina sin error. Credenciales: `Eli CRM secreto` (Header Auth) y `Redis local` |
+| [`pruebas/eli-version4-crm-copia.json`](pruebas/eli-version4-crm-copia.json) | Copia de prueba, inactiva (TK-19) | `version4` + 3 ramas hacia `Eli → CRM` sin esperar (tras «¿Mensaje nuevo?», «Responder por WhatsApp» y «Crear evento»). Se genera con [`../scripts/crm-copia-version4.jq`](../scripts/crm-copia-version4.jq); lo único que cambia fuera de las ramas nuevas es el path del webhook |
 | [`pruebas/queue-selftest.json`](pruebas/queue-selftest.json) | Prueba | Webhook GET + Code: comprueba cola → worker → runner |
 | [`pruebas/redis-selftest.json`](pruebas/redis-selftest.json) | Prueba | Webhook GET + Redis set/get: comprueba la credencial `Redis local` |
 | [`legacy/v2-bot-supabase.json`](legacy/v2-bot-supabase.json) | Histórico | Bot v2 integrado con Supabase (`barberia-reservas`), ver [`legacy/supabase/`](legacy/supabase/) |

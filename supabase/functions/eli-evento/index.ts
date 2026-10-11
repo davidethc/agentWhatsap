@@ -31,7 +31,7 @@ async function rest(ruta: string, cuerpo: unknown): Promise<Response> {
   });
 }
 
-// Deja constancia del fallo (HU-13) sin datos del paciente: ni teléfono ni texto.
+// Deja constancia del fallo (HU-13) sin datos del paciente: solo el tipo y los ids técnicos.
 async function registrarError(detalle: Record<string, unknown>) {
   try {
     await rest("errores_integracion", { origen: "eli", detalle });

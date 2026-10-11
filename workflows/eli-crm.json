@@ -1,7 +1,7 @@
 {
   "id": "EliCrmSubwf00001",
   "name": "Eli → CRM",
-  "description": "Sub-workflow de Eli hacia el Eli Panel (CRM). Recibe un evento {tipo, telefono, ...} (docs/crm/plan.md sección 5), lo envía por POST a la Edge Function eli-evento con el encabezado x-eli-secreto (credencial «Eli CRM secreto», tipo Header Auth), con timeout de 5 s y 2 reintentos. Si falla, guarda el evento en la lista Redis v4:crm:errores (LPUSH, tope de 200) y termina SIN error: Eli nunca depende del CRM. Cambiar la URL del nodo «Enviar a eli-evento» al pasar a la nube de Supabase.",
+  "description": "Sub-workflow de Eli hacia el Eli Panel (CRM). Recibe un evento {tipo, telefono, ...} (docs/crm/plan.md sección 5), lo envía por POST a la Edge Function eli-evento con el encabezado x-eli-secreto (credencial «Eli CRM secreto», tipo Header Auth), con timeout de 5 s y 2 reintentos. Nunca envía ni guarda el campo texto (privacidad, por ahora). Si falla, guarda el evento en la lista Redis v4:crm:errores (LPUSH, tope de 200) y termina SIN error: Eli nunca depende del CRM. Cambiar la URL del nodo «Enviar a eli-evento» al pasar a la nube de Supabase.",
   "nodes": [
     {
       "parameters": {
@@ -25,7 +25,7 @@
         "sendBody": true,
         "contentType": "json",
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json) }}",
+        "jsonBody": "={{ JSON.stringify((({ texto, ...resto }) => resto)($json)) }}",
         "options": {
           "timeout": 5000
         }
@@ -62,7 +62,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Falló el envío al CRM: arma la entrada que se guarda en Redis (v4:crm:errores).\n// No se guarda el secreto (no está en la entrada) y el error se recorta.\nconst evento = $('Entrada interna').first().json;\nconst err = $json.error ?? $json;\nconst detalle = (typeof err === 'string' ? err : (err.message ?? JSON.stringify(err))).slice(0, 500);\nreturn [{ json: { entrada: JSON.stringify({ en: new Date().toISOString(), error: detalle, evento }) } }];"
+        "jsCode": "// Falló el envío al CRM: arma la entrada que se guarda en Redis (v4:crm:errores).\n// Por privacidad NO se guarda el texto del mensaje; tampoco el secreto (no está en la entrada). El error se recorta.\nconst { texto, ...evento } = $(\"Entrada interna\").first().json;\nconst err = $json.error ?? $json;\nconst detalle = (typeof err === \"string\" ? err : (err.message ?? JSON.stringify(err))).slice(0, 500);\nreturn [{ json: { entrada: JSON.stringify({ en: new Date().toISOString(), error: detalle, evento }) } }];"
       },
       "id": "c1a10001-0000-4000-8000-000000000004",
       "name": "Armar error",

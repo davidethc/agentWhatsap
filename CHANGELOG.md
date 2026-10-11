@@ -6,6 +6,10 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli Panel: el CRM no guarda el contenido de los mensajes (TK-41).** Migración
+  `20261011000100_mensajes_sin_texto.sql` (borra `mensajes.texto`; `registrar_evento_eli` rechaza
+  `texto`), `eli-evento` responde 400 si llega `texto`, seed, pgTAP, tipos y capa de datos del panel
+  sin contenido.
 - **Eli Panel (CRM), fase de planificación con SDD** ([docs/crm/](docs/crm/README.md)): hub en
   Notion como fuente de verdad (constitución, spec en borrador con 14 historias, clarificaciones,
   flujos y tablero de tareas), `CLAUDE.md` con las reglas del proyecto, 6 agentes en
@@ -31,6 +35,7 @@ Ecuador.
   Eli → CRM y la tabla `mensajes` quedan sin `texto` (sigue registrándose que hubo mensaje, para el
   embudo); la HU-7 «conversación con Eli» y TK-31 quedan pospuestas. Docs actualizadas; falta que
   datos, frontend y n8n entreguen su parte.
+- **Privacidad (TK-41): el CRM no guarda el contenido de los mensajes, por ahora.** Los eventos `mensaje_entrante` y `mensaje_saliente` ya no llevan `texto` (solo `tipo`, `telefono`, `nombre_whatsapp`, `message_id` o `execution_id` y `en`), y `Eli → CRM` descarta `texto` aunque alguien lo mande, tanto en el POST como en la lista Redis `v4:crm:errores`. La base no cambia: `texto` sigue siendo opcional y queda vacío.
 - Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
 
 ### Cambiado

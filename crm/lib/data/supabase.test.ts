@@ -67,6 +67,51 @@ describe("adaptador Supabase", () => {
     ).rejects.toThrow("No se pudo guardar los datos")
   })
 
+  it("consentimiento y datos clínicos: escritura directa con los campos correctos", async () => {
+    const llamadas: { tabla: string; op: string; valor?: unknown }[] = []
+    // Cada maybeSingle() toma la siguiente respuesta (1.ª: ¿existe la fila?, 2.ª: resultado de escribir).
+    let cola: { data: unknown; error: unknown }[] = []
+    const cliente = {
+      from: (tabla: string) => {
+        const consulta: Record<string, unknown> = {}
+        for (const m of ["select", "eq", "order"]) consulta[m] = () => consulta
+        consulta.maybeSingle = async () => cola.shift() ?? { data: null, error: null }
+        return {
+          ...consulta,
+          update: (valor: unknown) => (llamadas.push({ tabla, op: "update", valor }), consulta),
+          insert: (valor: unknown) => (llamadas.push({ tabla, op: "insert", valor }), consulta),
+          upsert: () => llamadas.push({ tabla, op: "upsert" }),
+        }
+      },
+      rpc: vi.fn(),
+    } as unknown as SupabaseClient
+    const datos = crearDatosSupabase(cliente)
+    const clin = { alergias: "Polen", enfermedades: null, embarazo: null, miedo: null }
+    const ok = { data: { id: 7, ...clin }, error: null }
+
+    cola = [ok]
+    await datos.pacientes.marcarConsentimiento(7, "2026-10-09").catch(() => {})
+    expect(llamadas[0]).toEqual({ tabla: "pacientes", op: "update", valor: { consentimiento_firmado_en: "2026-10-09T12:00:00-05:00" } })
+
+    // Ya hay fila clínica → update de los 4 datos (sin tocar paciente_id).
+    cola = [{ data: { paciente_id: 7 }, error: null }, ok]
+    expect(await datos.pacientes.guardarClinicos(7, clin)).toMatchObject(clin)
+    expect(llamadas[1]).toEqual({ tabla: "datos_clinicos", op: "update", valor: clin })
+
+    // No hay fila → insert con paciente_id.
+    cola = [{ data: null, error: null }, ok]
+    await datos.pacientes.guardarClinicos(7, clin)
+    expect(llamadas[2]).toEqual({ tabla: "datos_clinicos", op: "insert", valor: { paciente_id: 7, ...clin } })
+    expect(llamadas.some((l) => l.op === "upsert")).toBe(false)
+
+    // El trigger de la base (P0001) se traduce a un mensaje claro.
+    cola = [{ data: null, error: null }, { data: null, error: { message: "Falta el consentimiento firmado del paciente", code: "P0001" } }]
+    await expect(datos.pacientes.guardarClinicos(7, clin)).rejects.toThrow(/consentimiento firmado.*ficha/)
+    // Un error técnico no se muestra.
+    cola = [{ data: null, error: null }, { data: null, error: { message: "relation x", code: "XX000" } }]
+    await expect(datos.pacientes.guardarClinicos(7, clin)).rejects.toThrow("No se pudo guardar los datos clínicos")
+  })
+
   it("citas: guardar, cancelar y marcar asistencia usan sus funciones", async () => {
     const { cliente, rpc, escrituras } = clienteSimulado({ data: { id: 7 }, error: null })
     const datos = crearDatosSupabase(cliente)

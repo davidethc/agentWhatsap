@@ -189,3 +189,31 @@ describe("resumen y ficha", () => {
     expect(await datos.pacientes.obtener(424242)).toBeNull()
   })
 })
+
+describe("consentimiento y datos clínicos", () => {
+  const vacios = { alergias: "Penicilina", enfermedades: null, embarazo: false, miedo: "Agujas" }
+
+  it("sin consentimiento rechaza guardar datos clínicos con un mensaje en español", async () => {
+    const p = await porNombre("Paciente B")
+    await expect(datos.pacientes.guardarClinicos(p.id, vacios)).rejects.toThrow(/consentimiento firmado/)
+    await expect(datos.pacientes.guardarClinicos(p.id, vacios)).rejects.toBeInstanceOf(ErrorDatos)
+    expect((await datos.pacientes.obtener(p.id))?.datosClinicos).toBeNull()
+  })
+  it("marcar el consentimiento guarda la fecha y luego deja guardar y leer los datos", async () => {
+    const p = await porNombre("Paciente B")
+    const marcado = await datos.pacientes.marcarConsentimiento(p.id, "2026-10-09")
+    expect(marcado.consentimientoFirmadoEn?.slice(0, 10)).toBe("2026-10-09")
+    expect(await datos.pacientes.guardarClinicos(p.id, vacios)).toEqual(vacios)
+    const ficha = await datos.pacientes.obtener(p.id)
+    expect(ficha?.paciente.consentimientoFirmadoEn).toBe(marcado.consentimientoFirmadoEn)
+    expect(ficha?.datosClinicos).toEqual(vacios)
+  })
+  it("no acepta una fecha futura ni mal escrita", async () => {
+    const p = await porNombre("Paciente B")
+    await expect(datos.pacientes.marcarConsentimiento(p.id, "2026-10-11")).rejects.toThrow(/futura/)
+    await expect(datos.pacientes.marcarConsentimiento(p.id, "ayer")).rejects.toThrow(/fecha válida/)
+  })
+  it("un paciente que no existe da error", async () => {
+    await expect(datos.pacientes.marcarConsentimiento(99999, "2026-10-09")).rejects.toThrow("Paciente no encontrado")
+  })
+})

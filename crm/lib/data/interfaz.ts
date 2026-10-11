@@ -5,7 +5,6 @@ import type {
   EntradaCita,
   FichaPaciente,
   FiltroPacientes,
-  Mensaje,
   MotivoPerdido,
   NuevoPaciente,
   Paciente,
@@ -50,10 +49,6 @@ export interface Datos {
   resumen: {
     /** `dia` por defecto: hoy (Guayaquil). */
     delDia(dia?: Date): Promise<Resumen>
-  }
-  mensajes: {
-    /** Conversación con Eli (solo lectura), de más antiguo a más nuevo. */
-    deConversacion(conversacionId: number): Promise<Mensaje[]>
   }
 }
 

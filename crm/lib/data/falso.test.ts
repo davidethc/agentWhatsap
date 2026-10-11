@@ -165,7 +165,7 @@ describe("actualizar datos básicos", () => {
   })
 })
 
-describe("resumen y mensajes", () => {
+describe("resumen y ficha", () => {
   it("resumen: citas de hoy y tarjetas coherentes", async () => {
     const r = await datos.resumen.delDia()
     expect(r.citasHoy).toHaveLength(3)
@@ -181,12 +181,6 @@ describe("resumen y mensajes", () => {
     const r = await datos.resumen.delDia()
     expect(r.citasHoy).toHaveLength(3)
     expect(r.tarjetas.citasHoy).toBe(2)
-  })
-  it("mensajes de una conversación, en orden", async () => {
-    const a = await porNombre("Paciente A")
-    const m = await datos.mensajes.deConversacion(a.conversacionId!)
-    expect(m.map((x) => x.direccion)).toEqual(["entrante", "saliente", "entrante"])
-    expect(await datos.mensajes.deConversacion(999999)).toEqual([])
   })
   it("ficha: dependientes y responsable", async () => {
     const a = await porNombre("Paciente A")

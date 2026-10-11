@@ -64,13 +64,6 @@ export type DatosClinicos = {
   miedo: string | null
 }
 
-export type Mensaje = {
-  id: number
-  direccion: "entrante" | "saliente"
-  texto: string
-  enviadoEn: string
-}
-
 /** Todo lo que muestra la ficha del paciente. */
 export type FichaPaciente = {
   paciente: Paciente

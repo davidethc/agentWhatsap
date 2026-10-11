@@ -36,7 +36,10 @@ async function Ficha({ params }: { params: Promise<{ id: string }> }) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         <div className="flex flex-col gap-6">
           <DatosBasicos key={JSON.stringify([ficha.paciente.id, ficha.paciente.nombre, ficha.paciente.cedula, ficha.paciente.fechaNacimiento, ficha.paciente.correo])} paciente={ficha.paciente} />
-          <CitasDelPaciente citas={ficha.citas} />
+          <CitasDelPaciente
+            citas={ficha.citas}
+            paciente={{ id: ficha.paciente.id, nombre: ficha.paciente.nombre, telefono: ficha.paciente.telefono }}
+          />
         </div>
         <HistorialEtapas historial={ficha.historial} />
       </div>

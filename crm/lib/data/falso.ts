@@ -22,6 +22,8 @@ import type {
   Resumen,
 } from "./tipos"
 
+const MENSAJE_SIN_CONSENTIMIENTO = "Falta el consentimiento firmado del paciente. Márcalo en la ficha antes de guardar datos clínicos."
+
 type Opciones = { ahora?: () => Date }
 
 /** Horario del consultorio (igual que el seed de la base): L–V 09–18, sábado 09–15. */
@@ -231,6 +233,20 @@ export function crearDatosFalsos({ ahora = () => new Date() }: Opciones = {}): D
           correo: d.correo,
         })
         return { ...p }
+      },
+      async marcarConsentimiento(id, fecha) {
+        const p = paciente(id)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) throw new ErrorDatos("Elige una fecha válida", "22023")
+        if (fecha > claveDia(ahora())) throw new ErrorDatos("La fecha de la firma no puede ser futura", "22023")
+        p.consentimientoFirmadoEn = `${fecha}T17:00:00.000Z` // mediodía en Guayaquil
+        return { ...p }
+      },
+      async guardarClinicos(id, d) {
+        const p = paciente(id)
+        if (!p.consentimientoFirmadoEn) throw new ErrorDatos(MENSAJE_SIN_CONSENTIMIENTO, "P0001")
+        const guardado = { ...d }
+        clinicos.set(id, guardado)
+        return { ...guardado }
       },
       async moverEtapa(id, etapa, motivo) {
         return cambiarEtapa(id, etapa, motivo)

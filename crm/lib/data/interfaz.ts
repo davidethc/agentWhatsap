@@ -1,6 +1,7 @@
 import type {
   Cita,
   DatosBasicos,
+  DatosClinicos,
   Etapa,
   EntradaCita,
   FichaPaciente,
@@ -29,6 +30,17 @@ export interface Datos {
      * función de la base para esto): la RLS la limita al personal y el trigger de auditoría la registra.
      */
     actualizar(id: number, datos: DatosBasicos): Promise<Paciente>
+    /**
+     * Guarda la fecha (yyyy-MM-dd) en que el paciente firmó el consentimiento. Escritura directa a
+     * `pacientes` (no hay función de la base para esto): la RLS la limita al personal y la auditoría la registra.
+     */
+    marcarConsentimiento(id: number, fecha: string): Promise<Paciente>
+    /**
+     * Guarda los datos clínicos (alergias, enfermedades, embarazo, miedo). Upsert directo a
+     * `datos_clinicos` (no hay función de la base): el trigger de la base rechaza si el paciente no
+     * tiene consentimiento firmado, la RLS limita al personal y la auditoría lo registra.
+     */
+    guardarClinicos(id: number, datos: DatosClinicos): Promise<DatosClinicos>
     /** Perdido exige `motivo`. */
     moverEtapa(id: number, etapa: Etapa, motivo?: MotivoPerdido): Promise<Paciente>
   }

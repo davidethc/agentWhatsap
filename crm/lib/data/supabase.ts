@@ -258,6 +258,43 @@ export function crearDatosSupabase(supabase: SupabaseClient): Datos {
         return pacientePorId(id)
       },
 
+      async marcarConsentimiento(id, fecha) {
+        // Escritura directa (no hay función de la base): mediodía en Guayaquil para que el día no se corra.
+        const r = await supabase
+          .from("pacientes")
+          .update({ consentimiento_firmado_en: `${fecha}T12:00:00-05:00` })
+          .eq("id", id)
+          .select("id")
+          .maybeSingle()
+        const fila = comprobar(r, "No se pudo guardar el consentimiento. Intenta de nuevo.")
+        if (!fila) throw new ErrorDatos("No se pudo guardar el consentimiento. Intenta de nuevo.", "42501")
+        return pacientePorId(id)
+      },
+
+      async guardarClinicos(id, d) {
+        // Escritura directa (no hay función de la base). No se usa upsert: ese también reescribe
+        // paciente_id y el permiso por columna solo deja cambiar los 4 datos clínicos.
+        // El trigger de la base responde P0001 si falta el consentimiento: se traduce a un mensaje claro.
+        const existe = comprobar(
+          await supabase.from("datos_clinicos").select("paciente_id").eq("paciente_id", id).maybeSingle(),
+          "No se pudo guardar los datos clínicos. Intenta de nuevo."
+        )
+        const campos = { alergias: d.alergias, enfermedades: d.enfermedades, embarazo: d.embarazo, miedo: d.miedo }
+        const consulta = existe
+          ? supabase.from("datos_clinicos").update(campos).eq("paciente_id", id)
+          : supabase.from("datos_clinicos").insert({ paciente_id: id, ...campos })
+        const r = await consulta.select("alergias, enfermedades, embarazo, miedo").maybeSingle()
+        if (r.error?.code === "P0001") {
+          throw new ErrorDatos(
+            "Falta el consentimiento firmado del paciente. Márcalo en la ficha antes de guardar datos clínicos.",
+            "P0001"
+          )
+        }
+        const fila = comprobar(r, "No se pudo guardar los datos clínicos. Intenta de nuevo.")
+        if (!fila) throw new ErrorDatos("No se pudo guardar los datos clínicos. Intenta de nuevo.", "42501")
+        return fila as DatosClinicos
+      },
+
       async moverEtapa(id, etapa, motivo) {
         const r = await supabase.rpc("mover_etapa", {
           p_paciente_id: id,

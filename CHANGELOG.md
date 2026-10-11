@@ -31,6 +31,10 @@ Ecuador.
   `.gitignore` cubre las copias. Paso a paso de TK-12 para aprobar:
   [docs/crm/tk-12-proyecto-remoto.md](docs/crm/tk-12-proyecto-remoto.md).
 - **Integración Eli → CRM en n8n (TK-18, TK-19)**: sub-workflow `Eli → CRM` ([workflows/eli-crm.json](workflows/eli-crm.json), inactivo) y una COPIA inactiva de version4 con 3 ramas sin esperar ([workflows/pruebas/eli-version4-crm-copia.json](workflows/pruebas/eli-version4-crm-copia.json), generada con `scripts/crm-copia-version4.jq`). `version4` real sin cambios.
+- **QA del Eli Panel, ronda 3** ([docs/crm/qa.md](docs/crm/qa.md)): TK-24, TK-27, TK-29, TK-32 y TK-33
+  pasan con Playwright contra Supabase local (asistencia con «volver en», kanban con motivo de Perdido,
+  ficha con auditoría, duplicado y dependiente, citas con aviso de horario y choque). Pendientes: login
+  intermitente (F-1) y pgTAP hasta integrar `feat/crm-datos` (F-2).
 - **QA del Eli Panel, ronda 2** ([docs/crm/qa.md](docs/crm/qa.md)): TK-13, TK-18, TK-19 y TK-23 pasan
   (backup contra la base local con checksums, workflows inactivos y sin secretos, `version4` real sin
   cambios, 43 pruebas del panel). Aviso: la copia de `version4` hay que regenerarla sobre el `version4`
@@ -38,8 +42,9 @@ Ecuador.
 - **El CRM no guarda ni muestra el contenido de los mensajes (TK-41)** — decisión del usuario del
   11-oct-2026, por privacidad ([ADR 0012](docs/adr/0012-crm-sin-contenido-de-mensajes.md)): el contrato
   Eli → CRM y la tabla `mensajes` quedan sin `texto` (sigue registrándose que hubo mensaje, para el
-  embudo); la HU-7 «conversación con Eli» y TK-31 quedan pospuestas. Docs actualizadas; falta que
-  datos, frontend y n8n entreguen su parte.
+  embudo); la HU-7 «conversación con Eli» y TK-31 quedan pospuestas. Integrado y verificado por QA
+  (ronda 3, [docs/crm/qa.md](docs/crm/qa.md)): columna borrada, `registrar_evento_eli` y `eli-evento`
+  rechazan `texto`, los nodos CRM de n8n no lo mandan y la ficha del panel no muestra conversación.
 - **Privacidad (TK-41): el CRM no guarda el contenido de los mensajes, por ahora.** Los eventos `mensaje_entrante` y `mensaje_saliente` ya no llevan `texto` (solo `tipo`, `telefono`, `nombre_whatsapp`, `message_id` o `execution_id` y `en`), y `Eli → CRM` descarta `texto` aunque alguien lo mande, tanto en el POST como en la lista Redis `v4:crm:errores`. La base no cambia: `texto` sigue siendo opcional y queda vacío.
 - Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
 

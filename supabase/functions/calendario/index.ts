@@ -4,6 +4,8 @@
 // son JWT: aquí se compara la clave a mano.
 //
 // POST {"accion": "push"}   → envía a Calendar las citas pendientes (TK-15)
+//      {"accion": "pull"}   → trae los cambios de Calendar con syncToken (TK-16)
+//      {"accion": "sync"}   → pull y luego push (el cron de 2 minutos; es el valor por defecto)
 // Respuestas: 200 {ok, configurado, ...} · 401 sin clave · 405 método · 500 error interno.
 //
 // Si faltan los secretos GOOGLE_SA_JSON o GCAL_CALENDAR_ID termina SIN error (200, configurado:false),
@@ -11,6 +13,7 @@
 
 import { ClienteCalendario, leerConfig } from "./google.ts";
 import { empujar } from "./empujar.ts";
+import { traer } from "./traer.ts";
 import { RepoSupabase } from "./repo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -40,8 +43,10 @@ Deno.serve(async (req) => {
   }
 
   const cuerpo = await req.json().catch(() => ({}));
-  const accion = typeof cuerpo?.accion === "string" ? cuerpo.accion : "push";
-  if (accion !== "push") return json(400, { ok: false, error: "accion debe ser push" });
+  const accion = typeof cuerpo?.accion === "string" ? cuerpo.accion : "sync";
+  if (!["push", "pull", "sync"].includes(accion)) {
+    return json(400, { ok: false, error: "accion debe ser push, pull o sync" });
+  }
 
   const repo = new RepoSupabase(SUPABASE_URL, SERVICE_KEY);
 
@@ -58,8 +63,10 @@ Deno.serve(async (req) => {
 
   try {
     const cal = new ClienteCalendario(lectura.config);
-    const push = await empujar(cal, repo);
-    return json(200, { ok: true, configurado: true, push });
+    // «sync» = primero se traen los cambios de Calendar y luego se envían los del panel.
+    const pull = accion === "push" ? undefined : await traer(cal, repo, lectura.config.calendarioId);
+    const push = accion === "pull" ? undefined : await empujar(cal, repo);
+    return json(200, { ok: true, configurado: true, pull, push });
   } catch (e) {
     console.error("calendario: fallo inesperado", e);
     try {

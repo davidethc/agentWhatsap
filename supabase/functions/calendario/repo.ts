@@ -2,8 +2,9 @@
 // Solo web estándar (fetch): se prueba en Node con un PostgREST falso o con el Supabase local.
 
 import type { CitaPendiente, RepoPush } from "./empujar.ts";
+import type { EventoCalendario, RepoPull } from "./traer.ts";
 
-export class RepoSupabase implements RepoPush {
+export class RepoSupabase implements RepoPush, RepoPull {
   url: string;
   clave: string;
   fetchFn: typeof fetch;
@@ -54,5 +55,18 @@ export class RepoSupabase implements RepoPush {
 
   async registrarError(detalle: Record<string, unknown>, dedupeMin = 0): Promise<void> {
     await this.rpc("calendario_registrar_error", { p_detalle: detalle, p_dedupe_min: dedupeMin });
+  }
+
+  // ── Pull (TK-16) ──
+  async leerSyncToken(calendarioId: string): Promise<string | null> {
+    return await this.rpc<string | null>("calendario_leer_token", { p_calendario_id: calendarioId });
+  }
+
+  async guardarSyncToken(calendarioId: string, token: string | null): Promise<void> {
+    await this.rpc("calendario_guardar_token", { p_calendario_id: calendarioId, p_token: token });
+  }
+
+  async aplicarEvento(evento: EventoCalendario): Promise<{ accion: string }> {
+    return await this.rpc<{ accion: string }>("aplicar_evento_calendario", { p_evento: evento });
   }
 }

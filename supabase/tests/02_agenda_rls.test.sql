@@ -1,5 +1,5 @@
 -- TK-3 · mensajes, citas, cambios_etapa, horario, errores_integracion y sync_calendario.
--- Datos inventados.
+-- TK-41: mensajes guarda solo dirección y hora, nunca el contenido. Datos inventados.
 begin;
 -- Aislar del seed.sql: se vacía dentro de la transacción (el rollback final lo deja como estaba).
 -- auditoria no se puede vaciar: las pruebas la filtran por fila.
@@ -7,7 +7,7 @@ delete from auth.users where email like '%@ejemplo.test';
 delete from public.personal;
 truncate public.mensajes, public.citas, public.cambios_etapa, public.datos_clinicos,
          public.pacientes, public.conversaciones, public.errores_integracion, public.sync_calendario;
-select plan(40);
+select plan(41);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000d1', 'doctora@ejemplo.test'),
@@ -18,8 +18,8 @@ values ('00000000-0000-0000-0000-0000000000d1', 'Doctora Prueba', 'doctora');
 insert into public.conversaciones (id, telefono) overriding system value values (900001, '593990000001');
 insert into public.pacientes (id, conversacion_id, nombre, origen)
   overriding system value values (900001, 900001, 'Ana Inventada', 'whatsapp');
-insert into public.mensajes (conversacion_id, id_externo, direccion, texto, enviado_en)
-  values (900001, 'wamid.prueba1', 'entrante', 'Hola', now());
+insert into public.mensajes (conversacion_id, id_externo, direccion, enviado_en)
+  values (900001, 'wamid.prueba1', 'entrante', now());
 insert into public.citas (paciente_id, gcal_event_id, inicia_en, termina_en, origen, sync)
   values (900001, 'gcal-prueba-1', '2026-10-12 10:00-05', '2026-10-12 11:00-05', 'eli', 'ok');
 insert into public.cambios_etapa (paciente_id, de, a, actor) values (900001, null, 'nuevo', 'eli');
@@ -33,10 +33,11 @@ select is(
   (select count(*)::int from pg_class c where c.relnamespace = 'public'::regnamespace
      and c.relkind = 'r' and not c.relrowsecurity),
   0, 'RLS activado en todas las tablas de public');
+select hasnt_column('public', 'mensajes', 'texto', 'mensajes no guarda el contenido (TK-41)');
 
 -- Únicos e integridad
-select throws_ok($$insert into public.mensajes (conversacion_id, id_externo, direccion, texto, enviado_en)
-  values (900001, 'wamid.prueba1', 'entrante', 'Hola otra vez', now())$$,
+select throws_ok($$insert into public.mensajes (conversacion_id, id_externo, direccion, enviado_en)
+  values (900001, 'wamid.prueba1', 'entrante', now())$$,
   '23505', null, 'unique(id_externo)');
 select throws_ok($$insert into public.citas (gcal_event_id, inicia_en, termina_en, origen)
   values ('gcal-prueba-1', '2026-10-13 10:00-05', '2026-10-13 11:00-05', 'calendario')$$,
@@ -44,8 +45,8 @@ select throws_ok($$insert into public.citas (gcal_event_id, inicia_en, termina_e
 select throws_ok($$insert into public.citas (inicia_en, termina_en, origen)
   values ('2026-10-13 11:00-05', '2026-10-13 10:00-05', 'panel')$$,
   '23514', null, 'termina_en > inicia_en');
-select throws_ok($$insert into public.mensajes (conversacion_id, id_externo, direccion, texto, enviado_en)
-  values (900001, 'x', 'lateral', 'a', now())$$, '23514', null, 'dirección entrante/saliente');
+select throws_ok($$insert into public.mensajes (conversacion_id, id_externo, direccion, enviado_en)
+  values (900001, 'x', 'lateral', now())$$, '23514', null, 'dirección entrante/saliente');
 select throws_ok($$insert into public.citas (inicia_en, termina_en, origen, sync)
   values ('2026-10-13 10:00-05', '2026-10-13 11:00-05', 'panel', 'quizas')$$,
   '23514', null, 'sync ok/pendiente/error');
@@ -85,8 +86,8 @@ select is((select count(*)::int from u), 1, 'personal actualiza citas');
 with u as (update public.horario set cierra = '17:00' where dia_semana = 5 returning 1)
 select is((select count(*)::int from u), 1, 'personal actualiza horario');
 -- Solo lectura: mensajes, cambios_etapa, errores_integracion, sync_calendario
-select throws_ok($$insert into public.mensajes (conversacion_id, id_externo, direccion, texto, enviado_en)
-  values (900001, 'falso', 'saliente', 'x', now())$$, '42501', null, 'personal no escribe mensajes');
+select throws_ok($$insert into public.mensajes (conversacion_id, id_externo, direccion, enviado_en)
+  values (900001, 'falso', 'saliente', now())$$, '42501', null, 'personal no escribe mensajes');
 select throws_ok($$insert into public.cambios_etapa (paciente_id, a, actor) values (900001, 'perdido', 'eli')$$,
   '42501', null, 'personal no inventa cambios_etapa');
 select throws_ok($$insert into public.errores_integracion (origen, detalle) values ('eli', '{}')$$,

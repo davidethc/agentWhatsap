@@ -79,6 +79,30 @@ docs, resueltos conservando ambos lados). No se hizo `db reset`, no se importó 
 | 7 | En error, «Armar error» guarda en Redis (`v4:crm:errores`) el evento completo, con **teléfono y texto del mensaje**. | Datos de salud en una lista de Redis (hasta 200). Contradice la regla «sin teléfono ni texto» de `errores_integracion`. | Con TK-41 el evento ya no lleva texto; falta decidir si guardar el teléfono. |
 | 8 | Alguien más levantó `supabase functions serve` con otro secreto; mi segundo `serve` salió solo y `eli-evento` devuelve 401 con mi secreto de la ronda 1. | Ninguno; no lo toqué. | Quien lo usa, que lo cierre al terminar (el runtime ya murió una vez por memoria). |
 
+## Ronda 3 · 11-oct-2026 · INCOMPLETA (se acabó el límite de uso)
+
+Rama `feat/crm-docs` tras `git merge feat/crm` (fast-forward, `74b2f99`). Pruebas con Playwright contra
+Supabase local y la doctora de prueba, sobre el build de producción (`next start`, puerto 3100).
+
+| Tarea | Resultado | Evidencia |
+|---|---|---|
+| Base `pnpm lint`, `typecheck`, `test` (75 pruebas) y `build` | ✅ Pasa | Los cuatro verdes tras el merge. |
+| TK-24 Resumen y asistencia | ⚠️ **No terminada** | Visto: citas de hoy por hora con paciente, servicio y estado; «Asistió» abre un diálogo con «volver en» 3 meses / **6 meses (recomendado)** / 1 año / otra fecha / sin fecha; «No asistió» pide confirmación. Capturas: `capturas/qa-tk24-resumen-1440.png`, `qa-tk24-asistio-dialogo-1440.png`. **No se llegó a confirmar** Asistió ni No asistió contra la base (ni a 768 px): sin resultado de HU-2.2 y HU-2.3. |
+| TK-27 Kanban | ⚠️ No probada | Solo se vieron las 6 columnas con las tarjetas del seed (Nuevo 6, Conversando 4, Agendó 4, Asistió 1, Seguimiento 3, Perdido 3). Falta arrastrar, motivo de Perdido, teclado y búsqueda. |
+| TK-29, TK-32, TK-33 | ⚠️ No probadas | Sin ejecutar. |
+
+### Hallazgos de la ronda 3
+
+| # | Qué | Impacto | Reproducir / evidencia |
+|---|---|---|---|
+| **F-1** | **El login falla de forma intermitente.** En 1 de 5 intentos (y 2 veces seguidas antes de reiniciar el servidor) el botón se queda en «Entrando…» y no pasa al Resumen. El log de `next start` muestra: `Route "/": Next.js encountered the unstable value Date.now() while prerendering` en `__loadSession` (auth-js). | La doctora podría quedarse sin entrar; hay que recargar. Probable relación con cómo se carga la sesión en el layout del panel (`app/(panel)/layout.tsx` → `requerirPersonal()` → `getClaims()`), pese al `await connection()`. | `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321 NEXT_PUBLIC_SUPABASE_ANON_KEY=<pública local> pnpm build && pnpm exec next start -p 3100`; repetir el login con la doctora de prueba 5 veces; mirar la salida del servidor. Reasignar a `crm-frontend`. |
+| **F-2** | `supabase test db` falla: `02_agenda_rls` (columna `mensajes.texto` no existe) y `06_evento_eli` («texto ya no se acepta»). | Es un desajuste, no un fallo de código: la base compartida ya tiene aplicada la migración TK-41 (`20261011000100`) que **aún no está en `feat/crm`**, y las pruebas del repo son las antiguas. | Se arregla cuando se integre la parte de datos de TK-41 (migración y pruebas actualizadas). |
+| F-3 | La base compartida se reinició entre rondas: el seed está limpio y mis filas de QA de las rondas 1 y 2 ya no están. | Ninguno. | — |
+
+**Pendiente (para otra ronda):** terminar TK-24 (Asistió con 6 meses, sin fecha y otra fecha; No asistió →
+Perdido; capturas a 768), y probar TK-27, TK-29 (sin conversación), TK-32 y TK-33 con los criterios de la
+Spec (HU-2, HU-5, HU-6, HU-8, HU-9) y capturas `qa-*`. No se usaron subagentes.
+
 ## TK-41 · El CRM no guarda ni muestra el contenido de los mensajes
 
 Decisión del usuario del 2026-10-11 ([ADR 0012](../adr/0012-crm-sin-contenido-de-mensajes.md)). Parte de

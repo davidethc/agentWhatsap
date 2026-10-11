@@ -242,6 +242,23 @@ export function crearDatosSupabase(supabase: SupabaseClient): Datos {
         return { duplicado: res.duplicado, paciente: await pacientePorId(res.paciente.id) }
       },
 
+      async actualizar(id, d) {
+        const r = await supabase
+          .from("pacientes")
+          .update({
+            nombre: d.nombre,
+            cedula: d.cedula,
+            fecha_nacimiento: d.fechaNacimiento,
+            correo: d.correo,
+          })
+          .eq("id", id)
+          .select("id")
+          .maybeSingle()
+        const fila = comprobar(r, "No se pudo guardar los datos. Intenta de nuevo.")
+        if (!fila) throw new ErrorDatos("No se pudo guardar los datos. Intenta de nuevo.", "42501")
+        return pacientePorId(id)
+      },
+
       async moverEtapa(id, etapa, motivo) {
         const r = await supabase.rpc("mover_etapa", {
           p_paciente_id: id,

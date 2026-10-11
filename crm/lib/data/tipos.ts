@@ -127,6 +127,14 @@ export type NuevoPaciente = {
   responsableId?: number
 }
 
+/** Los datos básicos que se pueden editar en la ficha (el teléfono y la etapa tienen su propio camino). */
+export type DatosBasicos = {
+  nombre: string
+  cedula: string | null
+  fechaNacimiento: string | null
+  correo: string | null
+}
+
 export type ResultadoCrearPaciente = {
   /** true = el teléfono ya existía: `paciente` es el titular existente y no se creó nada. */
   duplicado: boolean

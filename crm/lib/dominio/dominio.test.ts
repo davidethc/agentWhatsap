@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { claveDia, finDelDia, hora, inicioDeSemana, inicioDelDia } from "./fechas"
+import { claveDia, fechaCorta, fechaHora, finDelDia, hora, inicioDeSemana, inicioDelDia } from "./fechas"
 import { formatearTelefono, normalizarTelefono } from "./telefono"
 
 describe("normalizarTelefono", () => {
@@ -35,5 +35,14 @@ describe("fechas (America/Guayaquil, UTC-5)", () => {
   it("hora local", () => expect(hora("2026-10-10T14:00:00Z")).toBe("09:00"))
   it("la semana empieza el lunes", () => {
     expect(claveDia(inicioDeSemana(t))).toBe("2026-10-05")
+  })
+})
+
+describe("fechas para mostrar", () => {
+  it("fechaHora usa la hora de Guayaquil (UTC-5)", () => {
+    expect(fechaHora("2026-10-10T14:30:00Z")).toBe("10 oct, 09:30")
+  })
+  it("fechaCorta no se corre un día por la zona", () => {
+    expect(fechaCorta("2026-10-10")).toBe("10 oct 2026")
   })
 })

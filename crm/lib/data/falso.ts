@@ -231,6 +231,17 @@ export function crearDatosFalsos({ ahora = () => new Date() }: Opciones = {}): D
         )
         return { duplicado: false, paciente: { ...p } }
       },
+      async actualizar(id, d) {
+        if (!d.nombre.trim()) throw new ErrorDatos("Escribe el nombre del paciente", "23514")
+        const p = paciente(id)
+        Object.assign(p, {
+          nombre: d.nombre.trim(),
+          cedula: d.cedula,
+          fechaNacimiento: d.fechaNacimiento,
+          correo: d.correo,
+        })
+        return { ...p }
+      },
       async moverEtapa(id, etapa, motivo) {
         return cambiarEtapa(id, etapa, motivo)
       },

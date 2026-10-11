@@ -47,3 +47,14 @@ export function diaYMinutos(fecha: Date | string | number): { diaSemana: number;
   const f = enZona(fecha)
   return { diaSemana: getISODay(f), minutos: f.getHours() * 60 + f.getMinutes() }
 }
+
+/** «10 oct, 09:30» */
+export function fechaHora(fecha: Date | string | number): string {
+  return format(enZona(fecha), "d MMM, HH:mm", { locale: es })
+}
+
+/** «10 oct 2026» (para fechas yyyy-MM-dd de calendario, sin pasar por zonas). */
+export function fechaCorta(dia: string): string {
+  const [a, m, d] = dia.split("-").map(Number)
+  return format(new Date(a, m - 1, d), "d MMM yyyy", { locale: es })
+}

@@ -9,6 +9,8 @@
 # Uso:
 #   CRM_DB_URL='postgresql://...' scripts/backup-crm.sh
 #   (o CRM_DB_URL en .env; ver docs/crm/backup-crm.md)
+#   scripts/backup-crm.sh --db-url 'postgresql://...' [--dir carpeta]
+#   (--db-url solo para la base LOCAL: en la línea de comandos la contraseña se ve en `ps`)
 #
 # Variables:
 #   CRM_DB_URL      (obligatoria) cadena de conexión, con la contraseña codificada (%40 en vez de @...).
@@ -20,6 +22,21 @@
 # Resultado: $CRM_BACKUP_DIR/eli-crm-AAAAMMDD-HHMMSS/{roles,schema,data}.sql.gz + SHA256SUMS
 # Restaurar: ver docs/crm/backup-crm.md.
 set -euo pipefail
+
+# Opciones (pisan a las variables de entorno).
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --db-url) CRM_DB_URL="${2:?Falta el valor de --db-url}"; shift 2 ;;
+    --dir)    CRM_BACKUP_DIR="${2:?Falta el valor de --dir}"; shift 2 ;;
+    -h|--help) sed -n '2,23p' "$0"; exit 0 ;;
+    *) echo "Opción desconocida: $1 (ver --help)" >&2; exit 1 ;;
+  esac
+done
+# Una carpeta relativa se entiende desde donde se lanzó el script, no desde el repo.
+if [[ -n "${CRM_BACKUP_DIR:-}" && "$CRM_BACKUP_DIR" != /* && "$CRM_BACKUP_DIR" != "~"* ]]; then
+  CRM_BACKUP_DIR="$PWD/$CRM_BACKUP_DIR"
+fi
+
 cd "$(dirname "$0")/.."
 repo="$PWD"
 
@@ -65,15 +82,16 @@ chmod 700 "$base" "$dest"
 trap 'echo "Falló: se borra la copia incompleta $dest" >&2; rm -rf "$dest"' ERR
 
 echo "Copiando $destino_db → $dest"
-supabase db dump --db-url "$CRM_DB_URL" --role-only -f "$dest/roles.sql"
+# Primero el esquema: si no es la base del panel, se corta ANTES de copiar datos ajenos.
 supabase db dump --db-url "$CRM_DB_URL" -f "$dest/schema.sql"
+grep -q 'CREATE TABLE IF NOT EXISTS "public"."pacientes"' "$dest/schema.sql" \
+  || { echo "schema.sql no tiene la tabla pacientes: ¿es la base correcta?" >&2; false; }
+supabase db dump --db-url "$CRM_DB_URL" --role-only -f "$dest/roles.sql"
 supabase db dump --db-url "$CRM_DB_URL" --data-only --use-copy -f "$dest/data.sql"
 
 for f in roles schema data; do
   [[ -s "$dest/$f.sql" ]] || { echo "$f.sql salió vacío" >&2; false; }
 done
-grep -q 'CREATE TABLE IF NOT EXISTS "public"."pacientes"' "$dest/schema.sql" \
-  || { echo "schema.sql no tiene la tabla pacientes: ¿es la base correcta?" >&2; false; }
 
 gzip -9 "$dest"/*.sql
 (cd "$dest" && shasum -a 256 ./*.sql.gz > SHA256SUMS)

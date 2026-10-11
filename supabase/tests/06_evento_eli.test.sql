@@ -1,4 +1,5 @@
--- TK-7 · registrar_evento_eli: contrato Eli → CRM (plan §5). Datos inventados.
+-- TK-7 · registrar_evento_eli: contrato Eli → CRM (plan §5). TK-41: sin contenido de mensajes.
+-- Datos inventados.
 begin;
 -- Aislar del seed.sql: se vacía dentro de la transacción (el rollback final lo deja como estaba).
 -- auditoria no se puede vaciar: las pruebas la filtran por fila.
@@ -6,7 +7,7 @@ delete from auth.users where email like '%@ejemplo.test';
 delete from public.personal;
 truncate public.mensajes, public.citas, public.cambios_etapa, public.datos_clinicos,
          public.pacientes, public.conversaciones, public.errores_integracion, public.sync_calendario;
-select plan(31);
+select plan(32);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000d1', 'doctora@ejemplo.test');
 insert into public.personal (user_id, nombre, rol)
@@ -20,7 +21,7 @@ select set_config('request.jwt.claims', '{"role":"service_role"}', true);
 
 -- Número nuevo → titular en Nuevo con su mensaje
 select is(public.registrar_evento_eli('{"tipo":"mensaje_entrante","telefono":"0998887777",
-  "nombre_whatsapp":"Eva Inventada","message_id":"wamid.A1","texto":"Hola, quiero una limpieza",
+  "nombre_whatsapp":"Eva Inventada","message_id":"wamid.A1",
   "en":"2026-10-12T09:00:00-05:00"}'),
   '{"ok":true,"duplicado":false}'::jsonb, 'mensaje_entrante nuevo → ok, no duplicado');
 create temp table eva as
@@ -29,9 +30,9 @@ create temp table eva as
 select results_eq($$select nombre, etapa::text, origen::text, responsable_id from eva$$,
   $$values ('Eva Inventada', 'nuevo', 'whatsapp', null::bigint)$$, 'número nuevo → titular en Nuevo');
 select results_eq(
-  $$select m.direccion, m.texto, m.enviado_en from public.mensajes m
+  $$select m.direccion, m.enviado_en from public.mensajes m
      join public.conversaciones c on c.id = m.conversacion_id where c.telefono = '593998887777'$$,
-  $$values ('entrante', 'Hola, quiero una limpieza', '2026-10-12 09:00-05'::timestamptz)$$,
+  $$values ('entrante', '2026-10-12 09:00-05'::timestamptz)$$,
   'con su mensaje');
 select results_eq($$select turnos_entrantes, ultimo_entrante_en from public.conversaciones where telefono = '593998887777'$$,
   $$values (1, '2026-10-12 09:00-05'::timestamptz)$$, 'cuenta 1 turno');
@@ -42,7 +43,7 @@ select is((select actor::text from public.auditoria where tabla = 'pacientes' an
 
 -- Mismo message_id dos veces → 1 mensaje, sin turno extra
 select is(public.registrar_evento_eli('{"tipo":"mensaje_entrante","telefono":"0998887777",
-  "message_id":"wamid.A1","texto":"Hola, quiero una limpieza"}'),
+  "message_id":"wamid.A1"}'),
   '{"ok":true,"duplicado":true}'::jsonb, 'mismo message_id → duplicado');
 select is((select count(*)::int from public.mensajes where id_externo = 'wamid.A1'), 1, 'un solo mensaje');
 select is((select turnos_entrantes from public.conversaciones where telefono = '593998887777'), 1, 'sin turno extra');
@@ -50,7 +51,7 @@ select is((select etapa::text from public.pacientes where id = (select id from e
 
 -- 2.º turno → Conversando
 select lives_ok($$select public.registrar_evento_eli('{"tipo":"mensaje_entrante","telefono":"+593998887777",
-  "message_id":"wamid.A2","texto":"Mañana en la mañana","en":"2026-10-12T09:05:00-05:00"}')$$, '2.º mensaje');
+  "message_id":"wamid.A2","en":"2026-10-12T09:05:00-05:00"}')$$, '2.º mensaje');
 select is((select etapa::text from public.pacientes where id = (select id from eva)), 'conversando', '2.º turno → Conversando');
 select results_eq($$select de::text, a::text, actor::text from public.cambios_etapa
                     where paciente_id = (select id from eva) order by id desc limit 1$$,
@@ -58,12 +59,12 @@ select results_eq($$select de::text, a::text, actor::text from public.cambios_et
 
 -- Mensaje saliente de Eli
 select is(public.registrar_evento_eli('{"tipo":"mensaje_saliente","telefono":"593998887777",
-  "texto":"¡Hola! Te ayudo con eso.","execution_id":"9001","en":"2026-10-12T09:05:30-05:00"}'),
+  "execution_id":"9001","en":"2026-10-12T09:05:30-05:00"}'),
   '{"ok":true,"duplicado":false}'::jsonb, 'mensaje_saliente');
-select results_eq($$select direccion, texto from public.mensajes where id_externo = 'out:9001'$$,
-  $$values ('saliente', '¡Hola! Te ayudo con eso.')$$, 'saliente guardado con id out:execution_id');
+select results_eq($$select direccion from public.mensajes where id_externo = 'out:9001'$$,
+  $$values ('saliente')$$, 'saliente guardado con id out:execution_id');
 select is(public.registrar_evento_eli('{"tipo":"mensaje_saliente","telefono":"593998887777",
-  "texto":"¡Hola! Te ayudo con eso.","execution_id":"9001"}')->>'duplicado', 'true', 'saliente repetido → duplicado');
+  "execution_id":"9001"}')->>'duplicado', 'true', 'saliente repetido → duplicado');
 select is((select turnos_entrantes from public.conversaciones where telefono = '593998887777'), 2,
   'el saliente no cuenta turnos');
 
@@ -72,7 +73,7 @@ reset role;
 select lives_ok($$select private.cambiar_etapa((select id from eva), 'perdido', 'no_respondio')$$, 'estaba en Perdido');
 set local role service_role;
 select lives_ok($$select public.registrar_evento_eli('{"tipo":"mensaje_entrante","telefono":"0998887777",
-  "message_id":"wamid.A3","texto":"Hola de nuevo"}')$$, 'vuelve a escribir');
+  "message_id":"wamid.A3"}')$$, 'vuelve a escribir');
 select results_eq($$select etapa::text, motivo_perdido::text from public.pacientes where id = (select id from eva)$$,
   $$values ('conversando', null::text)$$, 'Perdido + mensaje → Conversando');
 
@@ -107,6 +108,9 @@ select throws_ok($$select public.registrar_evento_eli('{"tipo":"otro"}')$$, '220
   'Evento desconocido: otro', 'tipo desconocido');
 select throws_ok($$select public.registrar_evento_eli('{"tipo":"mensaje_entrante","message_id":"x"}')$$, '22023',
   'Falta el campo telefono', 'falta un campo obligatorio');
+select throws_ok($$select public.registrar_evento_eli('{"tipo":"mensaje_entrante","telefono":"0998887777",
+  "message_id":"wamid.A9","texto":"Hola"}')$$, '22023',
+  'texto ya no se acepta: el CRM no guarda el contenido de los mensajes', 'texto se rechaza (TK-41)');
 reset role;
 
 -- Solo la clave de servicio

@@ -22,17 +22,21 @@ ISO 8601 con zona (`2026-10-13T10:00:00-05:00`).
 
 | `tipo` | Obligatorios | Opcionales | Efecto | Idempotencia |
 |---|---|---|---|---|
-| `mensaje_entrante` | `telefono`, `message_id` | `nombre_whatsapp`, `texto`, `en` (por defecto ahora) | Crea la conversación y el titular en **Nuevo** si es la primera vez; guarda el mensaje; suma un turno; 2.º turno: Nuevo → **Conversando**; Perdido → **Conversando** | `message_id` (el del dedup de n8n) |
-| `mensaje_saliente` | `telefono`, `execution_id` (texto o número) | `texto`, `en` | Guarda la respuesta de Eli; no cuenta turnos | `out:<execution_id>` |
+| `mensaje_entrante` | `telefono`, `message_id` | `nombre_whatsapp`, `en` (por defecto ahora) | Crea la conversación y el titular en **Nuevo** si es la primera vez; registra el mensaje (dirección y hora); suma un turno; 2.º turno: Nuevo → **Conversando**; Perdido → **Conversando** | `message_id` (el del dedup de n8n) |
+| `mensaje_saliente` | `telefono`, `execution_id` (cadena o número) | `en` | Registra la respuesta de Eli (dirección y hora); no cuenta turnos | `out:<execution_id>` |
 | `cita_reservada` | `telefono`, `gcal_event_id`, `inicio` | `fin` (por defecto +1 h), `servicio`, `nombre` | Crea o actualiza la cita (origen `eli`, `sync = ok`) ligada al titular; paciente → **Agendó**. `nombre` solo se usa si hay que crear al titular | `gcal_event_id` |
 
 Todo lo que cambia queda con **actor = eli** en `cambios_etapa` y `auditoria`.
+
+**El CRM no guarda el contenido de los mensajes** (TK-41): solo dirección y hora. Si el evento trae
+`texto`, responde 400 «texto ya no se acepta: el CRM no guarda el contenido de los mensajes», para que
+nadie lo mande creyendo que se guarda.
 
 Ejemplo:
 
 ```json
 {"tipo":"mensaje_entrante","telefono":"0900000091","nombre_whatsapp":"Paciente Prueba",
- "message_id":"wamid.ABC","texto":"Hola","en":"2026-10-10T10:00:00-05:00"}
+ "message_id":"wamid.ABC","en":"2026-10-10T10:00:00-05:00"}
 ```
 
 ## Respuestas
@@ -41,10 +45,10 @@ Ejemplo:
 |---|---|---|
 | 200 | `{"ok":true,"duplicado":false}` | Guardado |
 | 200 | `{"ok":true,"duplicado":true}` | Ya estaba (reintento o mensaje repetido) |
-| 400 | `{"ok":false,"error":"…"}` | JSON inválido, `tipo` desconocido, falta un campo, fecha o teléfono no válidos |
+| 400 | `{"ok":false,"error":"…"}` | JSON inválido, `tipo` desconocido, falta un campo, fecha o teléfono no válidos, o llega `texto` |
 | 401 | `{"ok":false,"error":"No autorizado"}` | Sin `x-eli-secreto` o incorrecto |
 | 405 | `{"ok":false,"error":"Use POST"}` | Otro método |
-| 500 | `{"ok":false,"error":"…"}` | Fallo interno; queda una fila en `errores_integracion` (origen `eli`) con el tipo y los ids, **sin teléfono ni texto** |
+| 500 | `{"ok":false,"error":"…"}` | Fallo interno; queda una fila en `errores_integracion` (origen `eli`) con el tipo y los ids, **sin teléfono** |
 
 ## Probar en local
 
@@ -53,7 +57,7 @@ cp supabase/functions/.env.example supabase/functions/.env   # y poner un secret
 supabase functions serve --env-file supabase/functions/.env
 curl -i -X POST http://127.0.0.1:55321/functions/v1/eli-evento \
   -H "x-eli-secreto: $ELI_EVENTO_SECRETO" \
-  -d '{"tipo":"mensaje_entrante","telefono":"0900000091","message_id":"wamid.prueba1","texto":"Hola"}'
+  -d '{"tipo":"mensaje_entrante","telefono":"0900000091","message_id":"wamid.prueba1"}'
 ```
 
 Solo números claramente falsos (`5939000000xx`). En el proyecto remoto el secreto se pone con

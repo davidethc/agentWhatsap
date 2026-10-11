@@ -6,6 +6,10 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli Panel: el CRM no guarda el contenido de los mensajes (TK-41).** Migración
+  `20261011000100_mensajes_sin_texto.sql` (borra `mensajes.texto`; `registrar_evento_eli` rechaza
+  `texto`), `eli-evento` responde 400 si llega `texto`, seed, pgTAP, tipos y capa de datos del panel
+  sin contenido.
 - **Eli Panel (CRM), fase de planificación con SDD** ([docs/crm/](docs/crm/README.md)): hub en
   Notion como fuente de verdad (constitución, spec en borrador con 14 historias, clarificaciones,
   flujos y tablero de tareas), `CLAUDE.md` con las reglas del proyecto, 6 agentes en

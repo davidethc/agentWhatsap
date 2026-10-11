@@ -116,13 +116,13 @@ isOneToOne: true
                   ]
                 },"mensajes": {
                   Row: {
-                    "conversacion_id": number,"created_at": string,"direccion": string,"enviado_en": string,"id": number,"id_externo": string,"texto": string
+                    "conversacion_id": number,"created_at": string,"direccion": string,"enviado_en": string,"id": number,"id_externo": string
                   }
                   Insert: {
-                    "conversacion_id": number,"created_at"?: string,"direccion": string,"enviado_en": string,"id"?: never,"id_externo": string,"texto": string
+                    "conversacion_id": number,"created_at"?: string,"direccion": string,"enviado_en": string,"id"?: never,"id_externo": string
                   }
                   Update: {
-                    "conversacion_id"?: number,"created_at"?: string,"direccion"?: string,"enviado_en"?: string,"id"?: never,"id_externo"?: string,"texto"?: string
+                    "conversacion_id"?: number,"created_at"?: string,"direccion"?: string,"enviado_en"?: string,"id"?: never,"id_externo"?: string
                   }
                   Relationships: [
                     {

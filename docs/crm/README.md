@@ -15,6 +15,7 @@ Esta carpeta es su espejo: cada documento se copia aquí cuando el usuario lo ap
 | `integracion.md` | La escribe el orquestador durante la construcción |
 | [backup-crm.md](backup-crm.md) | Copia semanal de la base con `scripts/backup-crm.sh` y cómo restaurar (TK-13) |
 | [tk-12-proyecto-remoto.md](tk-12-proyecto-remoto.md) | Paso a paso para crear `eli-crm` en la nube (✋ espera aprobación) |
+| [qa.md](qa.md) | Informe de QA por tarea (ronda 1: TK-1 a TK-11, TK-14, TK-21 y TK-22) |
 
 ## Agentes (`.claude/agents/`)
 

@@ -19,6 +19,9 @@ Ecuador.
   `.gitignore` cubre las copias. Paso a paso de TK-12 para aprobar:
   [docs/crm/tk-12-proyecto-remoto.md](docs/crm/tk-12-proyecto-remoto.md).
 - **Integración Eli → CRM en n8n (TK-18, TK-19)**: sub-workflow `Eli → CRM` ([workflows/eli-crm.json](workflows/eli-crm.json), inactivo) y una COPIA inactiva de version4 con 3 ramas sin esperar ([workflows/pruebas/eli-version4-crm-copia.json](workflows/pruebas/eli-version4-crm-copia.json), generada con `scripts/crm-copia-version4.jq`). `version4` real sin cambios.
+- **Informe de QA del Eli Panel, ronda 1** ([docs/crm/qa.md](docs/crm/qa.md)): TK-1 a TK-11, TK-14
+  (solo la guía), TK-21 y TK-22 pasan (216 pruebas pgTAP, `eli-evento` por curl, lint/typecheck/build
+  y login de la doctora de prueba) y sin secretos ni datos reales en git; 5 observaciones.
 - Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
 
 ### Cambiado

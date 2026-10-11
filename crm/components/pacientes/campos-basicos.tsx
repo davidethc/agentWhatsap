@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useFormContext } from "react-hook-form"
 
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import type { DatosBasicosForm } from "@/lib/pacientes/esquema"
 
 /** Campos que comparten la ficha (editar) y «Nuevo paciente». Van dentro de un FormProvider. */
-export function CamposBasicos({ prefijo }: { prefijo: string }) {
+export function CamposBasicos({ prefijo, despuesDelNombre }: { prefijo: string; despuesDelNombre?: ReactNode }) {
   const { register, formState: { errors } } = useFormContext<DatosBasicosForm>()
   return (
     <FieldGroup>
@@ -16,6 +17,7 @@ export function CamposBasicos({ prefijo }: { prefijo: string }) {
         <Input id={`${prefijo}-nombre`} autoComplete="off" aria-invalid={!!errors.nombre} {...register("nombre")} />
         <FieldError>{errors.nombre?.message}</FieldError>
       </Field>
+      {despuesDelNombre}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field data-invalid={!!errors.cedula}>
           <FieldLabel htmlFor={`${prefijo}-cedula`}>Cédula</FieldLabel>

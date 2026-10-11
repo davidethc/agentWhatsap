@@ -13,6 +13,8 @@ Esta carpeta es su espejo: cada documento se copia aquí cuando el usuario lo ap
 | [plan.md](plan.md) | Aprobado (10-oct-2026): arquitectura, datos, contrato Eli → CRM, Calendar, pantallas |
 | [tasks.md](tasks.md) | Aprobadas (10-oct-2026): TK-1 a TK-40 en Ready |
 | `integracion.md` | La escribe el orquestador durante la construcción |
+| [backup-crm.md](backup-crm.md) | Copia semanal de la base con `scripts/backup-crm.sh` y cómo restaurar (TK-13) |
+| [tk-12-proyecto-remoto.md](tk-12-proyecto-remoto.md) | Paso a paso para crear `eli-crm` en la nube (✋ espera aprobación) |
 
 ## Agentes (`.claude/agents/`)
 

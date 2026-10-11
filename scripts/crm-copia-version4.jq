@@ -1,6 +1,10 @@
 # Arma la COPIA de version4 conectada a «Eli → CRM» (TK-19). No toca ningún nodo existente:
 # solo agrega 3 pares (Code + Execute Workflow sin esperar) y los cuelga en paralelo.
-# Uso: jq -f scripts/crm-copia-version4.jq workflows/eli-version4.json > workflows/pruebas/eli-version4-crm-copia.json
+# Uso (TK-20): SIEMPRE sobre el version4 más nuevo de main, para no perder cambios como los
+# seguimientos automáticos («Seg: …»):
+#   jq -f scripts/crm-copia-version4.jq /Users/d/agentWhatsap/workflows/eli-version4.json \
+#      > workflows/pruebas/eli-version4-crm-copia.json
+# Última generación: version4 de main d54e52b (10-oct-2026, seguimientos automáticos).
 def pos(n): (.nodes[] | select(.name == n) | .position);
 
 def codigo(id; nombre; js; p): {

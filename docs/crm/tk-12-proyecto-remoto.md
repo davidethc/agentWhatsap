@@ -1,8 +1,50 @@
-# TK-12 · Crear el proyecto remoto `eli-crm` (paso a paso para aprobar)
+# TK-12 · Crear el proyecto remoto `eli-crm` (paso a paso)
 
-> ✋ **Nada de esto se ha hecho todavía.** Es el plan para que lo apruebes. Nada pide tarjeta. Lo
-> que diga «tú» lo haces tú en el navegador; el resto lo corre `crm-datos` y te muestra cada comando
-> antes de lanzarlo.
+## Estado (11-oct-2026)
+
+| Dato público | Valor |
+|---|---|
+| Proyecto | `eli-crm` · ref `uvtlctqupeermbgsepxn` · plan Free · región `us-east-1` · Postgres 17 |
+| URL de la API | `https://uvtlctqupeermbgsepxn.supabase.co` |
+| URL de `eli-evento` | `https://uvtlctqupeermbgsepxn.supabase.co/functions/v1/eli-evento` (aún no desplegada) |
+| Secretos locales (600, fuera de git) | `~/.config/eli-crm/db-password` y `~/.config/eli-crm/eli-evento-secreto` |
+
+| Paso | Estado |
+|---|---|
+| 1 Crear proyecto | ✅ hecho por el usuario (`ACTIVE_HEALTHY`) |
+| 2 `link` | ✅ `supabase link --project-ref uvtlctqupeermbgsepxn` (el vínculo vive en `supabase/.temp/`, ignorado) |
+| 2 `db push --dry-run` | ✅ 9 migraciones, `seeds: []` |
+| 2 `db push` | ⛔ **bloqueado** por el clasificador de permisos de Claude Code («Production Deploy»). Remoto con 0 migraciones |
+| 3 Registro público | ⛔ **bloqueado** («Credential Exploration»: leer el token de la CLI del llavero). Hacerlo a mano |
+| 4 Cuentas | ⏳ pendiente: necesita los correos reales del usuario |
+| 5 Secreto generado | ✅ `openssl rand -hex 32` → `~/.config/eli-crm/eli-evento-secreto` (600) |
+| 5 Deploy + `secrets set` | ⏳ no intentado: misma categoría que `db push` |
+| 7 Copia y tipos | ⏳ depende de `db push` |
+
+### Para destrabar
+
+**Opción A (recomendada):** el usuario corre los comandos en su terminal (con `!` en Claude Code), desde
+`/Users/d/agentWhatsap-crm-datos`:
+
+```bash
+supabase db push -p "$(cat ~/.config/eli-crm/db-password)"
+supabase functions deploy eli-evento --project-ref uvtlctqupeermbgsepxn
+supabase secrets set --project-ref uvtlctqupeermbgsepxn ELI_EVENTO_SECRETO="$(cat ~/.config/eli-crm/eli-evento-secreto)"
+```
+
+**Opción B:** el usuario agrega permisos en `.claude/settings.local.json` y crm-datos los corre:
+`Bash(supabase db push:*)`, `Bash(supabase functions deploy:*)`, `Bash(supabase secrets set:*)`.
+
+**Paso 3, a mano:** Dashboard → Authentication → Sign In / Providers → apagar **Allow new users to
+sign up**; dejar **Email** encendido.
+
+Luego crm-datos sigue con: `migration list`, advisors de seguridad, prueba con curl (401 sin secreto
+y 400 con JSON inválido), `scripts/backup-crm.sh` contra el Session pooler y comparación de tipos.
+
+---
+
+> Plan original (aprobado). Nada pide tarjeta. Lo que diga «tú» lo haces tú en el navegador; el
+> resto lo corre `crm-datos` y te muestra cada comando antes de lanzarlo.
 
 ## 0. Lo que tienes que decidir
 

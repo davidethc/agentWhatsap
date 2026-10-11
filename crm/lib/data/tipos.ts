@@ -64,13 +64,6 @@ export type DatosClinicos = {
   miedo: string | null
 }
 
-export type Mensaje = {
-  id: number
-  direccion: "entrante" | "saliente"
-  texto: string
-  enviadoEn: string
-}
-
 /** Todo lo que muestra la ficha del paciente. */
 export type FichaPaciente = {
   paciente: Paciente
@@ -125,6 +118,14 @@ export type NuevoPaciente = {
   correo?: string
   /** Para crear un dependiente de otro paciente. */
   responsableId?: number
+}
+
+/** Los datos básicos que se pueden editar en la ficha (el teléfono y la etapa tienen su propio camino). */
+export type DatosBasicos = {
+  nombre: string
+  cedula: string | null
+  fechaNacimiento: string | null
+  correo: string | null
 }
 
 export type ResultadoCrearPaciente = {

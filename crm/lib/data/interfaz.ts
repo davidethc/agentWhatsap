@@ -1,10 +1,10 @@
 import type {
   Cita,
+  DatosBasicos,
   Etapa,
   EntradaCita,
   FichaPaciente,
   FiltroPacientes,
-  Mensaje,
   MotivoPerdido,
   NuevoPaciente,
   Paciente,
@@ -24,6 +24,11 @@ export interface Datos {
     obtener(id: number): Promise<FichaPaciente | null>
     /** Si el teléfono ya existe devuelve `duplicado: true` y no crea nada. */
     crear(entrada: NuevoPaciente): Promise<ResultadoCrearPaciente>
+    /**
+     * Edita nombre, cédula, nacimiento y correo. Es la única escritura directa a una tabla (no hay
+     * función de la base para esto): la RLS la limita al personal y el trigger de auditoría la registra.
+     */
+    actualizar(id: number, datos: DatosBasicos): Promise<Paciente>
     /** Perdido exige `motivo`. */
     moverEtapa(id: number, etapa: Etapa, motivo?: MotivoPerdido): Promise<Paciente>
   }
@@ -44,10 +49,6 @@ export interface Datos {
   resumen: {
     /** `dia` por defecto: hoy (Guayaquil). */
     delDia(dia?: Date): Promise<Resumen>
-  }
-  mensajes: {
-    /** Conversación con Eli (solo lectura), de más antiguo a más nuevo. */
-    deConversacion(conversacionId: number): Promise<Mensaje[]>
   }
 }
 

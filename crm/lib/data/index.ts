@@ -1,5 +1,7 @@
 import "server-only"
 
+import { connection } from "next/server"
+
 import { createClient } from "@/lib/supabase/server"
 
 import { crearDatosFalsos } from "./falso"
@@ -17,6 +19,9 @@ let falso: Datos | undefined
  * `ELI_DATOS=falso` (en .env.local) usa datos inventados en memoria, sin Supabase.
  */
 export async function obtenerDatos(): Promise<Datos> {
-  if (process.env.ELI_DATOS === "falso") return (falso ??= crearDatosFalsos())
+  if (process.env.ELI_DATOS === "falso") {
+    await connection() // el falso usa la hora actual: tiene que ser dinámico, no prerenderizado
+    return (falso ??= crearDatosFalsos())
+  }
   return crearDatosSupabase(await createClient())
 }

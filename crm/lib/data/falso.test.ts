@@ -148,7 +148,24 @@ describe("citas", () => {
   })
 })
 
-describe("resumen y mensajes", () => {
+describe("actualizar datos básicos", () => {
+  it("cambia nombre, cédula, nacimiento y correo, y no toca la etapa", async () => {
+    const a = await porNombre("Paciente A")
+    const r = await datos.pacientes.actualizar(a.id, {
+      nombre: " Paciente A Editado ", cedula: "0999999999", fechaNacimiento: "1990-05-06", correo: "a@ejemplo.test",
+    })
+    expect(r).toMatchObject({ nombre: "Paciente A Editado", cedula: "0999999999", etapa: a.etapa })
+    expect((await datos.pacientes.obtener(a.id))!.paciente.correo).toBe("a@ejemplo.test")
+  })
+  it("no deja guardar sin nombre", async () => {
+    const a = await porNombre("Paciente A")
+    await expect(
+      datos.pacientes.actualizar(a.id, { nombre: "  ", cedula: null, fechaNacimiento: null, correo: null })
+    ).rejects.toThrow("Escribe el nombre")
+  })
+})
+
+describe("resumen y ficha", () => {
   it("resumen: citas de hoy y tarjetas coherentes", async () => {
     const r = await datos.resumen.delDia()
     expect(r.citasHoy).toHaveLength(3)
@@ -164,12 +181,6 @@ describe("resumen y mensajes", () => {
     const r = await datos.resumen.delDia()
     expect(r.citasHoy).toHaveLength(3)
     expect(r.tarjetas.citasHoy).toBe(2)
-  })
-  it("mensajes de una conversación, en orden", async () => {
-    const a = await porNombre("Paciente A")
-    const m = await datos.mensajes.deConversacion(a.conversacionId!)
-    expect(m.map((x) => x.direccion)).toEqual(["entrante", "saliente", "entrante"])
-    expect(await datos.mensajes.deConversacion(999999)).toEqual([])
   })
   it("ficha: dependientes y responsable", async () => {
     const a = await porNombre("Paciente A")

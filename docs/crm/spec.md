@@ -9,7 +9,7 @@
 
 La doctora de EliDental abre **Eli Panel** en su computadora y en un vistazo sabe quién viene hoy, cómo
 va su consultorio y quién necesita atención. Cada persona que escribe por WhatsApp aparece sola en el
-panel, con su conversación con Eli, y avanza por el embudo hasta convertirse en paciente que vuelve.
+panel y avanza por el embudo hasta convertirse en paciente que vuelve.
 
 ## Usuarias
 
@@ -22,7 +22,7 @@ panel, con su conversación con Eli, y avanza por el embudo hasta convertirse en
 
 - **E1 Acceso**: login seguro.
 - **E2 Resumen del día**: la pantalla de inicio.
-- **E3 Pacientes**: kanban, ficha, Nuevo paciente y conversación.
+- **E3 Pacientes**: kanban, ficha y Nuevo paciente. (La conversación con Eli quedó pospuesta: [ADR 0012](../adr/0012-crm-sin-contenido-de-mensajes.md).)
 - **E4 Citas**: crear, editar y asistencia, sincronizadas con Google Calendar.
 - **E5 Eli conectada**: Eli llena y mueve el CRM sola.
 - **E6 Privacidad**: datos de salud protegidos.
@@ -105,7 +105,7 @@ Como doctora, quiero ver y editar la ficha de cada paciente, para tener sus dato
 4. Si el paciente tiene responsable, la ficha enlaza a la ficha del responsable y muestra la
    conversación compartida.
 
-**HU-7 · Leer la conversación con Eli** (Must)
+**HU-7 · Leer la conversación con Eli** (⏸ **Pospuesta**, TK-41, 2026-10-11: por privacidad el CRM no guarda ni muestra el contenido de los mensajes; ver [ADR 0012](../adr/0012-crm-sin-contenido-de-mensajes.md). TK-31 en Backlog. Lo que sigue es la historia original, **no se construye ahora**.)
 Como doctora, quiero leer todo lo que el paciente habló con Eli, para entender qué necesita antes de
 atenderlo.
 1. La ficha muestra los mensajes del paciente y de Eli en orden, con fecha y hora.
@@ -140,10 +140,10 @@ panel, para tener una sola agenda.
 
 ### E5 Eli conectada
 
-**HU-11 · Eli crea al paciente y guarda los mensajes** (Must)
+**HU-11 · Eli crea al paciente y registra los mensajes** (Must)
 Como doctora, quiero que quien escribe por WhatsApp aparezca solo en el panel, para no registrar nada a
 mano.
-1. Dado un número nuevo, cuando escribe, entonces aparece un paciente en Nuevo con su mensaje.
+1. Dado un número nuevo, cuando escribe, entonces aparece un paciente en Nuevo y queda registrado que escribió (sin guardar el contenido del mensaje).
 2. Cuando responde a Eli (su 2.º mensaje), pasa a Conversando.
 3. Si no tiene cita y lleva 24 h sin escribir, pasa a Perdido (no respondió).
 4. Si está en Perdido y vuelve a escribir, regresa a Conversando con su historial.

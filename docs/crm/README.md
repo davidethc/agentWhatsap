@@ -1,7 +1,7 @@
 # Eli Panel (CRM de EliDental)
 
-CRM propio de EliDental: resumen del día, kanban de pacientes (como Kommo), ficha con la conversación
-con Eli y citas sincronizadas con Google Calendar. Se construye con **SDD (Spec-Driven Development)**.
+CRM propio de EliDental: resumen del día, kanban de pacientes (como Kommo), ficha del paciente
+y citas sincronizadas con Google Calendar. Se construye con **SDD (Spec-Driven Development)**.
 
 **Fuente de verdad:** el hub de Notion [«Eli Panel — SDD Hub»](https://app.notion.com/p/3f55445f5f868115ab4acac0869bd112).
 Esta carpeta es su espejo: cada documento se copia aquí cuando el usuario lo aprueba.
@@ -13,9 +13,9 @@ Esta carpeta es su espejo: cada documento se copia aquí cuando el usuario lo ap
 | [plan.md](plan.md) | Aprobado (10-oct-2026): arquitectura, datos, contrato Eli → CRM, Calendar, pantallas |
 | [tasks.md](tasks.md) | Aprobadas (10-oct-2026): TK-1 a TK-40 en Ready |
 | `integracion.md` | La escribe el orquestador durante la construcción |
+| [qa.md](qa.md) | Informe de QA por tarea (ronda 1: TK-1 a TK-11, TK-14, TK-21 y TK-22; ronda 2: TK-13, TK-18, TK-19 y TK-23) |
 | [backup-crm.md](backup-crm.md) | Copia semanal de la base con `scripts/backup-crm.sh` y cómo restaurar (TK-13) |
 | [tk-12-proyecto-remoto.md](tk-12-proyecto-remoto.md) | Paso a paso para crear `eli-crm` en la nube (✋ espera aprobación) |
-| [qa.md](qa.md) | Informe de QA por tarea (ronda 1: TK-1 a TK-11, TK-14, TK-21 y TK-22) |
 
 ## Agentes (`.claude/agents/`)
 

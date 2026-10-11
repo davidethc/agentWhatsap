@@ -81,7 +81,7 @@ calendario) · `rol_personal` (doctora, admin) · `actor` (personal, eli, sistem
 | `conversaciones` | `id`, `telefono text` (593…), `nombre_whatsapp`, `turnos_entrantes int`, `ultimo_entrante_en` | `unique(telefono)`, `check (telefono ~ '^593[0-9]{8,9}$')` |
 | `pacientes` | `id`, `conversacion_id` (null si no tiene teléfono), `responsable_id` (→ pacientes), `nombre`, `cedula`, `fecha_nacimiento`, `correo`, `origen`, `etapa`, `motivo_perdido`, `volver_el date`, `consentimiento_firmado_en`, `etapa_cambiada_en` | Índices en `conversacion_id`, `responsable_id`, `etapa`, `volver_el`; **un solo titular por conversación** (único parcial `where responsable_id is null`); `check` motivo solo si etapa = perdido; búsqueda `pg_trgm` en `nombre` |
 | `datos_clinicos` | `paciente_id` (pk), `alergias`, `enfermedades`, `embarazo bool`, `miedo text` | Trigger: **no se guarda si el paciente no tiene consentimiento** |
-| `mensajes` | `id`, `conversacion_id`, `id_externo text`, `direccion` (entrante/saliente), `texto`, `enviado_en` | `unique(id_externo)`; índice `(conversacion_id, enviado_en)` |
+| `mensajes` | `id`, `conversacion_id`, `id_externo text`, `direccion` (entrante/saliente), `enviado_en` (**sin `texto`**: el CRM no guarda el contenido, [ADR 0012](../adr/0012-crm-sin-contenido-de-mensajes.md)) | `unique(id_externo)`; índice `(conversacion_id, enviado_en)` |
 | `citas` | `id`, `paciente_id` (null = sin vincular), `gcal_event_id`, `gcal_etag`, `inicia_en`, `termina_en`, `servicio`, `estado`, `origen`, `sync` (ok/pendiente/error), `sync_error` | `unique(gcal_event_id)`; índices `(inicia_en)`, `paciente_id`; parcial `where sync <> 'ok'`; `check termina_en > inicia_en` |
 | `cambios_etapa` | `id`, `paciente_id`, `de`, `a`, `motivo_perdido`, `actor`, `personal_id`, `en` | Índice `(paciente_id, en)` |
 | `horario` | `dia_semana`, `abre`, `cierra` | Semilla: L–V 09–18, sábado 09–15 (igual que Eli) |
@@ -123,8 +123,8 @@ Supabase). La función valida el JSON y llama a `registrar_evento_eli`. Responde
 
 | Evento | Datos | Efecto | Idempotencia |
 |---|---|---|---|
-| `mensaje_entrante` | `telefono`, `nombre_whatsapp`, `message_id`, `texto`, `en` | Crea la conversación y el titular en **Nuevo** si es la primera vez; guarda el mensaje; suma un turno; con 2 turnos o más, Nuevo → **Conversando**; Perdido → **Conversando** (reactivación) | `id_externo = message_id` (el mismo del dedup de n8n) |
-| `mensaje_saliente` | `telefono`, `texto`, `execution_id`, `en` | Guarda la respuesta de Eli | `id_externo = 'out:' + execution_id` |
+| `mensaje_entrante` | `telefono`, `nombre_whatsapp`, `message_id`, `en` (**sin `texto`**) | Crea la conversación y el titular en **Nuevo** si es la primera vez; registra que hubo mensaje (sin su contenido); suma un turno; con 2 turnos o más, Nuevo → **Conversando**; Perdido → **Conversando** (reactivación) | `id_externo = message_id` (el mismo del dedup de n8n) |
+| `mensaje_saliente` | `telefono`, `execution_id`, `en` (**sin `texto`**) | Registra que Eli respondió (sin su contenido) | `id_externo = 'out:' + execution_id` |
 | `cita_reservada` | `telefono`, `gcal_event_id`, `inicio`, `fin`, `servicio`, `nombre` | Crea o actualiza la cita (origen eli) ligada al titular; paciente → **Agendó** | `unique(gcal_event_id)` |
 
 **En n8n:** un workflow nuevo, `Eli → CRM` (`workflows/eli-crm.json`): entrada interna → HTTP Request
@@ -225,11 +225,11 @@ Al soltar en Perdido: diálogo «Motivo: no respondió / indeciso / no asistió�
 
 ```text
 ┌────────────┬───────────────────────────────┬──────────────────────────┐
-│ menú       │ Paciente A   [Agendó ▾]        │ Conversación con Eli     │
-│            │ Tel 5939…  · Responsable: —    │ (solo lectura)           │
-│            │ Datos básicos      [Editar]    │ 10:02 Paciente: Hola…    │
-│            │  Cédula · Nacimiento · Correo  │ 10:02 Eli: ¡Hola! …      │
-│            │ Datos clínicos                 │ 10:05 Paciente: mañana…  │
+│ menú       │ Paciente A   [Agendó ▾]        │ (Conversación con Eli:   │
+│            │ Tel 5939…  · Responsable: —    │ pospuesta, TK-41)        │
+│            │ Datos básicos      [Editar]    │                          │
+│            │  Cédula · Nacimiento · Correo  │                          │
+│            │ Datos clínicos                 │                          │
 │            │  ⚠ Falta consentimiento firmado│                          │
 │            │  [Marcar consentimiento firmado]│                          │
 │            │ Citas            [+ Nueva cita] │                          │

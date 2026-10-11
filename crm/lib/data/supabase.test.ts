@@ -47,6 +47,26 @@ describe("adaptador Supabase", () => {
     expect(escrituras).toEqual([]) // nunca insert/update/delete directos
   })
 
+  it("actualizar edita solo los 4 datos básicos (y falla claro si la RLS no deja)", async () => {
+    const llamadas: unknown[] = []
+    const consulta: Record<string, unknown> = {}
+    for (const m of ["select", "eq", "order"]) consulta[m] = () => consulta
+    consulta.maybeSingle = async () => ({ data: { id: 7 }, error: null })
+    const cliente = {
+      from: () => ({ ...consulta, update: (v: unknown) => (llamadas.push(v), consulta) }),
+      rpc: vi.fn(),
+    } as unknown as SupabaseClient
+    await crearDatosSupabase(cliente)
+      .pacientes.actualizar(7, { nombre: "Q", cedula: null, fechaNacimiento: "1990-01-02", correo: null })
+      .catch(() => {})
+    expect(llamadas).toEqual([{ nombre: "Q", cedula: null, fecha_nacimiento: "1990-01-02", correo: null }])
+
+    consulta.maybeSingle = async () => ({ data: null, error: null }) // 0 filas: la RLS no dejó
+    await expect(
+      crearDatosSupabase(cliente).pacientes.actualizar(7, { nombre: "Q", cedula: null, fechaNacimiento: null, correo: null })
+    ).rejects.toThrow("No se pudo guardar los datos")
+  })
+
   it("citas: guardar, cancelar y marcar asistencia usan sus funciones", async () => {
     const { cliente, rpc, escrituras } = clienteSimulado({ data: { id: 7 }, error: null })
     const datos = crearDatosSupabase(cliente)

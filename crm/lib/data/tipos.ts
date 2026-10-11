@@ -64,10 +64,10 @@ export type DatosClinicos = {
   miedo: string | null
 }
 
+/** Mensaje de la conversación con Eli: solo dirección y hora. El CRM no guarda el contenido (TK-41). */
 export type Mensaje = {
   id: number
   direccion: "entrante" | "saliente"
-  texto: string
   enviadoEn: string
 }
 

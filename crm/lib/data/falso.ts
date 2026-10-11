@@ -157,12 +157,12 @@ export function crearDatosFalsos({ ahora = () => new Date() }: Opciones = {}): D
   )
 
   mensajes.set(A.conversacionId!, [
-    { id: sig(), direccion: "entrante", texto: "Hola, quiero una cita", enviadoEn: iso(a(-1, 10, 2)) },
-    { id: sig(), direccion: "saliente", texto: "¡Hola! Claro, ¿qué día te viene bien?", enviadoEn: iso(a(-1, 10, 2)) },
-    { id: sig(), direccion: "entrante", texto: "Mañana a las 9", enviadoEn: iso(a(-1, 10, 5)) },
+    { id: sig(), direccion: "entrante", enviadoEn: iso(a(-1, 10, 2)) },
+    { id: sig(), direccion: "saliente", enviadoEn: iso(a(-1, 10, 2)) },
+    { id: sig(), direccion: "entrante", enviadoEn: iso(a(-1, 10, 5)) },
   ])
   mensajes.set(D.conversacionId!, [
-    { id: sig(), direccion: "entrante", texto: "Buenas, ¿cuánto cuesta una limpieza?", enviadoEn: iso(a(0, 8)) },
+    { id: sig(), direccion: "entrante", enviadoEn: iso(a(0, 8)) },
   ])
 
   // ───── Interfaz ─────

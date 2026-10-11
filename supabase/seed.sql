@@ -106,26 +106,13 @@ begin
     returning id into v_pac;
     v_ids := v_ids || v_pac;
 
-    -- Conversación: mensajes alternados paciente / Eli.
+    -- Conversación: mensajes alternados paciente / Eli (solo dirección y hora; el CRM no guarda
+    -- el contenido). Hasta 12 por conversación.
     if v_conv is not null and v_p.turnos > 0 then
-      insert into public.mensajes (conversacion_id, id_externo, direccion, texto, enviado_en)
+      insert into public.mensajes (conversacion_id, id_externo, direccion, enviado_en)
       select v_conv,
              case when i % 2 = 1 then 'wamid.seed.' || v_p.n || '.' || i else 'out:seed-' || v_p.n || '-' || i end,
              case when i % 2 = 1 then 'entrante' else 'saliente' end,
-             (array[
-               'Hola, buenas. Quisiera información para una limpieza dental.',
-               '¡Hola! Soy Eli, la asistente de EliDental 😊 Claro, te ayudo. ¿Para qué día te gustaría?',
-               '¿Tienen turno esta semana en la mañana?',
-               'Sí, tengo espacio el jueves a las 10:00 o el viernes a las 9:00. ¿Cuál te queda mejor?',
-               'El jueves a las 10 está bien.',
-               'Listo, te agendé el jueves a las 10:00. Te esperamos.',
-               'Gracias, ¿cuánto cuesta?',
-               'La valoración no tiene costo; el tratamiento te lo indica la doctora en la consulta.',
-               'Perfecto, muchas gracias.',
-               '¡Con gusto! Cualquier cosa me escribes por aquí.',
-               'Una consulta más: ¿atienden los sábados?',
-               'Sí, los sábados de 9:00 a 15:00.'
-             ])[i],
              -- Cada 3 min; el último entrante coincide con ultimo_entrante_en.
              (select ultimo_entrante_en from public.conversaciones where id = v_conv)
                - make_interval(mins => (2 * v_p.turnos - 1 - i) * 3)

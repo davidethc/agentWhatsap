@@ -309,16 +309,15 @@ export function crearDatosSupabase(supabase: SupabaseClient): Datos {
       async deConversacion(conversacionId) {
         const r = await supabase
           .from("mensajes")
-          .select("id, direccion, texto, enviado_en")
+          .select("id, direccion, enviado_en")
           .eq("conversacion_id", conversacionId)
           .order("enviado_en")
         const filas = comprobar(r, "No se pudo cargar la conversación. Intenta de nuevo.") as unknown as {
           id: number
           direccion: Mensaje["direccion"]
-          texto: string
           enviado_en: string
         }[]
-        return filas.map((m) => ({ id: m.id, direccion: m.direccion, texto: m.texto, enviadoEn: m.enviado_en }))
+        return filas.map((m) => ({ id: m.id, direccion: m.direccion, enviadoEn: m.enviado_en }))
       },
     },
   }

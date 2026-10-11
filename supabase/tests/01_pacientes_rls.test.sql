@@ -72,8 +72,9 @@ select ok((select count(*) from public.pacientes) >= 1, 'personal lee pacientes'
 select ok((select count(*) from public.conversaciones) >= 1, 'personal lee conversaciones');
 select is((select count(*)::int from public.datos_clinicos), 1, 'personal lee datos_clinicos');
 select is((select count(*)::int from public.personal), 1, 'personal lee personal');
-select lives_ok($$insert into public.pacientes (nombre, origen) values ('Beto Inventado', 'llamada')$$,
-  'personal inserta pacientes');
+-- Altas solo con crear_paciente (TK-39); la edición directa, solo de datos básicos (ver 09_permisos).
+select lives_ok($$select public.crear_paciente('Beto Inventado', 'llamada')$$,
+  'personal crea pacientes con crear_paciente');
 with u as (update public.pacientes set cedula = '0000000000' where id = 900001 returning 1)
 select is((select count(*)::int from u), 1, 'personal actualiza pacientes');
 with u as (update public.datos_clinicos set miedo = 'agujas' where paciente_id = 900001 returning 1)
@@ -88,12 +89,12 @@ select is((select count(*)::int from public.datos_clinicos), 0, 'ajeno ve 0 dato
 select throws_ok($$insert into public.pacientes (nombre, origen) values ('Intruso', 'llamada')$$,
   '42501', null, 'ajeno no inserta pacientes');
 
--- anon: 0 filas
+-- anon: sin privilegio de tabla (TK-39), ni siquiera puede consultar
 reset role;
 set local role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
-select is((select count(*)::int from public.pacientes), 0, 'anon ve 0 pacientes');
-select is((select count(*)::int from public.datos_clinicos), 0, 'anon ve 0 datos_clinicos');
+select throws_ok($$select count(*) from public.pacientes$$, '42501', null, 'anon no consulta pacientes');
+select throws_ok($$select count(*) from public.datos_clinicos$$, '42501', null, 'anon no consulta datos_clinicos');
 reset role;
 
 select * from finish();

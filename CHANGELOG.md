@@ -6,6 +6,11 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli Panel: permisos por columna (TK-39).** Migración `20261011000200_permisos_por_columna.sql`:
+  las funciones del panel pasan a `security definer`; el personal solo edita directo los datos básicos
+  y el consentimiento del paciente, los datos clínicos y el horario; etapas, citas y conversaciones
+  solo por funciones; `anon` sin privilegios en `public`. Prueba pgTAP `09_permisos` y 01/02/03
+  adaptadas. README de `supabase/`: 21 pacientes (20 + 1 dependiente) y 3 sin teléfono.
 - **Eli Panel: el CRM no guarda el contenido de los mensajes (TK-41).** Migración
   `20261011000100_mensajes_sin_texto.sql` (borra `mensajes.texto`; `registrar_evento_eli` rechaza
   `texto`), `eli-evento` responde 400 si llega `texto`, seed, pgTAP, tipos y capa de datos del panel

@@ -59,6 +59,45 @@ Con el número claramente falso `0900000091` (`593900000091`):
 | Funciones y RLS | ✅ | 0 funciones `security definer` sin `search_path`; 0 funciones ejecutables por `anon`; 21 políticas, ninguna con `using (true)`. |
 | La doctora sí ve datos | ✅ | Con su token: `GET /pacientes` devuelve las filas (23 en el momento de la prueba). |
 
+## Ronda 2 · 11-oct-2026 · TK-13, TK-18, TK-19 y TK-23
+
+Rama `feat/crm-docs` tras `git merge feat/crm` (`b848138`; conflictos solo en CHANGELOG y README de
+docs, resueltos conservando ambos lados). No se hizo `db reset`, no se importó ni activó nada en n8n.
+
+| Tarea | Resultado | Evidencia |
+|---|---|---|
+| **TK-13** `backup-crm.sh` | ✅ Pasa | Contra la base local (`--db-url …:55322`, destino fuera del repo): genera `eli-crm-AAAAMMDD-HHMMSS/` con `roles`, `schema` y `data` `.sql.gz` + `SHA256SUMS`; `shasum -c` → 3 × OK; carpeta 700 y archivos 600; el esquema trae 11 tablas, los datos traen `public`, `auth` y `storage` y la fila de QA (`593900000091`); sin claves en el esquema. Errores: sin `CRM_DB_URL` → «Falta CRM_DB_URL» (exit 1); URL `mysql://` → «no parece una cadena postgresql» (exit 1). `.gitignore` cubre `eli-crm-*/` (una copia hecha dentro de `crm/` no aparece en `git status`; la borré). Aviso esperado de `pg_dump` por la referencia circular de `pacientes` (la guía lo explica). **No probada la restauración** en una base vacía (haría falta un `db reset` o una base aparte). |
+| **TK-18** `workflows/eli-crm.json` | ✅ Pasa (solo lectura del JSON) | 8 nodos; sin clave `active` (n8n lo importa inactivo); POST a `http://host.docker.internal:55321/functions/v1/eli-evento`, `timeout 5000`, `maxTries 3` (= 1 intento + 2 reintentos), `continueErrorOutput`; error → «Armar error» → `LPUSH v4:crm:errores` → `LLEN` → si > 200 `RPOP`; termina sin error. Credenciales solo por referencia (`Eli CRM secreto`, `Redis local`); sin tokens, JWT ni el secreto de prueba. **No ejecutado en n8n** (prohibido importar): el 200 con fila creada y la lista de errores en Redis quedan para TK-37. |
+| **TK-19** copia de `version4` | ✅ Pasa (solo lectura del JSON) | `workflows/pruebas/eli-version4-crm-copia.json`: sin `active`, nombre «COPIA CRM (prueba, inactiva)», webhook con ruta propia (`copia-crm-tk19-no-usar`) para no chocar con producción. Frente al `version4` real: 6 nodos nuevos (3 «armar» + 3 «enviar … (sin esperar)»), **0 nodos eliminados, 0 conexiones originales perdidas**; el único nodo existente que cambia es «Webhook Kapso» (ruta e id). Las 3 llamadas son `executeWorkflow` con `waitForSubWorkflow: false` y `onError: continueRegularOutput`, colgadas **en paralelo** de «¿Mensaje nuevo?», «Responder por WhatsApp» y «Crear evento». Agente y modelo Gemini idénticos. `jq -f scripts/crm-copia-version4.jq workflows/eli-version4.json` reproduce la copia exacta. `workflows/eli-version4.json` real: **sin cambios** respecto al ancestro común con `main`. Simulé los 3 nodos «armar» con datos falsos y apliqué los eventos con `registrar_evento_eli` (paciente falso `593900000093`): Nuevo → Agendó, 2 mensajes, cita `agendada` / origen `eli` / sync `ok`; con teléfono o id vacíos el nodo no manda nada. |
+| **TK-23** Capa de datos | ✅ Pasa | `pnpm test`: 3 archivos, **43 pruebas** ok; `pnpm lint`, `pnpm typecheck` y `pnpm build` (con las dos variables públicas) ok. Solo se llaman las funciones de la base (`resumen_del_dia`, `mover_etapa`, `marcar_asistencia`, `crear_paciente`, `guardar_cita`, `cancelar_cita`); 0 `insert/update/upsert/delete` a tablas en `lib`, `app` y `components`; el cliente solo lee `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `ELI_DATOS` (adaptador falso/real); la `service_role` solo aparece en un comentario que la prohíbe. `crm/.env.example` está en git; **no pude leer su contenido** (el permiso lo niega). |
+
+### Observaciones de la ronda 2
+
+| # | Qué | Impacto | Sugerencia |
+|---|---|---|---|
+| 6 | **La copia de `version4` quedó vieja.** `main` ya tiene un `version4` con los seguimientos automáticos (`d54e52b`, +179 líneas) que `feat/crm` no tiene; la copia se hizo sobre el anterior. | Aplicar la copia tal cual en TK-20 **borraría los seguimientos** de producción. | Antes de TK-20, `git merge main` y regenerar con el `jq` (probé el `jq` sobre el `version4` de `main`: da 46 nodos, 6 de ellos CRM). Ya tiene backup previo obligatorio (`scripts/backup.sh`). |
+| 7 | En error, «Armar error» guarda en Redis (`v4:crm:errores`) el evento completo, con **teléfono y texto del mensaje**. | Datos de salud en una lista de Redis (hasta 200). Contradice la regla «sin teléfono ni texto» de `errores_integracion`. | Con TK-41 el evento ya no lleva texto; falta decidir si guardar el teléfono. |
+| 8 | Alguien más levantó `supabase functions serve` con otro secreto; mi segundo `serve` salió solo y `eli-evento` devuelve 401 con mi secreto de la ronda 1. | Ninguno; no lo toqué. | Quien lo usa, que lo cierre al terminar (el runtime ya murió una vez por memoria). |
+
+## TK-41 · El CRM no guarda ni muestra el contenido de los mensajes
+
+Decisión del usuario del 2026-10-11 ([ADR 0012](../adr/0012-crm-sin-contenido-de-mensajes.md)). Parte de
+docs hecha en esta rama; **falta verificar las entregas** de datos, frontend y n8n.
+
+Línea base (referencias a «texto» antes de las entregas): `supabase/migrations` 8, `supabase/functions`
+10, `supabase/seed.sql` 1, `supabase/tests` 12, copia de `version4` 5, `crm/lib` 19; `eli-crm.json`,
+`crm/app` y `crm/components` 0.
+
+Cuando las tres partes lleguen, comprobar y anotar aquí:
+
+- [ ] La columna `mensajes.texto` no existe y las filas viejas ya no tienen texto (incluidas las de QA).
+- [ ] `eli-evento` y `registrar_evento_eli` no leen ni guardan `texto`; `errores_integracion` tampoco.
+- [ ] El seed no trae mensajes con texto; `supabase test db` y `supabase gen types` al día.
+- [ ] Los nodos «CRM: armar mensaje_entrante / saliente» de n8n no mandan `texto`.
+- [ ] El panel no pide ni muestra texto (ficha sin conversación); `pnpm test`, `lint`, `typecheck` y `build` verdes.
+- [ ] Sigue registrándose que hubo mensaje: dirección, hora, turnos, Nuevo → Conversando, 24 h y deduplicación.
+- [ ] `git grep -i texto` en `supabase`, `workflows` y `crm` no deja nada del contenido de mensajes.
+
 ## Observaciones (no son fallos de ningún criterio)
 
 | # | Qué | Impacto | Sugerencia |

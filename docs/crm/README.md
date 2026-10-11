@@ -1,7 +1,7 @@
 # Eli Panel (CRM de EliDental)
 
-CRM propio de EliDental: resumen del día, kanban de pacientes (como Kommo), ficha con la conversación
-con Eli y citas sincronizadas con Google Calendar. Se construye con **SDD (Spec-Driven Development)**.
+CRM propio de EliDental: resumen del día, kanban de pacientes (como Kommo), ficha del paciente
+y citas sincronizadas con Google Calendar. Se construye con **SDD (Spec-Driven Development)**.
 
 **Fuente de verdad:** el hub de Notion [«Eli Panel — SDD Hub»](https://app.notion.com/p/3f55445f5f868115ab4acac0869bd112).
 Esta carpeta es su espejo: cada documento se copia aquí cuando el usuario lo aprueba.

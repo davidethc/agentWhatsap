@@ -13,3 +13,10 @@ backups/
 google-sa*.json
 gcal-*.json
 secrets/
+
+# Copias de la base del Eli Panel: datos de salud, nunca en git (TK-13).
+# Por defecto van fuera del repo (~/EliPanel-copias); esto cubre el caso de copiarlas aquí.
+EliPanel-copias/
+eli-crm-*/
+*.sql.gz
+*.dump

@@ -43,7 +43,7 @@ Ramas y modelos: `crm-datos` → `feat/crm-datos` (opus) · `crm-n8n` → `feat/
 | TK-28 | Kanban: búsqueda y actualización en tiempo real | crm-frontend | P1 | S | TK-27, TK-8 |
 | TK-29 | Ficha: datos básicos editables, responsable/dependientes e historial de etapas | crm-frontend | P0 | M | TK-23 |
 | TK-30 | Ficha: datos clínicos con consentimiento | crm-frontend | P0 | S | TK-29, TK-4 |
-| TK-31 | Ficha: conversación con Eli de solo lectura | crm-frontend | P0 | S | TK-29 |
+| TK-31 | ⏸ Ficha: conversación con Eli de solo lectura (**Backlog**, TK-41: el CRM no guarda mensajes) | crm-frontend | P0 | S | TK-29 |
 | TK-32 | Nuevo paciente (formulario, duplicado por teléfono y dependiente) | crm-frontend | P0 | M | TK-23, TK-6 |
 | TK-33 | Citas: crear, editar y cancelar desde el panel | crm-frontend | P0 | M | TK-23, TK-6 |
 | TK-34 | Citas: vista de semana y vincular citas sin paciente | crm-frontend | P1 | M | TK-33 |

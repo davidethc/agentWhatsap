@@ -19,9 +19,9 @@ let falso: Datos | undefined
  * `ELI_DATOS=falso` (en .env.local) usa datos inventados en memoria, sin Supabase.
  */
 export async function obtenerDatos(): Promise<Datos> {
-  if (process.env.ELI_DATOS === "falso") {
-    await connection() // el falso usa la hora actual: tiene que ser dinámico, no prerenderizado
-    return (falso ??= crearDatosFalsos())
-  }
+  // Todo acceso a datos es por petición (sesión, hora actual): nunca se prerenderiza. Sin esto, Next
+  // avisa «Date.now() while prerendering» porque el cliente de Supabase mira la hora al leer la sesión.
+  await connection()
+  if (process.env.ELI_DATOS === "falso") return (falso ??= crearDatosFalsos())
   return crearDatosSupabase(await createClient())
 }

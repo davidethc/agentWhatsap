@@ -30,8 +30,9 @@ agregan a `personal`.
 
 ## Datos de prueba (`seed.sql`)
 
-Todo inventado: 21 pacientes (nombres ficticios, teléfonos `5939000000xx`, cédulas `0000000xxx`,
-correos `@ejemplo.test`) en las 6 etapas, un dependiente, un paciente sin teléfono, ~70 mensajes,
+Todo inventado: 21 pacientes (20 titulares y 1 dependiente; nombres ficticios, teléfonos
+`5939000000xx`, cédulas `0000000xxx`, correos `@ejemplo.test`) en las 6 etapas, 3 sin teléfono, ~70
+mensajes (solo dirección y hora, sin contenido),
 citas de hoy y de la semana (una sin vincular y una cancelada), dos fichas con consentimiento y datos
 clínicos, cumpleaños y retornos. Las fechas son relativas a **hoy en Guayaquil**.
 
@@ -71,6 +72,21 @@ Regenerar después de cada migración nueva.
 
 Errores: 22023 datos inválidos / fuera de horario · 23P01 choque de citas · P0002 no existe ·
 42501 sin permiso · P0001 falta el consentimiento.
+
+### Qué puede escribir el panel directo (TK-39)
+
+Las funciones de personal son `security definer` (exigen personal al empezar). Con `UPDATE`/`INSERT`
+directo, `authenticated` solo puede:
+
+| Tabla | Permitido directo | Lo demás |
+|---|---|---|
+| `pacientes` | `update` de `nombre`, `cedula`, `fecha_nacimiento`, `correo`, `consentimiento_firmado_en` | Alta con `crear_paciente`; etapa con `mover_etapa` / `marcar_asistencia` |
+| `datos_clinicos` | `insert` y `update` de `alergias`, `enfermedades`, `embarazo`, `miedo` (exige consentimiento) | No se mueven de paciente |
+| `horario` | `abre`, `cierra` (e `insert` de un día) | — |
+| `citas`, `conversaciones` | nada | `guardar_cita`, `cancelar_cita`, `crear_paciente`, `eli-evento` |
+| `mensajes`, `cambios_etapa`, `auditoria`, `errores_integracion`, `sync_calendario`, `personal` | solo lectura | Funciones y triggers |
+
+`anon` no tiene ningún privilegio de tabla en `public` (tampoco en tablas futuras).
 
 ## Reglas
 

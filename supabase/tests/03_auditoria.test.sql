@@ -34,7 +34,8 @@ select results_eq(
   $$values ('update', null::text, '1111111111', 'personal', '00000000-0000-0000-0000-0000000000d1')$$,
   'editar paciente deja antes, después y actor');
 
-update public.citas set servicio = 'Limpieza' where id = 900001;
+-- Las citas se editan con guardar_cita (TK-39); la auditoría sigue registrando a la doctora.
+select public.guardar_cita(900001, '2026-10-12 10:00-05', '2026-10-12 11:00-05', 'Limpieza', 900001);
 select results_eq(
   $$select antes->>'servicio', despues->>'servicio', actor::text
       from public.auditoria where tabla = 'citas' and fila_id = 900001 and accion = 'update'$$,
@@ -59,8 +60,9 @@ select is((select count(*)::int from public.auditoria where tabla = 'pacientes' 
 -- Consentimiento
 select throws_ok($$insert into public.datos_clinicos (paciente_id, alergias) values (900002, 'polen')$$,
   'P0001', 'Falta el consentimiento firmado del paciente', 'sin consentimiento no se guardan datos clínicos');
+-- Moverlos de paciente ya no está permitido al personal (TK-39: sin privilegio sobre paciente_id).
 select throws_ok($$update public.datos_clinicos set paciente_id = 900002 where paciente_id = 900001$$,
-  'P0001', 'Falta el consentimiento firmado del paciente', 'tampoco moviéndolos a otro paciente');
+  '42501', null, 'tampoco moviéndolos a otro paciente');
 
 -- Nadie edita ni borra la auditoría
 select throws_ok($$update public.auditoria set actor = 'eli'$$, '42501', null, 'personal no edita auditoria');

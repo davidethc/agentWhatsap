@@ -1,3 +1,4 @@
+import { connection } from "next/server"
 import { Suspense } from "react"
 
 import { AppSidebar } from "@/components/layout/app-sidebar"
@@ -15,6 +16,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 }
 
 async function PanelConSesion({ children }: { children: React.ReactNode }) {
+  await connection() // la sesión depende de la hora (expiración del token): siempre en cada petición
   const personal = await requerirPersonal()
   return (
     <TooltipProvider>

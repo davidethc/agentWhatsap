@@ -7,7 +7,6 @@ import type {
   CambioEtapa,
   Cita,
   DatosClinicos,
-  Mensaje,
   OrigenPaciente,
   Paciente,
   Resumen,
@@ -242,6 +241,23 @@ export function crearDatosSupabase(supabase: SupabaseClient): Datos {
         return { duplicado: res.duplicado, paciente: await pacientePorId(res.paciente.id) }
       },
 
+      async actualizar(id, d) {
+        const r = await supabase
+          .from("pacientes")
+          .update({
+            nombre: d.nombre,
+            cedula: d.cedula,
+            fecha_nacimiento: d.fechaNacimiento,
+            correo: d.correo,
+          })
+          .eq("id", id)
+          .select("id")
+          .maybeSingle()
+        const fila = comprobar(r, "No se pudo guardar los datos. Intenta de nuevo.")
+        if (!fila) throw new ErrorDatos("No se pudo guardar los datos. Intenta de nuevo.", "42501")
+        return pacientePorId(id)
+      },
+
       async moverEtapa(id, etapa, motivo) {
         const r = await supabase.rpc("mover_etapa", {
           p_paciente_id: id,
@@ -305,21 +321,5 @@ export function crearDatosSupabase(supabase: SupabaseClient): Datos {
       },
     },
 
-    mensajes: {
-      async deConversacion(conversacionId) {
-        const r = await supabase
-          .from("mensajes")
-          .select("id, direccion, texto, enviado_en")
-          .eq("conversacion_id", conversacionId)
-          .order("enviado_en")
-        const filas = comprobar(r, "No se pudo cargar la conversación. Intenta de nuevo.") as unknown as {
-          id: number
-          direccion: Mensaje["direccion"]
-          texto: string
-          enviado_en: string
-        }[]
-        return filas.map((m) => ({ id: m.id, direccion: m.direccion, texto: m.texto, enviadoEn: m.enviado_en }))
-      },
-    },
   }
 }

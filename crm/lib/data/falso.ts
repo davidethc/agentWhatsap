@@ -18,7 +18,6 @@ import type {
   Cita,
   DatosClinicos,
   Etapa,
-  Mensaje,
   Paciente,
   Resumen,
 } from "./tipos"
@@ -54,7 +53,6 @@ export function crearDatosFalsos({ ahora = () => new Date() }: Opciones = {}): D
   const citas: Cita[] = []
   const historial = new Map<number, CambioEtapa[]>()
   const clinicos = new Map<number, DatosClinicos>()
-  const mensajes = new Map<number, Mensaje[]>()
 
   function nuevoPaciente(p: Partial<Paciente> & Pick<Paciente, "nombre">, telefono?: string): Paciente {
     const id = sig()
@@ -137,7 +135,7 @@ export function crearDatosFalsos({ ahora = () => new Date() }: Opciones = {}): D
   const A = nuevoPaciente({ nombre: "Paciente A", etapa: "agendo", origen: "whatsapp" }, "593990000001")
   const B = nuevoPaciente({ nombre: "Paciente B", etapa: "seguimiento", volverEl: format(addMonths(ahora(), 6), "yyyy-MM-dd") }, "593990000002")
   const C = nuevoPaciente({ nombre: "Paciente C", etapa: "nuevo" }, "593990000003")
-  const D = nuevoPaciente({ nombre: "Paciente D", etapa: "conversando" }, "593990000004")
+  nuevoPaciente({ nombre: "Paciente D", etapa: "conversando" }, "593990000004")
   nuevoPaciente({ nombre: "Paciente E", etapa: "perdido", motivoPerdido: "indeciso" }, "593990000005")
   nuevoPaciente({ nombre: "Paciente F", etapa: "nuevo", origen: "llamada" })
   nuevoPaciente(
@@ -156,14 +154,6 @@ export function crearDatosFalsos({ ahora = () => new Date() }: Opciones = {}): D
     base(sig(), A.id, a(2, 10), "Control")
   )
 
-  mensajes.set(A.conversacionId!, [
-    { id: sig(), direccion: "entrante", texto: "Hola, quiero una cita", enviadoEn: iso(a(-1, 10, 2)) },
-    { id: sig(), direccion: "saliente", texto: "¡Hola! Claro, ¿qué día te viene bien?", enviadoEn: iso(a(-1, 10, 2)) },
-    { id: sig(), direccion: "entrante", texto: "Mañana a las 9", enviadoEn: iso(a(-1, 10, 5)) },
-  ])
-  mensajes.set(D.conversacionId!, [
-    { id: sig(), direccion: "entrante", texto: "Buenas, ¿cuánto cuesta una limpieza?", enviadoEn: iso(a(0, 8)) },
-  ])
 
   // ───── Interfaz ─────
   return {
@@ -230,6 +220,17 @@ export function crearDatosFalsos({ ahora = () => new Date() }: Opciones = {}): D
           telefono ?? undefined
         )
         return { duplicado: false, paciente: { ...p } }
+      },
+      async actualizar(id, d) {
+        if (!d.nombre.trim()) throw new ErrorDatos("Escribe el nombre del paciente", "23514")
+        const p = paciente(id)
+        Object.assign(p, {
+          nombre: d.nombre.trim(),
+          cedula: d.cedula,
+          fechaNacimiento: d.fechaNacimiento,
+          correo: d.correo,
+        })
+        return { ...p }
       },
       async moverEtapa(id, etapa, motivo) {
         return cambiarEtapa(id, etapa, motivo)
@@ -350,10 +351,5 @@ export function crearDatosFalsos({ ahora = () => new Date() }: Opciones = {}): D
       },
     },
 
-    mensajes: {
-      async deConversacion(id) {
-        return [...(mensajes.get(id) ?? [])].sort((x, y) => x.enviadoEn.localeCompare(y.enviadoEn))
-      },
-    },
   }
 }

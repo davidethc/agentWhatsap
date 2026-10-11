@@ -938,7 +938,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Evento para Eli → CRM. Si algo falta, no manda nada.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to || !n.message_id) return [];\nreturn [{ json: { tipo: 'mensaje_entrante', telefono: n.to, nombre_whatsapp: n.nombre || undefined, message_id: n.message_id, texto: n.text, en: new Date().toISOString() } }];"
+        "jsCode": "// Evento para Eli → CRM. Por ahora NO lleva el texto del mensaje (privacidad). Si algo falta, no manda nada.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to || !n.message_id) return [];\nreturn [{ json: { tipo: 'mensaje_entrante', telefono: n.to, nombre_whatsapp: n.nombre || undefined, message_id: n.message_id, en: new Date().toISOString() } }];"
       },
       "id": "c19a0001-0000-4000-8000-000000000001",
       "name": "CRM: armar mensaje_entrante",
@@ -976,7 +976,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Respuesta que Eli acaba de mandar. execution_id lleva el número de vuelta para que cada respuesta del bucle sea única.\nconst n = $('Normalizar mensaje').first().json;\nconst salida = $('Agente version4').last().json.output;\nif (!n.to || !salida) return [];\nreturn [{ json: { tipo: 'mensaje_saliente', telefono: n.to, texto: String(salida).slice(0, 3000), execution_id: $execution.id + '-' + $runIndex, en: new Date().toISOString() } }];"
+        "jsCode": "// Respuesta que Eli acaba de mandar. Por ahora NO lleva el texto (privacidad). execution_id lleva el número de vuelta para que cada respuesta del bucle sea única.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to) return [];\nreturn [{ json: { tipo: 'mensaje_saliente', telefono: n.to, execution_id: $execution.id + '-' + $runIndex, en: new Date().toISOString() } }];"
       },
       "id": "c19a0001-0000-4000-8000-000000000003",
       "name": "CRM: armar mensaje_saliente",

@@ -16,6 +16,14 @@ personales: las credenciales van solo por nombre, y el calendario y el número u
 | [`legacy/v2-fuentes/`](legacy/v2-fuentes/) | Histórico | Scripts que generaron la v2 |
 | [`legacy/version4-inicial.sdk.ts`](legacy/version4-inicial.sdk.ts) | Histórico | Fuente original de version4 con el Workflow SDK de n8n (OpenRouter + Redis Cloud). **La fuente de verdad es `eli-version4.json`** |
 
+## Privacidad del CRM (TK-41)
+
+Por ahora el CRM **no guarda ni muestra el contenido de los mensajes**. Los eventos `mensaje_entrante`
+y `mensaje_saliente` salen sin `texto` (solo `tipo`, `telefono`, `nombre_whatsapp`, `message_id` o
+`execution_id` y `en`). `eli-crm.json` además quita `texto` antes del POST y antes de guardar en la
+lista `v4:crm:errores`. Para volver a guardar el texto hay que reponerlo en los dos armadores de
+`scripts/crm-copia-version4.jq` y en esas dos expresiones de `eli-crm.json`.
+
 ## Reglas
 
 - **La fuente de verdad es el JSON exportado** desde n8n con `scripts/export-workflow.sh`. No se editan

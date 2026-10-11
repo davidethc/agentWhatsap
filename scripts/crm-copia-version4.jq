@@ -26,11 +26,11 @@ def llamar(id; nombre; p): {
 | (.nodes[] | select(.name == "Webhook Kapso") | .webhookId) = "c0b1a000-0000-4000-8000-000000000019"
 | .nodes += [
     codigo("c19a0001-0000-4000-8000-000000000001"; "CRM: armar mensaje_entrante";
-      "// Evento para Eli → CRM. Si algo falta, no manda nada.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to || !n.message_id) return [];\nreturn [{ json: { tipo: 'mensaje_entrante', telefono: n.to, nombre_whatsapp: n.nombre || undefined, message_id: n.message_id, texto: n.text, en: new Date().toISOString() } }];";
+      "// Evento para Eli → CRM. Por ahora NO lleva el texto del mensaje (privacidad). Si algo falta, no manda nada.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to || !n.message_id) return [];\nreturn [{ json: { tipo: 'mensaje_entrante', telefono: n.to, nombre_whatsapp: n.nombre || undefined, message_id: n.message_id, en: new Date().toISOString() } }];";
       [$p1[0] + 240, $p1[1] - 220]),
     llamar("c19a0001-0000-4000-8000-000000000002"; "CRM: enviar mensaje_entrante (sin esperar)"; [$p1[0] + 480, $p1[1] - 220]),
     codigo("c19a0001-0000-4000-8000-000000000003"; "CRM: armar mensaje_saliente";
-      "// Respuesta que Eli acaba de mandar. execution_id lleva el número de vuelta para que cada respuesta del bucle sea única.\nconst n = $('Normalizar mensaje').first().json;\nconst salida = $('Agente version4').last().json.output;\nif (!n.to || !salida) return [];\nreturn [{ json: { tipo: 'mensaje_saliente', telefono: n.to, texto: String(salida).slice(0, 3000), execution_id: $execution.id + '-' + $runIndex, en: new Date().toISOString() } }];";
+      "// Respuesta que Eli acaba de mandar. Por ahora NO lleva el texto (privacidad). execution_id lleva el número de vuelta para que cada respuesta del bucle sea única.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to) return [];\nreturn [{ json: { tipo: 'mensaje_saliente', telefono: n.to, execution_id: $execution.id + '-' + $runIndex, en: new Date().toISOString() } }];";
       [$p2[0] + 240, $p2[1] - 220]),
     llamar("c19a0001-0000-4000-8000-000000000004"; "CRM: enviar mensaje_saliente (sin esperar)"; [$p2[0] + 480, $p2[1] - 220]),
     codigo("c19a0001-0000-4000-8000-000000000005"; "CRM: armar cita_reservada";

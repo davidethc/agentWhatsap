@@ -79,48 +79,46 @@ docs, resueltos conservando ambos lados). No se hizo `db reset`, no se importó 
 | 7 | En error, «Armar error» guarda en Redis (`v4:crm:errores`) el evento completo, con **teléfono y texto del mensaje**. | Datos de salud en una lista de Redis (hasta 200). Contradice la regla «sin teléfono ni texto» de `errores_integracion`. | Con TK-41 el evento ya no lleva texto; falta decidir si guardar el teléfono. |
 | 8 | Alguien más levantó `supabase functions serve` con otro secreto; mi segundo `serve` salió solo y `eli-evento` devuelve 401 con mi secreto de la ronda 1. | Ninguno; no lo toqué. | Quien lo usa, que lo cierre al terminar (el runtime ya murió una vez por memoria). |
 
-## Ronda 3 · 11-oct-2026 · INCOMPLETA (se acabó el límite de uso)
+## Ronda 3 · 11-oct-2026 · TK-24, TK-27, TK-29, TK-32 y TK-33 (navegador) + verificación de TK-41
 
-Rama `feat/crm-docs` tras `git merge feat/crm` (fast-forward, `74b2f99`). Pruebas con Playwright contra
-Supabase local y la doctora de prueba, sobre el build de producción (`next start`, puerto 3100).
+Rama `feat/crm-docs` tras `git merge feat/crm` (incluye TK-41: datos `a0db82d`, n8n `e2e36d2`). Playwright
+contra Supabase local y la doctora de prueba, sobre el build de producción (`next start`, puerto 3100;
+reconstruido tras el merge). Datos inventados; sin `db reset`. Base: `pnpm lint`, `typecheck`, `test`
+(75 pruebas) y `build` ✅.
 
-| Tarea | Resultado | Evidencia |
+| Tarea | Resultado | Evidencia (capturas en `capturas/qa-*`) |
 |---|---|---|
-| Base `pnpm lint`, `typecheck`, `test` (75 pruebas) y `build` | ✅ Pasa | Los cuatro verdes tras el merge. |
-| TK-24 Resumen y asistencia | ⚠️ **No terminada** | Visto: citas de hoy por hora con paciente, servicio y estado; «Asistió» abre un diálogo con «volver en» 3 meses / **6 meses (recomendado)** / 1 año / otra fecha / sin fecha; «No asistió» pide confirmación. Capturas: `capturas/qa-tk24-resumen-1440.png`, `qa-tk24-asistio-dialogo-1440.png`. **No se llegó a confirmar** Asistió ni No asistió contra la base (ni a 768 px): sin resultado de HU-2.2 y HU-2.3. |
-| TK-27 Kanban | ⚠️ No probada | Solo se vieron las 6 columnas con las tarjetas del seed (Nuevo 6, Conversando 4, Agendó 4, Asistió 1, Seguimiento 3, Perdido 3). Falta arrastrar, motivo de Perdido, teclado y búsqueda. |
-| TK-29, TK-32, TK-33 | ⚠️ No probadas | Sin ejecutar. |
+| **TK-24** Resumen y asistencia (HU-2) | ✅ Pasa | Citas de hoy por hora con paciente, servicio y estado (`qa-tk24-resumen-1440/768.png`). **Asistió** pide «volver en» (3 meses / 6 meses recomendado / 1 año / otra fecha / sin fecha). Jorge con el valor por defecto → Seguimiento, `volver_el` = 2027-04-11 (= hoy + 6 meses), cita `asistio`; Irene «sin fecha» → `volver_el = null`; paciente con «otra fecha» 2027-01-15 → `volver_el = 2027-01-15` (`qa-tk24-otra-fecha-1440.png`). **No asistió** (pide confirmación) → Perdido con motivo `no_asistio`, cita `no_asistio`. Cada cambio en `cambios_etapa` con `actor = personal`. |
+| **TK-27** Kanban (HU-5.1–5.3) | ✅ Pasa | 6 columnas (Nuevo, Conversando, Agendó, Asistió, Seguimiento / Volver, Perdido) con contadores. Arrastrar Nuevo → Conversando cambia la etapa y queda en `cambios_etapa` (actor personal). Soltar en Perdido abre «¿Por qué se perdió…?» (No respondió / Indeciso / No asistió): con «Indeciso» → `perdido`, `motivo = indeciso`; «Cancelar» deja la tarjeta donde estaba. También se movió una tarjeta con el teclado (Espacio, flecha, Espacio). **HU-5.4 (buscar por nombre o teléfono) no existe todavía en la pantalla**: es TK-28, fuera de esta ronda. |
+| **TK-29** Ficha (HU-6) | ✅ Pasa (con alcance) | Datos básicos, etapa con selector, fecha «Volver el» visible, citas e historial de etapas con quién/cuándo y «Motivo: indeciso». Enlaces: dependiente → responsable (`/pacientes/9`) y responsable → «Dependientes: …» (`/pacientes/21`). Editar el correo guarda y deja en `auditoria` `update` con antes/después y `actor = personal`. **Sin conversación** (correcto por TK-41). Datos clínicos y consentimiento (HU-6.3) aún no están: son TK-30. |
+| **TK-32** Nuevo paciente (HU-8) | ✅ Pasa | Formulario con nombre, teléfono, cómo llegó (llamada / presencial / referido), cédula, nacimiento y correo; vacío → mensajes de zod; teléfono «123» → «El teléfono no es válido». Crear con `0900000071` → fila en **Nuevo**, origen presencial, teléfono `593900000071`. Mismo teléfono otra vez → «Ya existe … ¿abrir su ficha o crear dependiente?» (`qa-tk32-duplicado-1440.png`); «Crear dependiente» cambia el formulario a «Comparte el teléfono y la conversación de su responsable» (sin pedir teléfono) y al guardar crea al paciente con `responsable` y la misma conversación. «Abrir ficha» **no se hizo clic**. |
+| **TK-33** Citas (HU-9) | ✅ Pasa | Crear (martes 13, 14:00, duración por defecto 1 h) → cita `agendada`, origen `panel`, sync `pendiente`, 14:00–15:00 Guayaquil, paciente → Agendó (aviso «Cita creada. El paciente pasó a Agendó.»). Domingo y lunes 19:00 → «La cita está fuera del horario del consultorio»; 09:45 sobre otra cita → «Ya hay otra cita en ese horario»; ninguna de las 3 se guardó. Cambiar a 15:00 con 2 h → 15:00–17:00, sync `pendiente`. Cancelar pide confirmación («Se quitará también de Google Calendar») → `cancelada`, sync `pendiente`. **No se verificó Google Calendar** (el push es TK-15/17). |
+
+### Verificación de TK-41
+
+| Comprobación | Resultado | Evidencia |
+|---|---|---|
+| Columna `mensajes.texto` borrada | ✅ | Columnas: `id, conversacion_id, id_externo, direccion, enviado_en, created_at`. Migración `20261011000100_mensajes_sin_texto.sql`. |
+| `registrar_evento_eli` rechaza `texto` | ✅ | Con `texto` → «texto ya no se acepta: el CRM no guarda el contenido de los mensajes»; sin él → `{"ok":true,"duplicado":false}`. `eli-evento/validar.ts` lo convierte en 400. |
+| `errores_integracion` sin texto | ✅ | 0 filas con «texto». |
+| Payloads de los nodos CRM (ejecutados con datos simulados con mensaje de salud) | ✅ | `mensaje_entrante`: `tipo, telefono, nombre_whatsapp, message_id, en`; `mensaje_saliente`: `tipo, telefono, execution_id, en`; `cita_reservada`: sin texto. El sub-workflow `eli-crm.json` además descarta `texto` si llegara. «Armar error» ya no guarda el texto (sí el teléfono). |
+| Seed y pruebas | ✅ | `seed.sql`: 0 referencias a «texto»; pgTAP del repo: `hasnt_column mensajes.texto` y «texto se rechaza (TK-41)»; `06_evento_eli` ok. |
+| Panel | ✅ | Sin conversación en la ficha; `pnpm test`, `lint`, `typecheck` y `build` verdes. Las pruebas de la capa de datos mencionan `texto` solo como filtro de búsqueda (nombre/teléfono). |
+| Sigue registrándose que hubo mensaje | ✅ | Eventos aceptados con dirección y hora; Nuevo → Conversando, Agendó y deduplicación por `id_externo` probados (rondas 1–3). |
+| `git grep -i texto` | ✅ | Solo quedan: migraciones históricas (`…0300`, `…0700`), el rechazo de `texto`, el filtro de búsqueda del panel, textos de UI y el texto que Eli le pasa al agente (no al CRM). |
 
 ### Hallazgos de la ronda 3
 
-| # | Qué | Impacto | Reproducir / evidencia |
+| # | Qué | Impacto | Sugerencia |
 |---|---|---|---|
-| **F-1** | **El login falla de forma intermitente.** En 1 de 5 intentos (y 2 veces seguidas antes de reiniciar el servidor) el botón se queda en «Entrando…» y no pasa al Resumen. El log de `next start` muestra: `Route "/": Next.js encountered the unstable value Date.now() while prerendering` en `__loadSession` (auth-js). | La doctora podría quedarse sin entrar; hay que recargar. Probable relación con cómo se carga la sesión en el layout del panel (`app/(panel)/layout.tsx` → `requerirPersonal()` → `getClaims()`), pese al `await connection()`. | `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321 NEXT_PUBLIC_SUPABASE_ANON_KEY=<pública local> pnpm build && pnpm exec next start -p 3100`; repetir el login con la doctora de prueba 5 veces; mirar la salida del servidor. Reasignar a `crm-frontend`. |
-| **F-2** | `supabase test db` falla: `02_agenda_rls` (columna `mensajes.texto` no existe) y `06_evento_eli` («texto ya no se acepta»). | Es un desajuste, no un fallo de código: la base compartida ya tiene aplicada la migración TK-41 (`20261011000100`) que **aún no está en `feat/crm`**, y las pruebas del repo son las antiguas. | Se arregla cuando se integre la parte de datos de TK-41 (migración y pruebas actualizadas). |
-| F-3 | La base compartida se reinició entre rondas: el seed está limpio y mis filas de QA de las rondas 1 y 2 ya no están. | Ninguno. | — |
+| F-1 | **Login intermitente (de la vuelta anterior).** En 1 de 5 intentos el botón se quedaba en «Entrando…»; el log mostraba `Route "/": … unstable value Date.now() while prerendering` en `__loadSession`. Tras el último reinicio y el build nuevo mi helper reintentó el login, así que **no se pudo confirmar si sigue ocurriendo**. | Posible bloqueo de acceso. | `crm-frontend`: reproducir con 5–10 logins seguidos sobre `next start` y revisar `app/(panel)/layout.tsx` / `getClaims()`. |
+| F-2 | `supabase test db` falla en `01`, `02` y `03` (`permission denied for table pacientes/citas`). No es un fallo del código de `feat/crm`: la base compartida ya tiene migraciones de otras ramas que `feat/crm` aún no integra (`20261011000200_permisos_por_columna`, `…120100_calendario_push`, `…120200_calendario_pull`) y esas pruebas son las anteriores. `04`–`08` pasan (incluido `06`, con TK-41). | Hasta integrar `feat/crm-datos` no hay un pgTAP verde contra esta base. | Integrar `feat/crm-datos` y volver a correr `supabase test db`. |
+| F-3 | Al marcar **Cancelar** una cita, el paciente se queda en Agendó (la HU-9 no pide otra cosa). | Menor. | Decidir con la doctora si debe volver a Conversando. |
+| F-4 | `database.types.ts` no incluye las funciones de calendario que ya existen en la base (`aplicar_evento_calendario`, `calendario_citas_pendientes`…). | Menor, mismo origen que F-2. | Regenerar al integrar. |
 
-**Pendiente (para otra ronda):** terminar TK-24 (Asistió con 6 meses, sin fecha y otra fecha; No asistió →
-Perdido; capturas a 768), y probar TK-27, TK-29 (sin conversación), TK-32 y TK-33 con los criterios de la
-Spec (HU-2, HU-5, HU-6, HU-8, HU-9) y capturas `qa-*`. No se usaron subagentes.
-
-## TK-41 · El CRM no guarda ni muestra el contenido de los mensajes
-
-Decisión del usuario del 2026-10-11 ([ADR 0012](../adr/0012-crm-sin-contenido-de-mensajes.md)). Parte de
-docs hecha en esta rama; **falta verificar las entregas** de datos, frontend y n8n.
-
-Línea base (referencias a «texto» antes de las entregas): `supabase/migrations` 8, `supabase/functions`
-10, `supabase/seed.sql` 1, `supabase/tests` 12, copia de `version4` 5, `crm/lib` 19; `eli-crm.json`,
-`crm/app` y `crm/components` 0.
-
-Cuando las tres partes lleguen, comprobar y anotar aquí:
-
-- [ ] La columna `mensajes.texto` no existe y las filas viejas ya no tienen texto (incluidas las de QA).
-- [ ] `eli-evento` y `registrar_evento_eli` no leen ni guardan `texto`; `errores_integracion` tampoco.
-- [ ] El seed no trae mensajes con texto; `supabase test db` y `supabase gen types` al día.
-- [ ] Los nodos «CRM: armar mensaje_entrante / saliente» de n8n no mandan `texto`.
-- [ ] El panel no pide ni muestra texto (ficha sin conversación); `pnpm test`, `lint`, `typecheck` y `build` verdes.
-- [ ] Sigue registrándose que hubo mensaje: dirección, hora, turnos, Nuevo → Conversando, 24 h y deduplicación.
-- [ ] `git grep -i texto` en `supabase`, `workflows` y `crm` no deja nada del contenido de mensajes.
+Datos de QA dejados en la base local (inventados): pacientes «Paciente QA Nuevo» y «Hijo QA Dependiente»
+(`593900000071`), la cita cancelada «Valoración QA» y la cita «QA Otra fecha» (insertada por SQL, porque hoy es
+domingo y el panel no deja agendar fuera de horario).
 
 ## Observaciones (no son fallos de ningún criterio)
 

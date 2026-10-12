@@ -107,9 +107,17 @@ export function generatedFaviconSvg(branding: Branding): string {
   const letra = faviconInitial(branding.name)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;");
+  // Mosaico con brillo diagonal: el acento sólido (el test lo fija) y encima
+  // un gloss blanco→negro que le da profundidad sin tocar la inicial.
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">`,
-    `<rect width="64" height="64" rx="12" fill="${accent}"/>`,
+    `<defs><linearGradient id="favoGloss" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">`,
+    `<stop offset="0" stop-color="#ffffff" stop-opacity="0.5"/>`,
+    `<stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>`,
+    `<stop offset="0.92" stop-color="#000000" stop-opacity="0.2"/>`,
+    `</linearGradient></defs>`,
+    `<rect width="64" height="64" rx="13" fill="${accent}"/>`,
+    `<rect width="64" height="64" rx="13" fill="url(#favoGloss)"/>`,
     `<text x="32" y="33" fill="${fg}" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif"`,
     ` font-size="38" font-weight="700" text-anchor="middle" dominant-baseline="central">${letra}</text>`,
     `</svg>`,

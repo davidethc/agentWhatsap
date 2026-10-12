@@ -38,8 +38,12 @@ export default async function AuthLayout({
             </h1>
           ) : (
             <div>
-              <h1 className="sr-only">{branding.name}</h1>
-              <p className="text-sm text-text-3">CRM de WhatsApp con agente de IA</p>
+              <h1 className="font-serif text-[26px] font-medium italic tracking-tight">
+                {branding.name}
+              </h1>
+              <p className="mt-1.5 text-sm text-text-3">
+                Pacientes, citas y WhatsApp en un solo lugar.
+              </p>
             </div>
           )}
         </div>

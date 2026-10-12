@@ -27,7 +27,8 @@ import {
  */
 export function navItemClass(active: boolean) {
   return cn(
-    "flex items-center gap-[10px] rounded-sm px-2.5 py-2.5 text-[13.5px] font-semibold transition-colors lg:py-2",
+    "flex items-center gap-[10px] rounded-md px-2.5 py-2.5 text-[13.5px] font-semibold transition-[background-color,color,transform] duration-200 lg:py-2",
+    "hover:translate-x-[2px]",
     // Acento sólido: dentro de `.nav-dark` es el calculado para fondo oscuro,
     // así que contrasta con la barra (≥ 3.5:1) sea cual sea el white-label.
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",

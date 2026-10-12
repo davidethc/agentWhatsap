@@ -1,57 +1,39 @@
-# EliDental CRM
+# crm/ · Eli Panel
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+Panel de la doctora de EliDental (Next.js 16, TypeScript estricto, Tailwind 4 y shadcn/ui) sobre Supabase.
+Resumen del día, tablero de pacientes por etapa, ficha, nuevo paciente y citas.
 
-**El CRM dental de WhatsApp para el consultorio EliDental (Loja, Ecuador).**
+- Cómo se usa: [docs/crm/guia-doctora.md](../docs/crm/guia-doctora.md)
+- Cómo levantarlo y operarlo: [docs/crm/operacion.md](../docs/crm/operacion.md)
+- Diseño y decisiones: [docs/crm/plan.md](../docs/crm/plan.md)
 
-EliDental atiende por WhatsApp con **Eli**, una asistente de IA que agenda sola.
-Este CRM es el panel donde la doctora ve esas conversaciones, el embudo de
-pacientes y la agenda del consultorio. Una instancia = un solo consultorio: marca
-EliDental, acento turquesa (#0e7490), moneda USD y zona `America/Guayaquil`.
-
-## Qué incluye
-
-- **Bandeja** de WhatsApp en tiempo real: hilo, contacto, ventana de 24 h,
-  respuestas de Eli marcadas como IA y handoff a la doctora con un click.
-- **Pipeline de pacientes**: Nuevo → Interesado → Agendó → Asistió → Seguimiento
-  → Perdido.
-- **Pacientes**: cada persona que escribe queda registrada con su ficha y notas.
-- **Citas / agenda dental**: calendario Día/Semana/Mes/Lista con el horario del
-  consultorio (L-V 09:00-18:00, sábado 09:00-15:00) y conectores de entrega
-  (enlace fijo, Google Calendar + Meet, Zoom).
-- **Agente Eli + knowledge base**: nombre, tono e instrucciones del consultorio;
-  responde solo con lo que sabe y escala a la doctora.
-- **Laboratorio**: pacientes simulados evalúan a Eli en un sandbox interno antes
-  de que hable con pacientes reales.
-- **Resultados**: números del consultorio (conversaciones, embudo, citas).
-- **Ajustes**: WhatsApp, marca, plantillas, equipo, IA, agenda.
-
-## Stack
-
-Next.js 15 + React 19 · TypeScript · PostgreSQL 16 + Drizzle ORM · Better Auth ·
-WhatsApp Cloud API oficial · IA por proveedor OpenRouter-compatible · Docker +
-Caddy.
-
-## Correrlo en local
+## Arrancar
 
 ```bash
+supabase start                  # base local (desde la raíz del repo)
+cp .env.example .env.local      # URL y clave PÚBLICA de `supabase status`
 pnpm install
-docker compose -f docker-compose.dev.yml up -d postgres   # Postgres local
-pnpm init-env                                              # crea .env con los secretos generados
-pnpm doctor                                                # revisa el entorno y la base
-pnpm seed:demo                                             # carga el consultorio de demostración EliDental
-pnpm dev                                                   # http://localhost:3000
+pnpm dev                        # http://localhost:3000
 ```
 
-## Despliegue
+Cuenta de prueba (solo local): `doctora@ejemplo.test` / `eli-panel-local`.
 
-En un VPS con Docker (2 GB de RAM bastan): con **Coolify** o con `docker compose`.
-Solo hace falta un dominio apuntando al servidor (Meta exige **https** para los
-webhooks) y un número en la WhatsApp Cloud API. Caddy emite el certificado solo.
-La agenda viene encendida por defecto (`AGENDA=on`); coloca tus credenciales de
-WhatsApp e IA en Ajustes.
+## Comandos
 
-## Créditos y licencia
+| Comando | Para qué |
+|---|---|
+| `pnpm lint` | Revisar el código |
+| `pnpm typecheck` | Revisar los tipos |
+| `pnpm test` | Pruebas (Vitest) |
+| `pnpm build` / `pnpm start` | Versión de producción |
 
-Es un **fork white-label de [vocero-crm](https://github.com/kevinrivm/vocero-crm)**,
-de [Kevin Belier](https://www.youtube.com/@KevinBelier), bajo licencia MIT.
+Sin `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` el panel falla a propósito al construirse.
+`ELI_DATOS=falso` en `.env.local` usa datos inventados en memoria, sin Supabase.
+
+## Reglas del código
+
+- El panel **lee** las tablas y **escribe** llamando a las funciones de la base (ahí viven las reglas del
+  embudo); solo los datos básicos, el consentimiento y los datos clínicos van directo, con permiso por columna.
+- Solo la URL y la clave pública llegan al navegador. **Nunca** una `service_role` ni un secreto.
+- Los colores están en un solo archivo: `styles/tokens.css`.
+- No se muestra ni se guarda el contenido de los mensajes ([ADR 0012](../docs/adr/0012-crm-sin-contenido-de-mensajes.md)).

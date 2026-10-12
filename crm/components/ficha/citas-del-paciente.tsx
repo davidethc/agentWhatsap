@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 
 export function CitasDelPaciente({ citas, paciente }: { citas: Cita[]; paciente: PacienteOpcion }) {
   return (
-    <Card>
+    <Card className="card-surface-hover">
       <CardHeader>
         <CardTitle>Citas</CardTitle>
         <CardAction>

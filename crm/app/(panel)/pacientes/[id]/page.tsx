@@ -18,6 +18,7 @@ export default function FichaPage({ params }: { params: Promise<{ id: string }> 
         <ArrowLeft className="size-4" />
         Pacientes
       </Link>
+      <span className="kicker">Eli Panel · Ficha del paciente</span>
       <Suspense fallback={<Skeleton className="h-96 w-full" />}>
         <Ficha params={params} />
       </Suspense>

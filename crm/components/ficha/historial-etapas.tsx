@@ -14,7 +14,7 @@ const QUIEN: Record<CambioEtapa["actor"], string> = {
 
 export function HistorialEtapas({ historial }: { historial: CambioEtapa[] }) {
   return (
-    <Card>
+    <Card className="card-surface-hover">
       <CardHeader>
         <CardTitle>Historial de etapas</CardTitle>
       </CardHeader>

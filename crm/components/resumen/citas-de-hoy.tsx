@@ -27,7 +27,7 @@ export function CitasDeHoy({ citas, hoy }: Props) {
   const [pendiente, setPendiente] = useState<Pendiente>(null)
 
   return (
-    <Card>
+    <Card className="card-surface-hover">
       <CardHeader>
         <CardTitle>Citas de hoy</CardTitle>
         <CardDescription>Toca «Asistió» o «No asistió» cuando termine la cita.</CardDescription>

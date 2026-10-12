@@ -186,12 +186,12 @@ function Columna({
       ref={setNodeRef}
       aria-label={`${TITULO[etapa]}, ${pacientes.length} pacientes`}
       className={cn(
-        "flex min-h-72 flex-col gap-2 rounded-xl bg-muted/60 p-2 transition-colors",
+        "flex min-h-72 flex-col gap-2 rounded-lg bg-muted p-2 transition-colors",
         isOver && "bg-accent ring-2 ring-primary/40"
       )}
     >
-      <h2 className="flex min-h-10 items-center justify-between gap-2 px-1 text-sm font-semibold">
-        {TITULO[etapa]}
+      <h2 className="flex min-h-10 items-center justify-between gap-2 px-1">
+        <span className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">{TITULO[etapa]}</span>
         <span className="rounded-full bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
           {pacientes.length}
         </span>

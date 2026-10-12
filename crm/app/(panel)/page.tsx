@@ -26,8 +26,11 @@ async function ResumenDelDia() {
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Resumen del día</h1>
+        <div className="flex flex-col gap-1">
+          <span className="kicker">Eli Panel · Hoy</span>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Resumen <em className="font-serif font-normal italic">del día</em>
+          </h1>
           <p className="text-sm text-muted-foreground first-letter:uppercase">{dia}</p>
         </div>
         <NuevoPaciente />

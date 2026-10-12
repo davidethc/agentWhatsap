@@ -47,7 +47,7 @@ export function DatosBasicos({ paciente }: { paciente: Paciente }) {
   }
 
   return (
-    <Card>
+    <Card className="card-surface-hover">
       <CardHeader>
         <CardTitle>Datos básicos</CardTitle>
         {!editando && (

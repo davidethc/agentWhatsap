@@ -30,10 +30,12 @@ export function AppSidebar({ nombre }: { nombre: string }) {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <span className="brand-tile flex size-8 shrink-0 items-center justify-center rounded-lg text-primary-foreground">
             <Stethoscope className="size-4" />
           </span>
-          <span className="truncate text-base font-semibold">Eli Panel</span>
+          <span className="truncate text-base font-semibold">
+            Eli <em className="font-serif font-normal italic">Panel</em>
+          </span>
         </div>
       </SidebarHeader>
       <SidebarContent>

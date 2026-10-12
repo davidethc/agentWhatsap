@@ -47,8 +47,8 @@ function TarjetaCita({ cita: c, pacientes }: { cita: Cita; pacientes: PacienteOp
   return (
     <li
       className={cn(
-        "flex flex-col gap-2 rounded-xl border bg-card p-3",
-        sinVincular && "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+        "card-surface-hover flex flex-col gap-2 rounded-xl border bg-card p-3",
+        sinVincular && "border-warning-soft bg-warning-tint"
       )}
     >
       <div className={cn("flex flex-col gap-0.5", cancelada && "text-muted-foreground line-through")}>

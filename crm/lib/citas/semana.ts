@@ -43,7 +43,15 @@ export function agruparPorDia(lunes: string, citas: Cita[]): DiaDeSemana[] {
   return diasDeSemana(lunes).map((dia) => ({ dia, citas: ordenadas.filter((c) => claveDia(c.iniciaEn) === dia) }))
 }
 
+/**
+ * Solo una cita agendada y sin paciente se puede vincular: la base rechaza editar una cita que ya
+ * fue atendida (asistió / no asistió) o cancelada («Solo se puede editar una cita agendada»).
+ */
+export function sePuedeVincular(cita: Pick<Cita, "pacienteId" | "estado">): boolean {
+  return cita.pacienteId === null && cita.estado === "agendada"
+}
+
 /** Citas agendadas que aún no tienen paciente. */
 export function contarSinVincular(citas: Cita[]): number {
-  return citas.filter((c) => c.pacienteId === null && c.estado === "agendada").length
+  return citas.filter(sePuedeVincular).length
 }

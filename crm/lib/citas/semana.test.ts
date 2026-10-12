@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { Cita } from "@/lib/data/tipos"
 
-import { agruparPorDia, contarSinVincular, diasDeSemana, lunesDeParametro, semanaVecina, tituloSemana } from "./semana"
+import { agruparPorDia, contarSinVincular, diasDeSemana, lunesDeParametro, sePuedeVincular, semanaVecina, tituloSemana } from "./semana"
 
 const cita = (id: number, iniciaEn: string, extra: Partial<Cita> = {}): Cita => ({
   id, pacienteId: 1, pacienteNombre: "Paciente Uno", iniciaEn, terminaEn: iniciaEn,
@@ -64,5 +64,18 @@ describe("contarSinVincular", () => {
       cita(2, "2026-10-10T15:00:00Z", { pacienteId: null, estado: "cancelada" }),
       cita(3, "2026-10-10T16:00:00Z"),
     ])).toBe(1)
+  })
+})
+
+describe("sePuedeVincular (F-5)", () => {
+  it.each([
+    [null, "agendada", true],
+    [null, "asistio", false],
+    [null, "no_asistio", false],
+    [null, "cancelada", false],
+    [7, "agendada", false],
+    [7, "asistio", false],
+  ] as const)("paciente %s y estado %s → %s", (pacienteId, estado, esperado) => {
+    expect(sePuedeVincular({ pacienteId, estado })).toBe(esperado)
   })
 })

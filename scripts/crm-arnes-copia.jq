@@ -23,6 +23,8 @@ def poner($id; $nombre; $json; $x): {
       [
         { parameters: {}, id: "h1000001-0000-4000-8000-000000000001", name: "Manual",
           type: "n8n-nodes-base.manualTrigger", typeVersion: 1, position: [0, 0] },
+        poner("h1000001-0000-4000-8000-000000000008"; "Leer webhook";
+          "{\"to\":\"593900000093\",\"nombre\":\"Paciente Prueba\",\"text\":\"TEXTO-QUE-NO-DEBE-VIAJAR\",\"message_id\":\"wamid.arnes-\(now | floor)\"}"; 110),
         poner("h1000001-0000-4000-8000-000000000002"; "Normalizar mensaje";
           "{\"to\":\"593900000093\",\"nombre\":\"Paciente Prueba\",\"text\":\"TEXTO-QUE-NO-DEBE-VIAJAR\",\"message_id\":\"wamid.arnes-\(now | floor)\"}"; 220),
         poner("h1000001-0000-4000-8000-000000000003"; "Validar pedido"; "{\"telefono\":\"593900000093\"}"; 440),
@@ -43,7 +45,8 @@ def poner($id; $nombre; $json; $x): {
     ),
     connections: (
       {
-        "Manual": { main: [[{ node: "Normalizar mensaje", type: "main", index: 0 }]] },
+        "Manual": { main: [[{ node: "Leer webhook", type: "main", index: 0 }]] },
+        "Leer webhook": { main: [[{ node: "Normalizar mensaje", type: "main", index: 0 }]] },
         "Normalizar mensaje": { main: [[{ node: "Validar pedido", type: "main", index: 0 }]] },
         "Validar pedido": { main: [[{ node: "Calcular turnos (mañana / tarde)", type: "main", index: 0 }]] },
         "Calcular turnos (mañana / tarde)": { main: [[{ node: "Crear evento", type: "main", index: 0 }]] },

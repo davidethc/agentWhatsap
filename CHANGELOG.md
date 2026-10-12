@@ -30,7 +30,7 @@ Ecuador.
   variable de entorno) y [docs/crm/backup-crm.md](docs/crm/backup-crm.md) con la restauración;
   `.gitignore` cubre las copias. Paso a paso de TK-12 para aprobar:
   [docs/crm/tk-12-proyecto-remoto.md](docs/crm/tk-12-proyecto-remoto.md).
-- **Integración Eli → CRM en n8n (TK-18, TK-19)**: sub-workflow `Eli → CRM` ([workflows/eli-crm.json](workflows/eli-crm.json), inactivo) y una COPIA inactiva de version4 con 3 ramas sin esperar ([workflows/pruebas/eli-version4-crm-copia.json](workflows/pruebas/eli-version4-crm-copia.json), generada con `scripts/crm-copia-version4.jq`). `version4` real sin cambios.
+- **Integración Eli → CRM en n8n (TK-18, TK-19)**: sub-workflow `Eli → CRM` ([workflows/eli-crm.json](workflows/eli-crm.json), inactivo) y una COPIA inactiva de version4 con 3 ramas sin esperar ([workflows/pruebas/eli-version4-crm-copia.json](workflows/pruebas/eli-version4-crm-copia.json), generada con `scripts/crm-copia-version4.jq`). `version4` real sin cambios. La copia se regeneró el 11-oct-2026 sobre el `version4` de `main` 4dbbf07 (medios con Gemini, respaldo OpenRouter, fechas de Ecuador, seguimientos): `mensaje_entrante` se cuelga tras `¿Mensaje nuevo?` leyendo `Leer webhook`. Plan exacto de TK-20 (sin ejecutar) en [docs/crm/integracion-version4.md](docs/crm/integracion-version4.md); arnés de pruebas `scripts/crm-arnes-copia.jq`.
 - **QA del Eli Panel, ronda 3** ([docs/crm/qa.md](docs/crm/qa.md)): TK-24, TK-27, TK-29, TK-32 y TK-33
   pasan con Playwright contra Supabase local (asistencia con «volver en», kanban con motivo de Perdido,
   ficha con auditoría, duplicado y dependiente, citas con aviso de horario y choque). Pendientes: login

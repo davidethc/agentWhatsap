@@ -21,6 +21,11 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 - **Nuevo script `pnpm acceso:crear <correo>`**: crea un acceso (correo +
   contraseña) por CLI con Better Auth, atravesando el gate de registro cerrado
   (`runInternalSignup`); el primer alta siembra organización, pipeline y perfil.
+- **Nuevo script `pnpm canal:conectar <phone_number_id>`**: conecta un número
+  para **solo recepción** (token vacío, sin credencial de envío) y apaga el
+  agente incluido, para que un cerebro externo (Eli/n8n por su proveedor) sea
+  quien responde. Deja el enrutamiento del webhook por `phone_number_id` usando
+  la misma capa que Ajustes (`saveCredentials`).
 - **Cabeceras de seguridad restauradas** en `next.config.ts` (CSP con
   `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`,
   `Referrer-Policy`, `Permissions-Policy`) y `poweredByHeader: false`. `output:

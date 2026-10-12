@@ -16,10 +16,11 @@ import type {
  * Adaptador real. Reglas:
  *  - LEE de las tablas (la RLS deja ver solo al personal).
  *  - ESCRIBE solo llamando a las funciones de la base (mover_etapa, crear_paciente, guardar_cita,
- *    cancelar_cita, marcar_asistencia): ahí viven las reglas del embudo.
+ *    cancelar_cita, marcar_asistencia): ahí viven las reglas del embudo. Excepción: datos básicos,
+ *    consentimiento y datos clínicos, que no tienen función y se escriben directo (permiso por columna + RLS).
  *
- * TODO(TK-8..11): cuando exista `database.types.ts`, tipar el cliente con `SupabaseClient<Database>`
- * y reemplazar las Fila* de abajo por los tipos generados.
+ * Las filas de abajo (Fila*) son el contrato con la base escrito a mano; `database.types.ts` (generado con
+ * `supabase gen types`, sin las funciones de calendario) queda de referencia para revisarlas.
  */
 
 type FilaPaciente = {

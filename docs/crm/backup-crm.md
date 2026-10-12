@@ -66,6 +66,49 @@ encendida y Docker abierto):
 
 Si la Mac suele estar apagada a esa hora, mejor un recordatorio semanal y correrlo a mano.
 
+### Contra la nube (`eli-crm`)
+
+Datos del proyecto (no son secretos): ref `uvtlctqupeermbgsepxn`, región `us-east-1`. Session pooler
+(lo deja `supabase link` en `supabase/.temp/pooler-url`, sin contraseña):
+
+```
+postgresql://postgres.uvtlctqupeermbgsepxn@aws-0-us-east-1.pooler.supabase.com:5432/postgres
+```
+
+La contraseña de la base vive en `~/.config/eli-crm/db-password` (permisos 600). **No se escribe en
+la terminal, ni en git, docs o Notion**: se lee del archivo dentro del mismo comando y se codifica
+para URL.
+
+**Opción A: una sola vez, sin guardar la URL**
+
+```bash
+cd /Users/d/agentWhatsap
+CRM_DB_URL="postgresql://postgres.uvtlctqupeermbgsepxn:$(python3 -c \
+  'import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip(), safe=""))' \
+  < ~/.config/eli-crm/db-password)@aws-0-us-east-1.pooler.supabase.com:5432/postgres" \
+  scripts/backup-crm.sh
+```
+
+La URL va como variable de entorno del comando, no como argumento: no aparece en `ps` ni en el
+historial, que solo guarda el `$(...)`.
+
+**Opción B: para el cron semanal.** Agregar una línea `CRM_DB_URL=...` al `.env` de la raíz (git lo
+ignora; plantilla en `.env.example`), con la contraseña ya codificada. Así `scripts/backup-crm.sh`
+la toma sola.
+
+Qué revisar después:
+
+1. Termina con «Listo:» y la carpeta `~/EliPanel-copias/eli-crm-AAAAMMDD-HHMMSS/` tiene los 3
+   `.sql.gz` y `SHA256SUMS`, todos `-rw-------`.
+2. `cd` a esa carpeta y `shasum -a 256 -c SHA256SUMS` → 3 OK.
+3. `gunzip -c schema.sql.gz | grep -c 'CREATE TABLE'`: deben ser 11 tablas de `public`.
+4. Si falla con `password authentication failed`, la contraseña no está bien codificada o cambió
+   (Dashboard → Database → Reset password, y actualizar `~/.config/eli-crm/db-password`). Si falla
+   con `Tenant or user not found`, el usuario debe ser `postgres.<ref>` y no `postgres`.
+
+El pooler de sesión del plan gratis admite pocas conexiones a la vez. La copia abre una por paso y
+tarda segundos, así que no afecta al panel.
+
 ### Dónde guardarlas
 
 - La carpeta local basta como primera copia. Para una segunda copia fuera de la Mac: un disco externo
@@ -122,5 +165,6 @@ rm -f *.sql                                   # no dejar copias sin comprimir
      (`public`+`private`), 15 triggers.
 4. `git check-ignore` cubre `EliPanel-copias/`, `eli-crm-*/`, `*.sql.gz` y `backups/`.
 
-**Pendiente:** correrlo una vez contra `eli-crm` en la nube (cuando exista, TK-12). Ahí la
-restauración completa (con `auth` real) se prueba en un proyecto nuevo o en la base local.
+**Pendiente:** correrlo una vez contra `eli-crm` en la nube (lo hace el orquestador o el usuario, con
+la sección «Contra la nube»). Ahí la restauración completa (con `auth` real) se prueba en un
+proyecto nuevo o en la base local.

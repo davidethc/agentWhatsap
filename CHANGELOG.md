@@ -6,6 +6,12 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli Panel: revisión de seguridad y datos de salud (apoyo a TK-39 de QA).** `db lint` sin
+  hallazgos en `public`/`private`; RLS en las 11 tablas; `anon` sin privilegios; `security definer`
+  con `search_path` fijo; seed solo con datos inventados. Hallazgo corregido en la migración
+  `20261011000300_anon_sin_execute_por_defecto.sql`: las funciones futuras de `public` y `private`
+  ya no quedan ejecutables por `anon`. Prueba pgTAP `10_seguridad`. `docs/crm/backup-crm.md` explica
+  cómo correr la copia contra la nube.
 - **Eli Panel: permisos por columna (TK-39).** Migración `20261011000200_permisos_por_columna.sql`:
   las funciones del panel pasan a `security definer`; el personal solo edita directo los datos básicos
   y el consentimiento del paciente, los datos clínicos y el horario; etapas, citas y conversaciones
@@ -31,6 +37,11 @@ Ecuador.
   `.gitignore` cubre las copias. Paso a paso de TK-12 para aprobar:
   [docs/crm/tk-12-proyecto-remoto.md](docs/crm/tk-12-proyecto-remoto.md).
 - **Integración Eli → CRM en n8n (TK-18, TK-19)**: sub-workflow `Eli → CRM` ([workflows/eli-crm.json](workflows/eli-crm.json), inactivo) y una COPIA inactiva de version4 con 3 ramas sin esperar ([workflows/pruebas/eli-version4-crm-copia.json](workflows/pruebas/eli-version4-crm-copia.json), generada con `scripts/crm-copia-version4.jq`). `version4` real sin cambios. La copia se regeneró el 11-oct-2026 sobre el `version4` de `main` 4dbbf07 (medios con Gemini, respaldo OpenRouter, fechas de Ecuador, seguimientos): `mensaje_entrante` se cuelga tras `¿Mensaje nuevo?` leyendo `Leer webhook`. Plan exacto de TK-20 (sin ejecutar) en [docs/crm/integracion-version4.md](docs/crm/integracion-version4.md); arnés de pruebas `scripts/crm-arnes-copia.jq`.
+
+- **QA del Eli Panel, ronda 4** ([docs/crm/qa.md](docs/crm/qa.md)): TK-25, TK-26, TK-28, TK-30 y TK-34
+  pasan con Playwright (números iguales a SQL, búsqueda y tiempo real con curl a `eli-evento`, datos
+  clínicos solo con consentimiento, vista de semana y vincular citas). Hallazgo F-5: «Vincular» aparece en
+  citas no agendadas y falla. El login (F-1) no se reprodujo en 15 intentos, pero sigue sin arreglo.
 - **QA del Eli Panel, ronda 3** ([docs/crm/qa.md](docs/crm/qa.md)): TK-24, TK-27, TK-29, TK-32 y TK-33
   pasan con Playwright contra Supabase local (asistencia con «volver en», kanban con motivo de Perdido,
   ficha con auditoría, duplicado y dependiente, citas con aviso de horario y choque). Pendientes: login

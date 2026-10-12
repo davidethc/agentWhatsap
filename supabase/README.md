@@ -86,7 +86,14 @@ directo, `authenticated` solo puede:
 | `citas`, `conversaciones` | nada | `guardar_cita`, `cancelar_cita`, `crear_paciente`, `eli-evento` |
 | `mensajes`, `cambios_etapa`, `auditoria`, `errores_integracion`, `sync_calendario`, `personal` | solo lectura | Funciones y triggers |
 
-`anon` no tiene ningún privilegio de tabla en `public` (tampoco en tablas futuras).
+`anon` no tiene ningún privilegio de tabla en `public` (tampoco en tablas futuras) ni EXECUTE en
+funciones de `public` o `private`, tampoco en las futuras (migración 0300). Por eso una función nueva
+necesita `grant execute ... to authenticated` (o `service_role`) explícito. Las invariantes de
+seguridad (RLS en todo, nada para `anon`, `search_path` fijo en `security definer`, ningún bucket
+público) se comprueban en `tests/10_seguridad.test.sql`.
+
+Revisión de seguridad: `supabase db lint --local -s public,private --level warning` (sin `-s`,
+también revisa `extensions` y salen falsos positivos de pgTAP) y `supabase test db`.
 
 ## Reglas
 

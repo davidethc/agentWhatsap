@@ -109,6 +109,27 @@ ella, 401). Base: `https://eli-panel.vercel.app`.
 | `GET  /api/bot/availability` | Con `AGENDA`: huecos para ofrecer. |
 | `POST` · `PATCH /api/bot/bookings` | Con `AGENDA`: reservar (201) / mover (200) un hueco ofrecido. |
 
+### Conectar el número (solo recepción)
+
+El webhook solo enruta eventos cuyo `phone_number_id` exista como número
+conectado. Para dejar a Eli (n8n) como único que responde, conecta el número
+**sin credencial de envío y con el agente incluido apagado**:
+
+```bash
+WABA_ID='…' pnpm canal:conectar <phone_number_id>   # p. ej. 1347989838397545
+```
+
+`scripts/conectar-canal.ts` usa la misma capa que Ajustes (`saveCredentials`),
+pero guarda el token **vacío**: el CRM registra entrantes y no puede enviar.
+Apaga además `agent_profile.enabled`. No valida contra Meta ni registra el
+webhook (eso lo hace el proveedor, Kapso). Verificación:
+
+```sql
+set search_path to vocero;
+select phone_number_id, status, length(token_cipher) as cifrado from meta_credentials;  -- cifrado = 0
+select enabled from agent_profile;                                                       -- false
+```
+
 ### Cómo n8n crea contactos, conversaciones y citas
 
 - **Contacto, lead y conversación los crea la ingesta**, no hay endpoint de alta.
@@ -118,7 +139,13 @@ ella, 401). Base: `https://eli-panel.vercel.app`.
   `messages[]`). Es idempotente (dedup por `wa_message_id`).
   **Requisito**: ese `phone_number_id` debe existir como número conectado en
   **Ajustes → WhatsApp**; si no, el evento se descarta («phone_number_id
-  desconocido»). Sin `META_APP_SECRET` no se valida la firma HMAC del webhook.
+  desconocido»). El `GET` de verificación de Meta responde el `hub.challenge`
+  si `hub.verify_token` es igual a `META_WEBHOOK_VERIFY_TOKEN`; la firma HMAC
+  del `POST` (`x-hub-signature-256`) **solo se exige si hay `META_APP_SECRET`**
+  (sin él, capa desactivada).
+- **Salientes**: al CRM solo llegan los mensajes del cliente (`messages`). Lo que
+  Eli envía por Kapso **no** se registra, salvo que el proveedor entregue
+  `smb_message_echoes` (mensajes escritos a mano desde el teléfono, coexistencia).
 - **Contexto / conversación pasa por `conversationId`** (o `identity`):
   `GET /api/bot/context?identity=<teléfono normalizado|bsuid:…|ig:…|fb:…>` o
   `?conversationId=<cv_…>`. La respuesta trae contacto, etapa, ficha, handoff,

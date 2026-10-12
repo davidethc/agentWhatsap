@@ -26,7 +26,15 @@ import * as schema from "./schema";
  */
 export const PG_CONNECTION_OPTIONS = {
   onnotice: () => {},
-  connection: { TimeZone: "UTC" },
+  connection: {
+    TimeZone: "UTC",
+    // Esquema de sesión: TODA la superficie de Vocero vive en un solo esquema.
+    // Por defecto `public`; en el Supabase compartido de Eli Panel es `vocero`
+    // (DATABASE_SCHEMA) para no chocar con las tablas del panel. Con esto las
+    // tablas de drizzle (declaradas sin esquema) y las de Better Auth resuelven
+    // ahí, y las migraciones (scripts/migrate.mjs, drizzle.config.ts) también.
+    search_path: process.env.DATABASE_SCHEMA?.trim() || "public",
+  },
 } as const;
 
 /**

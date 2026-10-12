@@ -52,28 +52,28 @@ CREATE TABLE IF NOT EXISTS "conversion_event" (
 );
 --> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "ad_attribution" ADD CONSTRAINT "ad_attribution_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "ad_attribution" ADD CONSTRAINT "ad_attribution_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "ad_attribution" ADD CONSTRAINT "ad_attribution_contact_id_contact_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contact"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "ad_attribution" ADD CONSTRAINT "ad_attribution_contact_id_contact_id_fk" FOREIGN KEY ("contact_id") REFERENCES "vocero"."contact"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "ad_attribution" ADD CONSTRAINT "ad_attribution_conversation_id_conversation_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversation"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "ad_attribution" ADD CONSTRAINT "ad_attribution_conversation_id_conversation_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "vocero"."conversation"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "capi_settings" ADD CONSTRAINT "capi_settings_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "capi_settings" ADD CONSTRAINT "capi_settings_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "capi_settings" ADD CONSTRAINT "capi_settings_qualified_stage_id_pipeline_stage_id_fk" FOREIGN KEY ("qualified_stage_id") REFERENCES "public"."pipeline_stage"("id") ON DELETE set null ON UPDATE no action;
+	ALTER TABLE "capi_settings" ADD CONSTRAINT "capi_settings_qualified_stage_id_pipeline_stage_id_fk" FOREIGN KEY ("qualified_stage_id") REFERENCES "vocero"."pipeline_stage"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "conversion_event" ADD CONSTRAINT "conversion_event_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "conversion_event" ADD CONSTRAINT "conversion_event_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "conversion_event" ADD CONSTRAINT "conversion_event_conversation_id_conversation_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversation"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "conversion_event" ADD CONSTRAINT "conversion_event_conversation_id_conversation_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "vocero"."conversation"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "conversion_event" ADD CONSTRAINT "conversion_event_attribution_id_ad_attribution_id_fk" FOREIGN KEY ("attribution_id") REFERENCES "public"."ad_attribution"("id") ON DELETE set null ON UPDATE no action;
+	ALTER TABLE "conversion_event" ADD CONSTRAINT "conversion_event_attribution_id_ad_attribution_id_fk" FOREIGN KEY ("attribution_id") REFERENCES "vocero"."ad_attribution"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "ad_attribution_org_conversation_uq" ON "ad_attribution" USING btree ("organization_id","conversation_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "ad_attribution_org_contact_idx" ON "ad_attribution" USING btree ("organization_id","contact_id");--> statement-breakpoint

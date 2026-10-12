@@ -22,10 +22,17 @@ const migrationsFolder =
 const maxAttempts = 15;
 for (let attempt = 1; attempt <= maxAttempts; attempt++) {
   // TimeZone UTC: invariante de tiempo del proyecto (ver src/lib/db/index.ts).
+  // search_path: esquema de sesión (DATABASE_SCHEMA; `public` si no se define).
+  // El pooler de Supabase ignora `options` en la URL, así que el esquema se fija
+  // aquí, en la conexión de postgres.js — es lo que hace que las tablas
+  // (declaradas sin esquema en schema.ts) caigan en `vocero`.
   const sql = postgres(url, {
     max: 1,
     onnotice: () => {},
-    connection: { TimeZone: "UTC" },
+    connection: {
+      TimeZone: "UTC",
+      search_path: process.env.DATABASE_SCHEMA?.trim() || "public",
+    },
   });
   try {
     await migrate(drizzle(sql), { migrationsFolder });

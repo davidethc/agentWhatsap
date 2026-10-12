@@ -18,7 +18,7 @@ ALTER TABLE "contact" ADD COLUMN "channel" text DEFAULT 'whatsapp' NOT NULL;--> 
 ALTER TABLE "conversation" ADD COLUMN "channel" text DEFAULT 'whatsapp' NOT NULL;--> statement-breakpoint
 ALTER TABLE "conversation" ADD COLUMN "channel_thread_ref" text;--> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "instagram_credentials" ADD CONSTRAINT "instagram_credentials_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "instagram_credentials" ADD CONSTRAINT "instagram_credentials_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

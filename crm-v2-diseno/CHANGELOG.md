@@ -7,6 +7,25 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar — camino a 2.0.0
 
+### Esquema Postgres configurable (`DATABASE_SCHEMA`) y despliegue compartido
+
+- **Nuevo `DATABASE_SCHEMA`** (por defecto `public`): el CRM puede vivir en un
+  esquema propio de una base compartida. Se aplica como `search_path` de sesión
+  en la app (`src/lib/db/index.ts`), en las migraciones (`scripts/migrate.mjs`)
+  y en `drizzle.config.ts` (`schemaFilter`). Aditivo: sin la variable nada
+  cambia. Ver `docs/despliegue-eli-panel.md`.
+- Las migraciones generadas referenciaban las claves foráneas con `"public".`;
+  en este fork se reescribieron a `"vocero".` para poder aplicar en ese esquema.
+  **Al correr `pnpm db:generate`, revisa el SQL** (drizzle volverá a emitir
+  `"public".` porque `schema.ts` no usa `pgSchema`).
+- **Nuevo script `pnpm acceso:crear <correo>`**: crea un acceso (correo +
+  contraseña) por CLI con Better Auth, atravesando el gate de registro cerrado
+  (`runInternalSignup`); el primer alta siembra organización, pipeline y perfil.
+- **Cabeceras de seguridad restauradas** en `next.config.ts` (CSP con
+  `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`,
+  `Referrer-Policy`, `Permissions-Policy`) y `poweredByHeader: false`. `output:
+  standalone` se omite en Vercel.
+
 Lo que ya está en `main` de la sección 2.0.0 del
 [plan](docs/plan-1.5-y-2.0.md). Nada de esto cambia una instalación que no
 toque sus variables.

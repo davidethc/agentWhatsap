@@ -18,12 +18,12 @@ CREATE TABLE "lead_stage_event" (
 	CONSTRAINT "lse_loss_reason_ck" CHECK ("lead_stage_event"."to_stage_kind" <> 'lost' OR "lead_stage_event"."approximate" = true OR "lead_stage_event"."loss_reason" IS NOT NULL)
 );
 --> statement-breakpoint
-ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_lead_id_lead_id_fk" FOREIGN KEY ("lead_id") REFERENCES "public"."lead"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_contact_id_contact_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contact"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_from_stage_id_pipeline_stage_id_fk" FOREIGN KEY ("from_stage_id") REFERENCES "public"."pipeline_stage"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_to_stage_id_pipeline_stage_id_fk" FOREIGN KEY ("to_stage_id") REFERENCES "public"."pipeline_stage"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_actor_user_id_user_id_fk" FOREIGN KEY ("actor_user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_lead_id_lead_id_fk" FOREIGN KEY ("lead_id") REFERENCES "vocero"."lead"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_contact_id_contact_id_fk" FOREIGN KEY ("contact_id") REFERENCES "vocero"."contact"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_from_stage_id_pipeline_stage_id_fk" FOREIGN KEY ("from_stage_id") REFERENCES "vocero"."pipeline_stage"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_to_stage_id_pipeline_stage_id_fk" FOREIGN KEY ("to_stage_id") REFERENCES "vocero"."pipeline_stage"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "lead_stage_event" ADD CONSTRAINT "lead_stage_event_actor_user_id_user_id_fk" FOREIGN KEY ("actor_user_id") REFERENCES "vocero"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "lse_org_occurred_idx" ON "lead_stage_event" USING btree ("organization_id","occurred_at");--> statement-breakpoint
 CREATE INDEX "lse_lead_occurred_idx" ON "lead_stage_event" USING btree ("lead_id","occurred_at");--> statement-breakpoint
 CREATE INDEX "lse_org_kind_occurred_idx" ON "lead_stage_event" USING btree ("organization_id","to_stage_kind","occurred_at");--> statement-breakpoint

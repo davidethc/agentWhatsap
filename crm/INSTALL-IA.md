@@ -19,8 +19,8 @@ código.
 
 **Render, Fly o Railway**: este guion es para Coolify y docker compose. Para
 esas plataformas hay un manifest por cada una en la raíz del repo
-(`render.yaml`, `fly.toml`, `railway.toml`), con lo que queda a mano escrito
-dentro: README → «Instalación» → «Otras plataformas».
+(`render.yaml`, `fly.toml`, `railway.toml`); léelos para los ajustes y la
+etiqueta de imagen de cada plataforma.
 
 ## Reglas para el asistente
 

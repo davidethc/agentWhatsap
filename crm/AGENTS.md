@@ -45,7 +45,7 @@ pnpm dev                                                   # http://localhost:30
 | `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build` | Los cuatro gates del CI (`pnpm test` es `vitest run`; `pnpm test:watch` para iterar) |
 | `pnpm test:e2e` | `scripts/e2e-selftest.mjs` contra la app viva con mocks. `test:e2e:calendario` y `test:e2e:resultados` conducen sus guiones; el resto de `scripts/e2e-*.mjs` se corre con `node --env-file=.env scripts/<nombre>.mjs` |
 | `pnpm db:generate` | Genera una migración nueva en `drizzle/` a partir de `src/lib/db/schema.ts` |
-| `pnpm seed:demo` | Carga la Ferretería El Martillo (también desde la UI al primer arranque) |
+| `pnpm seed:demo` | Carga el consultorio demo «EliDental» (también desde la UI al primer arranque) |
 | `pnpm init-env [--domain x]` | Crea `.env` desde `.env.example` con los secretos generados y `DOMAIN=localhost` (o el dominio dado); nunca pisa uno existente. Lógica en `src/server/doctor/init-env.ts` |
 | `pnpm doctor` | Una línea ✓/✗ por comprobación con el arreglo exacto: variables (mismo esquema zod de `src/lib/env.ts`), `select 1` a `DATABASE_URL`, escritura en `MEDIA_DIR` y, si hay número conectado, el token contra Meta. Sale con 1 si algo obligatorio falla. Lógica en `src/server/doctor/checks.ts` |
 
@@ -95,7 +95,7 @@ Apagada, cada superficie responde 404 (no 403). El despliegue en producción est
 | `leads/` | Única puerta que escribe `lead.stage_id` (con bitácora) y prioridad del lead | `stage-history.ts`, `priority.ts` |
 | `messenger/` | Adaptador del canal de Messenger (Meta o Zernio), tras `CHANNELS` | `ingest.ts`, `send.ts`, `credentials.ts` |
 | `onboarding/` | Guía de inicio: qué falta para que el agente conteste (perfil, IA, WhatsApp y, con `AGENDA`, agenda), los pasos que ve el dueño y si la guía es la primera pantalla (`guideFirst`) | `status.ts`, `guide.ts`, `calendar-verifiers.ts` |
-| `seed/` | Negocio demo idempotente «Ferretería El Martillo» | `demo.ts` |
+| `seed/` | Consultorio demo idempotente «EliDental» | `demo.ts` |
 | `whatsapp/` | Credenciales cifradas, prueba de conexión y suscripción del webhook, media, plantillas | `credentials.ts`, `connect.ts`, `media.ts`, `templates.ts` |
 | `zernio/` | Transporte y firma de la API unificada de Zernio; reparte cada evento al canal que toca | `index.ts`, `dispatch.ts` |
 

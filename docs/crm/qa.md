@@ -156,6 +156,101 @@ Perdido; Úrsula y Tomás → Conversando; Bruno → Perdido) y la conversación
 otra sesión). Las filas de `auditoria` y `cambios_etapa` son inmutables. Un `supabase db reset` (lo decide el
 orquestador) devuelve el seed a su estado inicial.
 
+## Ronda 5 · 11/12-oct-2026 · TK-39 (seguridad), TK-36 (panel HU-1 a HU-9) y TK-37 (Eli → CRM)
+
+Rama `feat/crm-docs` tras `git merge feat/crm` (`b1b1d78`, con el arreglo de F-1/F-4 de frontend). Esta
+ronda **no repite pruebas de navegador**: TK-39 y TK-37 se verificaron con consultas y ejecuciones nuevas, y TK-36
+se cierra con la evidencia de las rondas 1 a 4 más una **revisión del código**. Antes: `supabase test db` PASS
+(11 archivos, 261 pruebas), `pnpm lint`, `typecheck`, `test` (102) y `build` ✅. Sin calendario (TK-38).
+
+### Veredicto por tarea
+
+| Tarea | Veredicto | Resumen |
+|---|---|---|
+| **TK-39** Seguridad y datos de salud | ✅ **Pasa** (con 5 observaciones menores) | RLS en las 11 tablas, anon sin nada, sin `service_role` en el panel, sin datos reales, secretos solo en `.env`, sin texto de mensajes. |
+| **TK-36** Panel HU-1 a HU-9 | ✅ **Pasa** (con F-5, menor) | Todas las historias del panel cumplidas con evidencia (tabla abajo). HU-7 pospuesta (TK-41) y la parte de Calendar de HU-9/HU-10, fuera. |
+| **TK-37** Integración Eli → CRM | ✅ **Pasa** | Con la copia inactiva y el arnés: los 3 eventos llegan, son idempotentes, el texto no viaja y, con el CRM caído, Eli sigue y el error queda registrado. |
+
+### TK-39 · Seguridad y datos de salud
+
+| Revisión | Resultado | Evidencia |
+|---|---|---|
+| RLS en todo | ✅ | 11 de 11 tablas de `public` con RLS; 0 vistas; 0 sin RLS. |
+| anon sin privilegios ni EXECUTE | ✅ | 0 privilegios de `anon` en tablas/secuencias de `public` y `private`; 0 funciones ejecutables por `anon` o `PUBLIC`; `anon` sin uso del esquema `private`; privilegios por defecto de `postgres` cerrados (migración `…000300`). Los privilegios por defecto que quedan son de `supabase_admin` y esquemas del sistema (`storage`, `graphql`). |
+| Usuario autenticado que **no** es de `personal` | ✅ | Creado y borrado en esta prueba: las 11 tablas devuelven `[]`; `resumen_del_dia` y `mover_etapa` → 403 «Solo el personal del consultorio puede hacer esto»; `registrar_evento_eli` → 403; `POST /pacientes` → 403. |
+| La doctora no puede saltarse las reglas | ✅ | `PATCH` directo de `etapa`, `conversacion_id` o `cambios_etapa`, `DELETE` en `auditoria`, `INSERT` en `personal` (auto-promoción) y `registrar_evento_eli` → 403 por permisos por columna. |
+| Funciones | ✅ | 0 `security definer` sin `search_path`; a `authenticated` solo se exponen las 6 funciones del panel (`mover_etapa`, `marcar_asistencia`, `crear_paciente`, `guardar_cita`, `cancelar_cita`, `resumen_del_dia`). |
+| Sin `service_role` en el panel | ✅ | 0 coincidencias en `crm/` (solo un comentario que la prohíbe); el panel solo lee `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`; en el bundle del navegador (`.next/static`) no hay JWT ni `sb_secret_` (solo la comprobación de prefijos de la librería y la clave **pública**). |
+| Secretos solo en `.env` | ✅ | Ningún JWT, `sb_secret_`, clave privada, `AIza…`, `ghp_`, `xox…` ni `AKIA…` en archivos ni en el historial `main..HEAD`; sin contraseñas incrustadas en URLs de conexión; `git ls-files` solo trae los `.env.example`; `.gitignore` cubre `.env`, `crm/.env.local`, `supabase/functions/.env`, `secrets/` y las copias `eli-crm-*/`. El ref del proyecto remoto (`uvtlctq…`) que aparece en las guías es un identificador público, no un secreto. |
+| Sin datos reales | ✅ | Solo `@ejemplo.test`, teléfonos `5939000000xx` y cédulas `0000000xxx`; ningún teléfono ni cédula fuera de ese patrón. El correo del consultorio y su ficha pública están en el prompt de Eli (negocio, no pacientes). |
+| Sin texto de mensajes | ✅ | Columna `mensajes.texto` borrada; `registrar_evento_eli`/`eli-evento` rechazan `texto`; el arnés lo comprobó de punta a punta (TK-37). |
+| Storage, Realtime y Auth (local) | ✅ | 0 buckets; Realtime solo con `pacientes`, `mensajes`, `citas` (la RLS decide qué recibe cada sesión); registro público cerrado, sin sesiones anónimas, páginas del panel con `Cache-Control: no-store`. `eli-evento` compara el secreto en tiempo constante y no registra teléfonos ni textos. |
+
+Observaciones de TK-39 (ninguna bloquea):
+
+| # | Qué | Sugerencia |
+|---|---|---|
+| S-1 | El panel no envía cabeceras de seguridad (`Content-Security-Policy`, `X-Frame-Options`/`frame-ancestors`, `X-Content-Type-Options`, `Referrer-Policy`) y deja `X-Powered-By`. Es un panel de datos de salud. | `crm-frontend`: agregarlas en `next.config.ts` **antes de publicar** (TK-35). |
+| S-2 | `GET /salir` cierra la sesión: otra página podría cerrarle la sesión a la doctora (CSRF de baja gravedad). | Pasarlo a `POST` (como `cerrarSesion`). |
+| S-3 | `minimum_password_length = 6` en `config.toml` (local). | En el proyecto remoto (TK-12): mínimo 10–12, sin registro público, cuentas creadas por el admin, y revisar los advisors de Supabase. |
+| S-4 | La entrada de error de Redis (`v4:crm:errores`) guarda el evento con teléfono y nombre de WhatsApp (ya sin texto). | Aceptable en Redis local con tope de 200; decidir si quitar el teléfono. |
+| S-5 | Los objetos que cree `supabase_admin` (no `postgres`) en `public` heredan privilegios de `anon`. | Aplicar siempre las migraciones como `postgres`, como hasta ahora; el test `10_seguridad` cubre las funciones. |
+
+### TK-36 · Panel HU-1 a HU-9 (veredicto con la evidencia acumulada)
+
+| HU | Veredicto | Dónde se probó |
+|---|---|---|
+| HU-1 Acceso | ✅ | Ronda 1 (sin sesión → login, clave mala, registro cerrado) y ronda 3/4 (login, cerrar sesión; 15 de 15 logins; prueba de regresión de F-1 ya integrada). |
+| HU-2 Citas de hoy y asistencia | ✅ | Ronda 3 (TK-24): «volver en» 6 meses / sin fecha / otra fecha; No asistió → Perdido. |
+| HU-3 Números | ✅ | Ronda 4 (TK-25): tarjetas iguales a SQL. |
+| HU-4 Cumpleaños y retornos | ✅ | Ronda 4 (TK-26). |
+| HU-5 Kanban | ✅ | Rondas 3 y 4 (TK-27, TK-28): arrastrar, motivo de Perdido, teclado, búsqueda, tiempo real. |
+| HU-6 Ficha | ✅ | Rondas 3 y 4 (TK-29, TK-30): datos, auditoría, historial, enlaces, consentimiento. (HU-6.4 «conversación» pospuesta.) |
+| HU-7 Conversación | ⏸ Pospuesta | TK-41 / ADR 0012. |
+| HU-8 Nuevo paciente | ✅ | Ronda 3 (TK-32). |
+| HU-9 Citas | ✅ (sin Calendar) | Ronda 3 (TK-33) y 4 (TK-34): crear, 1 h por defecto, duración, fuera de horario, choque, cambiar, cancelar, vincular, semana. Google Calendar → TK-38. |
+
+**Revisión del código del panel** (3 450 líneas leídas: capa de datos, acciones del servidor, auth, proxy, kanban,
+citas, ficha, resumen): bien resuelto —todas las escrituras de negocio pasan por las funciones de la base (solo datos
+básicos, consentimiento y datos clínicos van directo, con permiso por columna); cada acción vuelve a validar con
+zod en el servidor; los errores de la base se traducen a mensajes claros y los desconocidos no se filtran; el kanban
+revierte el movimiento si falla; el login exige estar en `personal` y no revela si el correo existe. Defectos
+encontrados:
+
+| # | Qué | Impacto | Arreglo (para `crm-frontend`) |
+|---|---|---|---|
+| **F-5** | `components/citas/semana-de-citas.tsx:46`: `sinVincular = c.pacienteId === null && !cancelada` muestra «Vincular» también en citas Asistió / No asistió, y `guardar_cita` responde «Solo se puede editar una cita agendada». El aviso del encabezado (`lib/citas/semana.ts:48`) ya cuenta solo las agendadas. | Botón que falla. | Cambiar a `c.pacienteId === null && c.estado === "agendada"`. |
+| C-1 | Realtime escucha solo `pacientes`: Resumen y Citas no se refrescan solos cuando Eli agenda; el kanban sí. | Menor (HU-10 pide «pocos minutos»). | Escuchar también `citas`, o dejarlo así. |
+| C-2 | `pacientes.listar({ texto })` (adaptador real) busca el teléfono con `like %dígitos%`: un `0991…` no encuentra `593991…`. El panel no lo usa (filtra en el cliente con `filtrarPacientes`, que sí lo resuelve). | Latente. | Quitar el filtro `texto` del adaptador o quitar el `0` inicial. |
+
+### TK-37 · Integración Eli → CRM (copia inactiva + arnés)
+
+Con `scripts/crm-arnes-copia.jq` sobre `workflows/pruebas/eli-version4-crm-copia.json`, contra el CRM local. El
+arnés se importó como workflow **inactivo** (`ZZArnesCopia0000001`) y se ejecutó con `n8n execute`; no se activó ni
+publicó nada, no se tocó `version4` y nunca se llamó a Kapso ni a Gemini. El eli-evento local usó un secreto aleatorio
+solo local (en el workflow de prueba, no en la credencial «Eli CRM secreto»).
+
+| Prueba | Resultado | Evidencia |
+|---|---|---|
+| Los 3 armadores de la copia producen eventos válidos | ✅ | `mensaje_entrante` (`tipo, telefono, nombre_whatsapp, message_id, en`), `mensaje_saliente` (`…, execution_id, en`) y `cita_reservada` (`…, gcal_event_id, inicio, fin, servicio, nombre`); sin campo `texto` aunque el mensaje simulado era «TEXTO-QUE-NO-DEBE-VIAJAR». |
+| Llegan al CRM (ok) | ✅ | Ejecución `success`: los 3 `POST` → `{"ok":true,"duplicado":false}`. En la base: titular **Nuevo → Agendó** (actor `eli`), mensajes entrante y saliente (sin texto), cita `agendada` / origen `eli` / sync `ok`, 0 filas en `errores_integracion`. |
+| Idempotencia | ✅ | Segunda ejecución con el mismo `message_id` y `gcal_event_id` → `duplicado:true` en los 3 envíos. |
+| «Eli sigue respondiendo» | ✅ | El nodo paralelo «Cita reservada» (la respuesta de Eli) se ejecutó en ambas corridas, también con el CRM caído. |
+| **CRM caído** (URL muerta `:59999`) | ✅ | 3 intentos (`maxTries 3`, timeout 5 s), `ECONNREFUSED` → «Armar error» → `LPUSH` → `LLEN` = 1 → «¿Más de 200?» no recorta; el workflow termina `success` en **7 s**. La entrada guardada trae `{en, error, evento{tipo, telefono, nombre_whatsapp, message_id, en}}`: **sin texto y sin secreto**. (Se usó una lista de prueba `qa-test:crm:errores`, no `v4:crm:errores`.) |
+| `eli-evento` | ✅ | Sin secreto 401; con secreto 200; rechaza `texto` (400, ronda 3). |
+
+Notas: (1) `n8n execute` dentro del contenedor que ya corre choca con el puerto 5679 del *task broker*; se resuelve con
+`docker compose exec -T -e N8N_RUNNERS_MODE=internal -e N8N_RUNNERS_BROKER_PORT=5690 n8n n8n execute --id=…`.
+(2) No se probó el envío real desde `version4` (Kapso → Eli → CRM): la copia sigue inactiva y TK-20 lo hará con tu
+aprobación.
+
+### Limpieza de la ronda 5
+
+Borrados (todo inventado): el usuario de Auth «ajeno» de la prueba de TK-39; las conversaciones 310 y 311 con sus
+pacientes, mensajes, historial y la cita `gcal-arnes-…`; la clave Redis `qa-test:crm:errores` (base 1). Quedan 21
+pacientes (el seed) y 0 filas en `errores_integracion`. **Pendiente de borrar a mano en n8n:** el workflow inactivo
+«ZZ arnés copia version4 (borrable)» (el CLI de n8n no borra workflows).
+
 ## Observaciones (no son fallos de ningún criterio)
 
 | # | Qué | Impacto | Sugerencia |

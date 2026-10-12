@@ -6,6 +6,12 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli Panel: revisión de seguridad y datos de salud (apoyo a TK-39 de QA).** `db lint` sin
+  hallazgos en `public`/`private`; RLS en las 11 tablas; `anon` sin privilegios; `security definer`
+  con `search_path` fijo; seed solo con datos inventados. Hallazgo corregido en la migración
+  `20261011000300_anon_sin_execute_por_defecto.sql`: las funciones futuras de `public` y `private`
+  ya no quedan ejecutables por `anon`. Prueba pgTAP `10_seguridad`. `docs/crm/backup-crm.md` explica
+  cómo correr la copia contra la nube.
 - **Eli Panel: permisos por columna (TK-39).** Migración `20261011000200_permisos_por_columna.sql`:
   las funciones del panel pasan a `security definer`; el personal solo edita directo los datos básicos
   y el consentimiento del paciente, los datos clínicos y el horario; etapas, citas y conversaciones

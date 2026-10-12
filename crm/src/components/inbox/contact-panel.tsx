@@ -173,15 +173,15 @@ export function ContactPanel({
   const currentIndex = stages.findIndex((s) => s.id === currentStageId);
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Por debajo de xl el panel flota (bg-popover, ver InboxClient): su
-          cabecera va del mismo tono para no dejar una franja más oscura. */}
-      <header className="sticky top-0 flex items-center justify-between border-b bg-background px-4 py-3 max-xl:bg-popover">
+    // Tarjeta del tablero en escritorio; como cajón (debajo de xl) va de
+    // borde a borde, sin radio ni sombra propios.
+    <div className="card-surface flex h-full flex-col overflow-hidden max-xl:rounded-none max-xl:border-0 max-xl:shadow-none">
+      <header className="sticky top-0 flex items-center justify-between border-b bg-popover px-4 py-3">
         <h3 className="kicker text-text-2">Detalles</h3>
         <button
           onClick={onClose}
           aria-label="Ocultar panel"
-          className="rounded p-1 text-text-3 hover:bg-accent hover:text-foreground"
+          className="rounded-full p-1 text-text-3 transition-colors hover:bg-accent hover:text-foreground"
         >
           <ChevronRight className="h-4 w-4" strokeWidth={1.7} />
         </button>
@@ -191,11 +191,13 @@ export function ContactPanel({
         {/* Contacto */}
         <section className="border-b p-4">
           <div className="flex items-center gap-3">
-            <ContactAvatar
-              name={conversation.contact.name}
-              seed={conversation.contact.id}
-              size="md"
-            />
+            <span className="shrink-0 rounded-full ring-2 ring-border ring-offset-2 ring-offset-popover">
+              <ContactAvatar
+                name={conversation.contact.name}
+                seed={conversation.contact.id}
+                size="md"
+              />
+            </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-bold tracking-tight">
                 {conversation.contact.name}
@@ -207,7 +209,7 @@ export function ContactPanel({
           </div>
 
           {conversation.handoffAt && (
-            <div className="mt-3 rounded-md border border-warning-soft bg-warning-tint p-3">
+            <div className="mt-3 rounded-lg border border-warning-soft bg-warning-tint p-3">
               <p className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
                 <UserRound className="h-4 w-4" strokeWidth={1.7} /> Atención humana
               </p>
@@ -226,7 +228,7 @@ export function ContactPanel({
             </div>
           )}
 
-          <div className="mt-3 rounded-md border bg-subtle px-3 py-2.5">
+          <div className="mt-3 rounded-lg border bg-subtle px-3 py-2.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[13px] font-medium">IA en esta conversación</p>

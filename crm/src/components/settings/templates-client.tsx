@@ -31,7 +31,8 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -160,12 +161,12 @@ export function TemplatesClient() {
   const empty = templates !== null && templates.length === 0;
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       <HowItWorks defaultOpen={empty} />
 
       <section className="space-y-3" aria-labelledby="tpl-list-title">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 id="tpl-list-title" className="text-base font-semibold">
+          <h3 id="tpl-list-title" className="text-[16px] font-bold tracking-tight">
             Tus plantillas
           </h3>
           <div className="flex items-center gap-2">
@@ -205,7 +206,7 @@ export function TemplatesClient() {
           !creating && (
             <EmptyState
               icon={FileText}
-              className="rounded-lg border border-dashed"
+              className="rounded-lg border border-dashed border-border-strong bg-popover"
               title="Todavía no tienes plantillas"
               description="Crea la primera para poder escribirle a un cliente cuando pasen las 24 horas. Puedes empezar con un ejemplo."
               action={
@@ -219,7 +220,7 @@ export function TemplatesClient() {
         ) : (
           <ul className="space-y-2">
             {templates.map((t) => (
-              <li key={t.id} className="rounded-lg border bg-card p-4">
+              <li key={t.id} className="card-surface card-surface-hover p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="break-all font-mono text-sm font-medium">{t.name}</p>
@@ -279,7 +280,7 @@ function HowItWorks({ defaultOpen }: { defaultOpen: boolean }) {
   ];
 
   return (
-    <section className="rounded-lg border bg-card">
+    <section className="card-surface">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -305,7 +306,7 @@ function HowItWorks({ defaultOpen }: { defaultOpen: boolean }) {
           </p>
           <ol className="grid gap-3 sm:grid-cols-3">
             {steps.map((s, i) => (
-              <li key={s.title} className="rounded-md border bg-background p-3">
+              <li key={s.title} className="rounded-lg bg-subtle p-3">
                 <p className="flex items-center gap-2 font-medium">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
                     {i + 1}
@@ -316,7 +317,7 @@ function HowItWorks({ defaultOpen }: { defaultOpen: boolean }) {
               </li>
             ))}
           </ol>
-          <details className="rounded-md bg-subtle p-3">
+          <details className="rounded-lg bg-subtle p-3">
             <summary className="cursor-pointer font-medium">Consejos para que Meta la apruebe</summary>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
               <li>No empieces ni termines el mensaje con una variable, y no pongas dos variables juntas.</li>
@@ -412,7 +413,7 @@ function CreateForm({
   }
 
   return (
-    <Card>
+    <SettingsCard>
       <CardHeader>
         <CardTitle>Nueva plantilla</CardTitle>
         <CardDescription>
@@ -474,8 +475,8 @@ function CreateForm({
               <label
                 key={c}
                 className={cn(
-                  "cursor-pointer rounded-md border p-3 text-sm transition-colors",
-                  category === c ? "border-primary bg-brand-tint" : "hover:bg-accent"
+                  "cursor-pointer rounded-lg border p-3 text-sm transition-colors",
+                  category === c ? "border-primary bg-brand-tint" : "bg-subtle hover:border-border-strong hover:bg-accent"
                 )}
               >
                 <input
@@ -582,6 +583,6 @@ function CreateForm({
           Cuando Meta la apruebe aparecerá en la Bandeja, lista para enviar.
         </p>
       </CardContent>
-    </Card>
+    </SettingsCard>
   );
 }

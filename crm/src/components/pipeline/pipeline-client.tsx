@@ -13,7 +13,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { MessageSquareText, Settings2, Trophy, XCircle } from "lucide-react";
+import { Clock, MessageSquareText, Settings2, Trophy, XCircle } from "lucide-react";
 import type { LossReason, PriorityValue, StageDto } from "@/lib/types";
 import { formatMoneyCents, sumable } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -172,8 +172,13 @@ export function PipelineClient() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 sm:py-4">
-        <h2 className="text-[17px] font-bold tracking-tight">Pipeline</h2>
+      <header className="flex flex-wrap items-end justify-between gap-3 border-b px-4 py-3 sm:px-6 sm:py-4">
+        <div className="min-w-0">
+          <p className="kicker">
+            Embudo · {leads.length} {leads.length === 1 ? "trato" : "tratos"}
+          </p>
+          <h2 className="mt-0.5 text-[17px] font-bold tracking-tight">Pipeline</h2>
+        </div>
         <Button variant="outline" size="sm" onClick={() => setManaging(true)}>
           <Settings2 className="h-4 w-4" /> Gestionar etapas
         </Button>
@@ -181,17 +186,18 @@ export function PipelineClient() {
 
       {/* El tablero se arrastra en horizontal; en el teléfono cada columna
           se detiene en su sitio (snap) para no quedar a medio camino. */}
-      <div className="flex-1 snap-x snap-mandatory overflow-x-auto p-3 sm:snap-none sm:p-4">
+      <div className="flex-1 snap-x snap-mandatory overflow-x-auto p-3 sm:snap-none sm:p-4 lg:p-5">
         <DndContext
           sensors={sensors}
           onDragStart={onDragStart}
           onDragEnd={(e) => void onDragEnd(e)}
         >
-          <div className="flex h-full gap-3">
-            {stages.map((stage) => (
+          <div className="flex h-full gap-3 lg:gap-4">
+            {stages.map((stage, i) => (
               <StageColumn
                 key={stage.id}
                 stage={stage}
+                index={i}
                 currency={currency}
                 onEditAmount={setEditandoMonto}
                 onOpen={(l) => setAbiertoId(l.id)}
@@ -203,7 +209,12 @@ export function PipelineClient() {
           </div>
           <DragOverlay>
             {activeLead ? (
-              <LeadCard lead={activeLead} currency={currency} overlay />
+              <LeadCard
+                lead={activeLead}
+                currency={currency}
+                stage={stages.find((s) => s.id === activeLead.stageId)}
+                overlay
+              />
             ) : null}
           </DragOverlay>
         </DndContext>
@@ -289,72 +300,117 @@ function totalesDeEtapa(leads: BoardLead[], businessCurrency: string) {
   return { totalCents, sinMonto, otraMoneda };
 }
 
+/** Tono del chip de etapa: ganada en verde, perdida apagada, el resto con acento. */
+function chipDeEtapa(kind: StageDto["kind"] | undefined) {
+  if (kind === "won") return "bg-success-tint text-success-text";
+  if (kind === "lost") return "bg-chip text-text-3";
+  return "bg-brand-tint text-brand-text";
+}
+
 function StageColumn({
   stage,
+  index,
   leads,
   currency,
   onEditAmount,
   onOpen,
 }: {
   stage: StageDto;
+  index: number;
   leads: BoardLead[];
   currency: string;
   onEditAmount: (lead: BoardLead) => void;
   onOpen: (lead: BoardLead) => void;
 }) {
+  // La columna entera es el blanco de soltar: la cabecera y el pie cuentan,
+  // no solo el hueco de las tarjetas.
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
+  const won = stage.kind === "won";
   return (
-    <div
+    <section
       ref={setNodeRef}
-      className={cn(
-        "flex h-full w-64 shrink-0 snap-start flex-col rounded-lg border border-border-strong bg-subtle transition-[box-shadow,border-color]",
-        isOver && "border-brand ring-[3px] ring-brand-soft"
-      )}
+      aria-label={stage.name}
+      className="flex h-full w-[17rem] shrink-0 snap-start flex-col"
     >
-      <div className="flex items-center justify-between px-3 py-2.5">
-        <span className="flex items-center gap-1.5 text-[13.5px] font-bold tracking-tight">
-          {stage.kind === "won" && <Trophy className="h-3.5 w-3.5 text-primary" />}
-          {stage.kind === "lost" && (
-            <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
-          )}
-          {stage.name}
-        </span>
-        <span className="rounded-full border border-border-strong bg-background px-2 py-0.5 font-mono text-[11px] text-text-3">
+      <div className="flex items-end justify-between gap-2 px-1 pb-2.5">
+        <div className="min-w-0">
+          <p className="kicker">Etapa {String(index + 1).padStart(2, "0")}</p>
+          <span
+            className={cn(
+              "mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold tracking-tight",
+              chipDeEtapa(stage.kind)
+            )}
+          >
+            {won && <Trophy className="h-3.5 w-3.5 shrink-0" />}
+            {stage.kind === "lost" && <XCircle className="h-3.5 w-3.5 shrink-0" />}
+            <span className="truncate">{stage.name}</span>
+          </span>
+        </div>
+        <span
+          className="kicker rounded-full bg-chip px-2 py-0.5 tabular-nums text-text-2"
+          aria-label={`${leads.length} en ${stage.name}`}
+        >
           {leads.length}
         </span>
       </div>
-      <div className="flex-1 space-y-2 overflow-y-auto p-2">
+
+      <div
+        className={cn(
+          "board-col flex-1 border transition-[box-shadow,border-color]",
+          won ? "border-success" : "border-transparent",
+          isOver && "border-brand ring-[3px] ring-brand-soft"
+        )}
+      >
         {leads.map((lead) => (
           <DraggableLead
             key={lead.id}
             lead={lead}
+            stage={stage}
             currency={currency}
             onEditAmount={onEditAmount}
             onOpen={onOpen}
           />
         ))}
+        {leads.length === 0 && (
+          <p className="flex min-h-20 items-center justify-center rounded-lg border border-dashed border-border-strong px-3 text-center text-xs text-text-4">
+            Suelta aquí un trato
+          </p>
+        )}
       </div>
-      <StageFooter leads={leads} currency={currency} />
-    </div>
+      <StageFooter leads={leads} currency={currency} won={won} />
+    </section>
   );
 }
 
 /** Cuánto dinero hay en esta etapa, y qué quedó fuera de la cuenta. */
-function StageFooter({ leads, currency }: { leads: BoardLead[]; currency: string }) {
+function StageFooter({
+  leads,
+  currency,
+  won,
+}: {
+  leads: BoardLead[];
+  currency: string;
+  won: boolean;
+}) {
   const { totalCents, sinMonto, otraMoneda } = totalesDeEtapa(leads, currency);
   const conMonto = leads.length - sinMonto - otraMoneda;
 
   return (
-    <div className="border-t px-3 py-2 text-[11px]">
+    <div className="px-1 pt-2 text-[11px]">
       {conMonto === 0 ? (
         // Un "$0.00" aquí se lee como un error del sistema, no como un dato.
-        <p className="text-muted-foreground">Sin montos capturados</p>
+        <p className="text-text-3">Sin montos capturados</p>
       ) : (
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-muted-foreground">
+          <span className="text-text-3">
             Total{sinMonto > 0 ? ` · ${sinMonto} sin monto` : ""}
           </span>
-          <span className="font-semibold tabular-nums">
+          <span
+            className={cn(
+              "font-mono text-xs font-semibold tabular-nums",
+              won ? "text-success-text" : "text-foreground"
+            )}
+          >
             {formatMoneyCents(totalCents, currency)}
           </span>
         </div>
@@ -372,11 +428,13 @@ function StageFooter({ leads, currency }: { leads: BoardLead[]; currency: string
 
 function DraggableLead({
   lead,
+  stage,
   currency,
   onEditAmount,
   onOpen,
 }: {
   lead: BoardLead;
+  stage: StageDto;
   currency: string;
   onEditAmount: (lead: BoardLead) => void;
   onOpen: (lead: BoardLead) => void;
@@ -404,39 +462,61 @@ function DraggableLead({
         }
       }}
       aria-label={`Abrir el trato de ${lead.contact.name}`}
-      className={cn(isDragging && "opacity-40")}
+      className={cn(
+        "rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
+        isDragging && "opacity-40"
+      )}
     >
-      <LeadCard lead={lead} currency={currency} onEditAmount={onEditAmount} />
+      <LeadCard
+        lead={lead}
+        stage={stage}
+        currency={currency}
+        onEditAmount={onEditAmount}
+      />
     </div>
   );
 }
 
 function LeadCard({
   lead,
+  stage,
   currency,
   overlay = false,
   onEditAmount,
 }: {
   lead: BoardLead;
+  stage?: StageDto;
   currency: string;
   overlay?: boolean;
   onEditAmount?: (lead: BoardLead) => void;
 }) {
+  const won = stage?.kind === "won";
+  const monto =
+    lead.amountCents === null
+      ? null
+      : formatMoneyCents(lead.amountCents, lead.currency ?? currency);
   return (
     <div
       className={cn(
-        "cursor-grab rounded-md border border-border-strong bg-card p-3 shadow-sm transition-shadow hover:shadow-md",
-        overlay && "rotate-2 shadow-pop"
+        "card-surface card-surface-hover cursor-grab p-3 hover:border-border-strong",
+        won && "border-success-soft",
+        overlay && "rotate-2 cursor-grabbing shadow-pop"
       )}
     >
       <div className="flex items-center gap-2.5">
-        <ContactAvatar name={lead.contact.name} seed={lead.contact.id} size="sm" />
+        {/* Un anillo fino despega el avatar del fondo de la tarjeta. */}
+        <span className="flex shrink-0 rounded-full ring-2 ring-border">
+          <ContactAvatar name={lead.contact.name} seed={lead.contact.id} size="sm" />
+        </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="truncate text-sm font-semibold">{lead.contact.name}</p>
+            <p className="truncate text-[13.5px] font-semibold tracking-tight">
+              {lead.contact.name}
+            </p>
             {lead.priority && <PriorityBadge value={lead.priority} />}
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-text-3">
+            <Clock className="h-3 w-3 shrink-0" />
             {lead.lastActivityAt
               ? `Actividad: ${formatTime(lead.lastActivityAt)}`
               : "Sin actividad"}
@@ -448,40 +528,53 @@ function LeadCard({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
             aria-label="Abrir conversación"
-            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="rounded-full p-1.5 text-text-3 transition-colors hover:bg-brand-tint hover:text-brand-text"
           >
             <MessageSquareText className="h-4 w-4" />
           </Link>
         )}
       </div>
-      {!overlay && onEditAmount && (
-        <button
-          // `stopPropagation` en pointerdown: sin esto, tocar el monto empieza
-          // un arrastre y el diálogo nunca abre.
-          onPointerDown={(e) => e.stopPropagation()}
-          // También en `click`: sin esto, tocar el monto abriría además el
-          // cajón, porque el evento sigue subiendo hasta la tarjeta.
-          onClick={(e) => {
-            e.stopPropagation();
-            onEditAmount(lead);
-          }}
+
+      <div className="mt-2.5 flex items-center justify-between gap-2 border-t pt-2">
+        <span
           className={cn(
-            "mt-1.5 w-full rounded px-1 py-0.5 text-right text-xs tabular-nums hover:bg-accent",
-            lead.amountCents === null
-              ? "text-text-3"
-              : "font-semibold text-foreground"
+            "rounded-full px-2 py-0.5 text-[10.5px] font-medium",
+            won ? "bg-success-tint text-success-text" : "bg-chip text-text-3"
           )}
         >
-          {lead.amountCents === null
-            ? "+ monto"
-            : formatMoneyCents(lead.amountCents, lead.currency ?? currency)}
-        </button>
-      )}
-      {overlay && lead.amountCents !== null && (
-        <p className="mt-1.5 text-right text-xs font-semibold tabular-nums">
-          {formatMoneyCents(lead.amountCents, lead.currency ?? currency)}
-        </p>
-      )}
+          {won && stage
+            ? stage.name
+            : lead.conversationId
+              ? "En conversación"
+              : "Sin conversación"}
+        </span>
+        {!overlay && onEditAmount && (
+          <button
+            // `stopPropagation` en pointerdown: sin esto, tocar el monto empieza
+            // un arrastre y el diálogo nunca abre.
+            onPointerDown={(e) => e.stopPropagation()}
+            // También en `click`: sin esto, tocar el monto abriría además el
+            // cajón, porque el evento sigue subiendo hasta la tarjeta.
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditAmount(lead);
+            }}
+            className={cn(
+              "rounded-full px-2 py-0.5 font-mono text-xs tabular-nums transition-colors",
+              monto === null
+                ? "border border-dashed border-border-strong text-text-3 hover:border-brand hover:text-brand-text"
+                : won
+                  ? "font-semibold text-success-text hover:bg-success-tint"
+                  : "font-semibold text-foreground hover:bg-row-hover"
+            )}
+          >
+            {monto ?? "+ monto"}
+          </button>
+        )}
+        {overlay && monto !== null && (
+          <p className="font-mono text-xs font-semibold tabular-nums">{monto}</p>
+        )}
+      </div>
     </div>
   );
 }

@@ -308,7 +308,8 @@ export function BookingsClient({
   if (!view || !range || !today) {
     return (
       <div className="flex h-full flex-col">
-        <header className="border-b px-4 py-3 sm:px-6 sm:py-4">
+        <header className="px-4 pt-4 sm:px-6 sm:pt-5">
+          <p className="kicker">Agenda</p>
           <h2 className="text-[17px] font-bold tracking-tight">Citas</h2>
         </header>
         <p className="p-6 text-sm text-text-3">Cargando…</p>
@@ -400,6 +401,7 @@ export function BookingsClient({
                 bookings={visible}
                 timezone={timezone}
                 today={today}
+                nowMinutes={nowMinutes}
                 selectedId={selectedId}
                 onSelect={select}
                 onOpenDay={openDay}
@@ -410,6 +412,7 @@ export function BookingsClient({
                 bookings={visible}
                 timezone={timezone}
                 today={today}
+                nowMinutes={nowMinutes}
                 selectedId={selectedId}
                 onSelect={select}
               />
@@ -469,13 +472,13 @@ function StatusBar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2 text-xs text-text-3 sm:px-6">
-      <span>
-        <strong className="font-semibold text-text-2">{counts.sessions}</strong>{" "}
+      <span className="rounded-full bg-brand-tint px-2.5 py-0.5 text-brand-text">
+        <strong className="font-semibold">{counts.sessions}</strong>{" "}
         {counts.sessions === 1 ? "cita" : "citas"}
         {counts.blocks > 0 && (
           <>
             {" · "}
-            <strong className="font-semibold text-text-2">{counts.blocks}</strong>{" "}
+            <strong className="font-semibold">{counts.blocks}</strong>{" "}
             {counts.blocks === 1 ? "bloqueo" : "bloqueos"}
           </>
         )}

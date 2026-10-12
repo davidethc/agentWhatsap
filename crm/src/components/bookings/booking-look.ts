@@ -60,3 +60,30 @@ export function canRetrySync(b: Booking): boolean {
 export function hasDeliveryIssue(b: Booking): boolean {
   return canRetrySync(b);
 }
+
+/**
+ * Chip del estado (redondo, tinta + texto): el mismo en la Lista, el Mes y el
+ * panel. Solo tokens, como `bookingTone`.
+ */
+export function statusChip(b: Booking): string {
+  if (b.status === "cancelada") return "bg-chip text-text-3";
+  if (b.kind === "block") return "bg-chip text-text-2";
+  if (b.status === "realizada") return "bg-success-tint text-success-text";
+  if (b.status === "no_show") return "bg-warning-tint text-warning-text";
+  return "bg-brand-tint text-brand-text";
+}
+
+/**
+ * Lo que viene: una cita agendada que aún no empieza (en la zona del negocio).
+ * Se destaca con un borde de acento para leer de un vistazo qué sigue.
+ */
+export function isUpcoming(
+  b: Booking,
+  day: string,
+  startMin: number,
+  today: string,
+  nowMinutes: number
+): boolean {
+  if (b.kind !== "session" || b.status !== "agendada") return false;
+  return day > today || (day === today && startMin >= nowMinutes);
+}

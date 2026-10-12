@@ -4,13 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Copy, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -146,7 +141,7 @@ export function MessengerClient() {
     (source === "zernio" ? accountRef.trim().length > 0 : pageId.trim().length > 0);
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       {connection?.status === "reconnect_required" && (
         <div className="flex items-start gap-2 rounded-lg border border-danger-soft bg-danger-tint p-4 text-sm">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
@@ -181,7 +176,7 @@ export function MessengerClient() {
         </div>
       )}
 
-      <Card>
+      <SettingsCard>
         <CardHeader>
           <CardTitle>
             {connection ? "Reconectar Messenger" : "Conectar Messenger"}
@@ -279,10 +274,10 @@ export function MessengerClient() {
             {saving ? "Probando…" : "Probar y guardar"}
           </Button>
         </CardContent>
-      </Card>
+      </SettingsCard>
 
       {webhook?.messengerUrl && (
-        <Card>
+        <SettingsCard>
           <CardHeader>
             <CardTitle>Webhook de Messenger</CardTitle>
             <CardDescription>
@@ -341,7 +336,7 @@ export function MessengerClient() {
                   : "Define META_APP_SECRET en la instancia para que además se verifique la firma de cada entrega."}
             </p>
           </CardContent>
-        </Card>
+        </SettingsCard>
       )}
     </div>
   );

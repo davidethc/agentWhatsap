@@ -29,7 +29,7 @@ export function SettingsNav({
   return (
     <nav
       aria-label="Ajustes"
-      className="flex shrink-0 gap-4 overflow-x-auto border-b px-2 py-2 sm:w-48 sm:flex-col sm:gap-5 sm:overflow-visible sm:border-b-0 sm:border-r sm:p-3"
+      className="flex shrink-0 gap-4 overflow-x-auto border-b bg-background px-2 py-2 sm:w-52 sm:rounded-lg sm:border sm:bg-popover sm:shadow-sm sm:flex-col sm:gap-5 sm:self-start sm:overflow-visible sm:p-3"
     >
       {sections.map((section) => (
         <div
@@ -45,7 +45,7 @@ export function SettingsNav({
                 href={t.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "block shrink-0 whitespace-nowrap rounded-sm px-3 py-2 text-[13.5px] font-semibold transition-colors",
+                  "block shrink-0 whitespace-nowrap rounded-full px-3 py-2 text-[13.5px] font-semibold transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   active
                     ? "bg-brand-tint text-brand-text"

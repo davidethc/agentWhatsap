@@ -55,8 +55,11 @@ export function CalendarToolbar({
   const picker = useRef<HTMLInputElement>(null);
 
   return (
-    <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 sm:px-6">
-      <h2 className="mr-1 text-[17px] font-bold tracking-tight">Citas</h2>
+    <header className="flex flex-wrap items-end gap-x-3 gap-y-2 px-4 pb-2 pt-4 sm:px-6 sm:pt-5">
+      <div className="mr-1">
+        <p className="kicker">Agenda</p>
+        <h2 className="text-[17px] font-bold tracking-tight">Citas</h2>
+      </div>
 
       <div className="flex items-center gap-1">
         <Button variant="outline" size="sm" onClick={onToday}>
@@ -80,7 +83,7 @@ export function CalendarToolbar({
             type="date"
             value={anchor}
             onChange={(e) => e.target.value && onListRange(e.target.value, listTo)}
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-brand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-soft"
+            className="h-8 rounded-md border border-input bg-popover px-2 text-sm focus-visible:border-brand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-soft"
           />
           <span className="text-text-3">al</span>
           <label className="sr-only" htmlFor="lista-hasta">
@@ -93,7 +96,7 @@ export function CalendarToolbar({
             min={anchor}
             onChange={(e) => e.target.value && onListRange(anchor, e.target.value)}
             title={`Hasta ${MAX_RANGE_DAYS} días`}
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-brand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-soft"
+            className="h-8 rounded-md border border-input bg-popover px-2 text-sm focus-visible:border-brand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-soft"
           />
         </div>
       ) : (
@@ -134,7 +137,7 @@ export function CalendarToolbar({
       )}
 
       <div className="ml-auto flex items-center gap-2">
-        <div role="group" aria-label="Vista" className="inline-flex rounded-full border bg-secondary p-0.5">
+        <div role="group" aria-label="Vista" className="inline-flex rounded-full border bg-subtle p-0.5">
           {(Object.keys(VIEW_LABEL) as CalendarView[]).map((v) => (
             <button
               key={v}
@@ -143,7 +146,7 @@ export function CalendarToolbar({
               onClick={() => onView(v)}
               className={cn(
                 "h-7 rounded-full px-3 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
-                view === v ? "bg-background text-foreground shadow-sm" : "text-text-3 hover:text-foreground"
+                view === v ? "bg-popover text-foreground shadow-sm" : "text-text-3 hover:text-foreground"
               )}
             >
               {VIEW_LABEL[v]}

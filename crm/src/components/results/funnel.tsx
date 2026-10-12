@@ -21,17 +21,19 @@ export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
   }
 
   return (
-    <ol className="space-y-2.5">
+    <ol className="space-y-3">
       {steps.map((step, i) => {
         const siguiente = steps[i + 1];
         return (
           <li key={step.stageId ?? step.name}>
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <span className="min-w-0 truncate font-medium">{step.name}</span>
-              <span className="tabular-nums">{step.reached}</span>
+              <span className="rounded-full bg-popover px-2 py-px text-xs font-semibold tabular-nums shadow-sm">
+                {step.reached}
+              </span>
             </div>
             <div
-              className="mt-1 h-2 w-full overflow-hidden rounded-[4px] bg-subtle"
+              className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-chip"
               role="img"
               aria-label={`${step.reached} pacientes llegaron a ${step.name}`}
             >
@@ -39,8 +41,8 @@ export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
                 <div
                   className={
                     step.kind === "won"
-                      ? "h-full rounded-r-[4px] bg-success"
-                      : "h-full rounded-r-[4px] bg-brand"
+                      ? "h-full rounded-full bg-success"
+                      : "h-full rounded-full bg-brand"
                   }
                   style={{ width: `${Math.max(1, (step.reached / max) * 100)}%` }}
                 />

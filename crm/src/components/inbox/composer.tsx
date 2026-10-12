@@ -200,7 +200,7 @@ export function Composer({
   if (!conversation.windowOpen) {
     return (
       <div className="border-t bg-background px-[18px] py-3.5">
-        <div className="mb-3 flex items-start gap-2 rounded-md border border-warning-soft bg-warning-tint p-3 text-sm text-warning-text">
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-warning-soft bg-warning-tint p-3 text-sm text-warning-text">
           <Clock3 className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.7} />
           <div>
             <p className="font-medium">La ventana de 24 horas está cerrada.</p>
@@ -225,7 +225,7 @@ export function Composer({
           {templates.slice(0, 4).map((t) => (
             <button
               key={t.id}
-              className="rounded-full border border-border-strong bg-background px-3 py-1 text-xs font-semibold text-text-2 transition-colors hover:border-brand hover:bg-brand-tint hover:text-brand-text"
+              className="rounded-full border border-border bg-chip px-3 py-1 text-xs font-semibold text-text-2 transition-colors hover:border-brand hover:bg-brand-tint hover:text-brand-text"
               onClick={() => {
                 const firstName = conversation.contact.name.split(" ")[0] ?? "";
                 setText(t.body.replace(/\{\{\s*1\s*\}\}/g, firstName));
@@ -241,7 +241,7 @@ export function Composer({
       )}
 
       {file && (
-        <div className="mb-2.5 flex items-center gap-2.5 rounded-md border bg-subtle p-2.5">
+        <div className="mb-2.5 flex items-center gap-2.5 rounded-lg border bg-subtle p-2.5">
           {filePreview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -269,7 +269,7 @@ export function Composer({
       )}
 
       {panel === "location" && (
-        <div className="mb-2.5 flex flex-wrap items-end gap-2 rounded-md border bg-subtle p-2.5">
+        <div className="mb-2.5 flex flex-wrap items-end gap-2 rounded-lg border bg-subtle p-2.5">
           <label className="min-w-0 flex-1 text-xs text-text-2">
             Coordenadas o enlace de Google Maps
             <input
@@ -306,7 +306,7 @@ export function Composer({
       )}
 
       {panel === "contact" && (
-        <div className="mb-2.5 flex flex-wrap items-end gap-2 rounded-md border bg-subtle p-2.5">
+        <div className="mb-2.5 flex flex-wrap items-end gap-2 rounded-lg border bg-subtle p-2.5">
           <label className="min-w-0 flex-1 text-xs text-text-2">
             Nombre
             <input

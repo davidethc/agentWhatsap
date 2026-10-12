@@ -10,7 +10,8 @@ import {
   MAX_FAVICON_BYTES,
 } from "@/lib/favicon";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 
 /**
  * El icono de la pestaña.
@@ -75,7 +76,7 @@ export function FaviconCard({ branding }: { branding: Branding }) {
   }
 
   return (
-    <Card>
+    <SettingsCard>
       <CardHeader>
         <CardTitle>Logo del negocio</CardTitle>
         <p className="text-sm text-text-3">
@@ -145,6 +146,6 @@ export function FaviconCard({ branding }: { branding: Branding }) {
 
         {error && <p className="text-sm text-destructive">{error}</p>}
       </CardContent>
-    </Card>
+    </SettingsCard>
   );
 }

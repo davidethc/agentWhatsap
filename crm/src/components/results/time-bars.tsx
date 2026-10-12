@@ -43,16 +43,16 @@ export function TimeBars({
   const cada = Math.max(1, Math.ceil(n / 6));
 
   return (
-    <figure className="min-w-0">
+    <figure className="min-w-0 rounded-lg bg-subtle p-3.5 sm:p-4">
       <figcaption className="mb-2 flex items-baseline justify-between gap-2">
         <span className="text-[13px] font-semibold text-text-2">{title}</span>
-        <span className="text-xs text-text-3">
+        <span className="rounded-full bg-popover px-2 py-px text-[11px] text-text-3 shadow-sm">
           {format(total)} en el periodo
         </span>
       </figcaption>
 
       {max === 0 ? (
-        <p className="flex h-36 items-center justify-center rounded-md border border-dashed text-sm text-text-3">
+        <p className="flex h-36 items-center justify-center rounded-lg border border-dashed border-border-strong text-sm text-text-3">
           {emptyText}
         </p>
       ) : (
@@ -156,7 +156,7 @@ function Tooltip({
 }) {
   return (
     <div
-      className="pointer-events-none absolute z-10 whitespace-nowrap rounded-md border border-border-strong bg-popover px-2 py-1 text-xs shadow-md"
+      className="pointer-events-none absolute z-10 whitespace-nowrap rounded-full border border-border-strong bg-popover px-2.5 py-1 text-xs shadow-md"
       style={{ ...anclaje(index, n), bottom: `calc(${Math.min(bottomPct, 100)}% + 6px)` }}
     >
       <strong className="font-semibold text-foreground">{format(point.value)}</strong>

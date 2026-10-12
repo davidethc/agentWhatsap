@@ -24,7 +24,7 @@ function StatusTicks({ status }: { status: MessageDto["status"] }) {
   if (status === "delivered")
     return <CheckCheck className={cn(cls, "text-text-4")} strokeWidth={1.7} />;
   if (status === "read")
-    return <CheckCheck className={cn(cls, "text-[#53bdeb]")} strokeWidth={1.7} />;
+    return <CheckCheck className={cn(cls, "text-info")} strokeWidth={1.7} />;
   return <AlertTriangle className={cn(cls, "text-destructive")} strokeWidth={1.7} />;
 }
 
@@ -125,7 +125,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
         <img
           src={src}
           alt={media.caption ?? mediaLabel(media.kind)}
-          className="max-h-72 max-w-full rounded-md object-contain"
+          className="max-h-72 max-w-full rounded-[12px] object-contain"
           loading="lazy"
         />
       </a>
@@ -133,7 +133,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
   }
   if (media.kind === "video") {
     return (
-      <video controls preload="metadata" className="max-h-72 max-w-full rounded-md">
+      <video controls preload="metadata" className="max-h-72 max-w-full rounded-[12px]">
         <source src={src} type={media.mimeType ?? undefined} />
       </video>
     );
@@ -144,7 +144,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
   // document
   return (
     <a
-      className="flex items-center gap-2 rounded-md border border-border-strong bg-background px-2.5 py-2 hover:bg-subtle"
+      className="flex items-center gap-2 rounded-lg border bg-popover px-2.5 py-2 transition-colors hover:border-border-strong hover:bg-accent"
       href={src}
       download={media.fileName ?? undefined}
       target="_blank"
@@ -208,17 +208,21 @@ export function MessageThread({ messages }: { messages: MessageDto[] }) {
         return (
           <div key={m.id}>
             {newDay && (
-              <div className="my-3 flex justify-center">
-                <span className="kicker rounded-full border border-border-strong bg-background px-3 py-1 text-text-2 shadow-sm">
+              // Separador de día: kicker entre dos filetes, como las
+              // cabeceras de columna del tablero.
+              <div className="my-4 flex items-center gap-3" role="separator">
+                <span className="h-px flex-1 bg-border" />
+                <span className="kicker rounded-full border bg-popover px-3 py-1 text-text-2 shadow-sm">
                   {dayLabel(m.createdAt)}
                 </span>
+                <span className="h-px flex-1 bg-border" />
               </div>
             )}
             <div
               className={cn(
                 "flex",
                 out ? "justify-end" : "justify-start",
-                grouped ? "mt-[3px]" : "mt-2.5"
+                grouped ? "mt-1" : "mt-3"
               )}
             >
               <div
@@ -227,11 +231,11 @@ export function MessageThread({ messages }: { messages: MessageDto[] }) {
                   // con 64% cada mensaje se parte en tres líneas.
                   // Burbujas del mockup de la landing: el cliente entra en
                   // verde WhatsApp, el CRM contesta con el lavado del acento.
-                  "max-w-[85%] rounded-[14px] border px-3 pb-1.5 pt-2 text-[13.5px] leading-[1.45] shadow-sm sm:max-w-[64%]",
+                  "max-w-[85%] rounded-[18px] border px-3.5 pb-1.5 pt-2 text-[13.5px] leading-[1.5] shadow-sm sm:max-w-[64%]",
                   out
                     ? "border-bubble-out-border bg-bubble-out text-bubble-out-text"
                     : "border-bubble-in-border bg-bubble-in",
-                  !grouped && (out ? "rounded-tr-[5px]" : "rounded-tl-[5px]")
+                  !grouped && (out ? "rounded-tr-[6px]" : "rounded-tl-[6px]")
                 )}
               >
                 {m.media ? (
@@ -254,10 +258,10 @@ export function MessageThread({ messages }: { messages: MessageDto[] }) {
                     {m.text ? ` — ${m.text}` : ""}
                   </span>
                 )}
-                <span className="float-right ml-2 mt-1 flex items-center gap-1">
+                <span className="float-right ml-3 mt-1.5 flex items-center gap-1 leading-none">
                   {m.aiGenerated && (
                     <span
-                      className="inline-flex items-center gap-0.5 text-[10px] font-medium text-brand-ink"
+                      className="inline-flex items-center gap-0.5 rounded-full bg-brand-tint px-1.5 py-px text-[10px] font-medium text-brand-text"
                       title="Respuesta generada por IA"
                     >
                       <Sparkles className="h-3 w-3" strokeWidth={1.7} /> IA
@@ -265,13 +269,13 @@ export function MessageThread({ messages }: { messages: MessageDto[] }) {
                   )}
                   {m.origin === "manual" && (
                     <span
-                      className="inline-flex items-center gap-0.5 text-[10px] font-medium text-text-3"
+                      className="inline-flex items-center gap-0.5 rounded-full bg-chip px-1.5 py-px text-[10px] font-medium text-text-3"
                       title="Enviado a mano desde la app de WhatsApp Business"
                     >
                       <Smartphone className="h-3 w-3" strokeWidth={1.7} /> Celular
                     </span>
                   )}
-                  <span className="font-mono text-[10px] tracking-[0.04em] text-text-3">
+                  <span className="font-mono text-[10px] tabular-nums tracking-[0.04em] text-text-3">
                     {bubbleTime(m.createdAt)}
                   </span>
                   {out && <StatusTicks status={m.status} />}
@@ -279,7 +283,7 @@ export function MessageThread({ messages }: { messages: MessageDto[] }) {
                 {out && m.status === "failed" && (
                   // El triángulo solo decía "algo falló". El motivo lo manda
                   // Meta y lo guardábamos sin enseñarlo nunca.
-                  <p className="mt-1.5 flex items-start gap-1.5 rounded-md border border-danger-soft bg-danger-tint px-2 py-1.5 text-[11.5px] leading-snug text-danger-text">
+                  <p className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-danger-soft bg-danger-tint px-2 py-1.5 text-[11.5px] leading-snug text-danger-text">
                     <AlertTriangle
                       className="mt-[1px] h-3.5 w-3.5 shrink-0"
                       strokeWidth={1.8}

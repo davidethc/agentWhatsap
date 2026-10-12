@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { bookingTitle, bookingTone, canRetrySync, statusLabel, type Booking } from "./booking-look";
+import { bookingTitle, bookingTone, canRetrySync, statusChip, statusLabel, type Booking } from "./booking-look";
 
 /**
  * 215 — La cita, abierta, sin salir del calendario. Tiene TODO lo que tenía la
@@ -96,7 +96,7 @@ export function BookingDrawer({
       <aside
         role="dialog"
         aria-label={`${isSession ? "Cita" : "Bloqueo"}: ${bookingTitle(b)}`}
-        className="fixed inset-y-0 right-0 z-50 flex w-[min(400px,94vw)] flex-col border-l bg-popover shadow-pop lg:static lg:z-auto lg:w-[360px] lg:shrink-0 lg:shadow-none"
+        className="fixed inset-y-0 right-0 z-50 flex w-[min(400px,94vw)] flex-col border-l bg-popover shadow-pop lg:static lg:z-auto lg:mb-4 lg:mr-4 lg:w-[360px] lg:shrink-0 lg:overflow-hidden lg:rounded-lg lg:border lg:shadow-sm"
       >
         <header className="flex items-center justify-between border-b px-4 py-3">
           <h3 className="kicker text-text-2">{isSession ? "Cita" : "Bloqueo de horario"}</h3>
@@ -114,7 +114,7 @@ export function BookingDrawer({
           {/* Qué y cuándo */}
           <section className="space-y-3 border-b p-4">
             <div className="flex items-start gap-3">
-              <span aria-hidden className={cn("mt-1.5 h-3 w-3 shrink-0 rounded-full", tone.dot)} />
+              <span aria-hidden className={cn("mt-1.5 h-3 w-3 shrink-0 rounded-full ring-4 ring-subtle", tone.dot)} />
               <div className="min-w-0">
                 <p
                   className={cn(
@@ -137,19 +137,9 @@ export function BookingDrawer({
             </div>
 
             <div className="flex flex-wrap gap-1.5">
-              <Badge
-                variant={
-                  b.status === "realizada"
-                    ? "success"
-                    : b.status === "no_show"
-                      ? "warning"
-                      : b.status === "cancelada"
-                        ? "secondary"
-                        : "default"
-                }
-              >
+              <span className={cn("rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold", statusChip(b))}>
                 {statusLabel(b)}
-              </Badge>
+              </span>
               {isSession && (
                 <Badge variant="secondary" className="gap-1">
                   {b.source === "ai" && <Sparkles className="h-3 w-3" />}

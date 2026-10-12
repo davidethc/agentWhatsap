@@ -12,11 +12,11 @@ import {
 } from "@/lib/brain-status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { cn, initials } from "@/lib/utils";
 
 type Profile = {
   enabled: boolean;
@@ -80,7 +80,7 @@ export function AgentClient() {
 
   if (!profile) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-full items-center justify-center bg-subtle text-sm text-muted-foreground">
         Cargando…
       </div>
     );
@@ -108,13 +108,34 @@ export function AgentClient() {
         ? null
         : "configurar";
 
+  const qa = entries.filter((e) => e.kind === "qa").length;
+
   return (
-    <div className="h-full overflow-y-auto">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 sm:py-4">
-        <h2 className="text-[17px] font-bold tracking-tight">Agente de IA</h2>
+    <div className="h-full overflow-y-auto bg-subtle">
+      <header className="board-head mb-0 items-center border-b bg-background px-4 py-4 sm:px-6">
+        <div className="min-w-0">
+          <p className="kicker mb-1.5">Agente · perfil</p>
+          <h2 className="text-[20px] font-bold leading-tight tracking-tight">Agente de IA</h2>
+        </div>
         <div className="flex items-center gap-3">
-          {saved && <span className="text-xs text-primary">Guardado ✓</span>}
-          <span className="text-sm text-muted-foreground">
+          {saved && (
+            <span className="rounded-full bg-brand-tint px-2.5 py-0.5 text-xs font-medium text-brand-text">
+              Guardado ✓
+            </span>
+          )}
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
+              profile.enabled ? "bg-success-tint text-success-text" : "bg-chip text-text-3"
+            )}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                profile.enabled ? "bg-success" : "bg-border-strong"
+              )}
+            />
             {profile.enabled ? "Encendido" : "Apagado"}
           </span>
           {/* El interruptor compartido (#53): el pomo propio de aquí era
@@ -132,14 +153,41 @@ export function AgentClient() {
         </div>
       </header>
 
-      {brain && (
-        <div className="mx-4 mt-4 sm:mx-6 sm:mt-6">
-          <BrainStatusCard status={brain} />
+      <div className="mx-auto flex max-w-[1400px] flex-col gap-2.5 p-3 sm:gap-4 sm:p-6">
+      {/* Tarjeta de perfil: quién es el agente de un vistazo. */}
+      <section className="card-surface overflow-hidden" aria-label="Perfil del agente">
+        <div className="h-16 bg-brand-tint sm:h-20" aria-hidden />
+        <div className="-mt-8 flex flex-wrap items-end gap-4 px-4 pb-4 sm:-mt-10 sm:px-5 sm:pb-5">
+          <span
+            aria-hidden
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand text-xl font-bold text-brand-fg ring-4 ring-popover sm:h-20 sm:w-20 sm:text-2xl"
+          >
+            {initials(profile.name || "Agente")}
+          </span>
+          <div className="min-w-0 flex-1 pb-1">
+            <p className="kicker">Asistente de WhatsApp</p>
+            <p className="truncate text-[18px] font-bold leading-tight tracking-tight">
+              {profile.name || "Sin nombre"}
+            </p>
+            {profile.tone && (
+              <p className="mt-0.5 truncate text-xs text-text-3">Tono: {profile.tone}</p>
+            )}
+          </div>
+          <dl className="grid w-full grid-cols-3 gap-2.5 sm:w-auto">
+            <ProfileStat label="P/R" value={qa} />
+            <ProfileStat label="Bloques" value={entries.length - qa} />
+            <ProfileStat
+              label="Caracteres"
+              value={kbSize ? kbSize.chars.toLocaleString("es-MX") : "—"}
+            />
+          </dl>
         </div>
-      )}
+      </section>
+
+      {brain && <BrainStatusCard status={brain} />}
 
       {aiCallout === "externo" && brain && (
-        <div className="mx-4 mt-4 rounded-lg border border-brand-soft bg-brand-tint p-5 text-center sm:mx-6 sm:mt-6 sm:p-6">
+        <div className="rounded-lg border border-brand-soft bg-brand-tint p-5 text-center sm:p-6">
           <Cable className="mx-auto mb-2 h-8 w-8 text-primary" strokeWidth={1.7} />
           <p className="font-medium">{externalAnswerLabel(brain)}</p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
@@ -150,7 +198,7 @@ export function AgentClient() {
         </div>
       )}
       {aiCallout === "configurar" && (
-        <div className="mx-4 mt-4 rounded-lg border border-brand-soft bg-brand-tint p-5 text-center sm:mx-6 sm:mt-6 sm:p-6">
+        <div className="rounded-lg border border-brand-soft bg-brand-tint p-5 text-center sm:p-6">
           <Sparkles className="mx-auto mb-2 h-8 w-8 text-primary" />
           <p className="font-medium">
             {aiMensaje ? "Tu agente no puede contestar" : "Configura tu proveedor de IA para activar el agente"}
@@ -170,11 +218,50 @@ export function AgentClient() {
         </div>
       )}
 
-      <div className="grid gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-2">
+      <div className="grid gap-2.5 sm:gap-4 lg:grid-cols-2 lg:items-start">
         <ProfileSection profile={profile} onSave={saveProfile} />
         <KbSection entries={entries} kbSize={kbSize} onChanged={() => void refetch()} />
       </div>
+      </div>
     </div>
+  );
+}
+
+function ProfileStat({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="min-w-0 rounded-lg bg-subtle px-3 py-2 text-center sm:min-w-[84px]">
+      <dt className="kicker truncate">{label}</dt>
+      <dd className="mt-1 text-lg font-semibold leading-none tabular-nums">{value}</dd>
+    </div>
+  );
+}
+
+/** El marco de cada bloque de esta pantalla: tarjeta del tablero con kicker. */
+function Panel({
+  kicker,
+  title,
+  description,
+  right,
+  children,
+}: {
+  kicker: string;
+  title: string;
+  description: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="card-surface">
+      <header className="flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
+        <div className="min-w-0">
+          <p className="kicker mb-1.5">{kicker}</p>
+          <h3 className="text-[16px] font-bold leading-tight tracking-tight">{title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        </div>
+        {right}
+      </header>
+      <div className="space-y-4 px-4 pb-4 sm:px-5 sm:pb-5">{children}</div>
+    </section>
   );
 }
 
@@ -189,14 +276,11 @@ function ProfileSection({
   useEffect(() => setForm(profile), [profile]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Comportamiento</CardTitle>
-        <CardDescription>
-          Cómo se presenta y actúa el agente al responder a tus clientes.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Panel
+      kicker="01 · Comportamiento"
+      title="Comportamiento"
+      description="Cómo se presenta y actúa el agente al responder a tus clientes."
+    >
         <div className="space-y-1.5">
           <Label htmlFor="agent-name">Nombre del agente</Label>
           <Input
@@ -244,8 +328,7 @@ function ProfileSection({
           />
         </div>
         <Button onClick={() => void onSave(form)}>Guardar comportamiento</Button>
-      </CardContent>
-    </Card>
+    </Panel>
   );
 }
 
@@ -291,31 +374,25 @@ function KbSection({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Knowledge base</CardTitle>
-            <CardDescription>
-              La única fuente de verdad del agente: lo que no está aquí, no lo
-              afirma.
-            </CardDescription>
-          </div>
-          {kbSize && (
-            <Badge variant={kbSize.warning ? "warning" : "secondary"}>
-              {kbSize.chars.toLocaleString("es-MX")} caracteres
-            </Badge>
-          )}
-        </div>
+    <Panel
+      kicker="02 · Conocimiento"
+      title="Knowledge base"
+      description="La única fuente de verdad del agente: lo que no está aquí, no lo afirma."
+      right={
+        kbSize && (
+          <Badge variant={kbSize.warning ? "warning" : "secondary"} className="shrink-0">
+            {kbSize.chars.toLocaleString("es-MX")} caracteres
+          </Badge>
+        )
+      }
+    >
         {kbSize?.warning && (
-          <p className="text-xs text-warning-text">
+          <p className="rounded-lg bg-warning-tint px-3 py-2 text-xs text-warning-text">
             El conocimiento se acerca al límite del contexto del modelo (v1 lo
             inyecta completo en cada turno). Considera depurar entradas.
           </p>
         )}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2 rounded-md border p-3">
+        <div className="space-y-2 rounded-lg bg-subtle p-3">
           <p className="text-sm font-medium">Nueva pregunta / respuesta</p>
           <Input
             placeholder="Pregunta (p. ej. ¿Hacen envíos?)"
@@ -337,7 +414,7 @@ function KbSection({
           </Button>
         </div>
 
-        <div className="space-y-2 rounded-md border p-3">
+        <div className="space-y-2 rounded-lg bg-subtle p-3">
           <p className="text-sm font-medium">Nuevo bloque de texto libre</p>
           <Textarea
             placeholder="Horarios, direcciones, políticas…"
@@ -352,7 +429,19 @@ function KbSection({
 
         <ul className="space-y-2">
           {entries.map((e) => (
-            <li key={e.id} className="flex items-start gap-2 rounded-md border p-3">
+            <li
+              key={e.id}
+              className="flex items-start gap-2 rounded-lg border bg-background p-3 transition-colors hover:border-border-strong hover:bg-row-hover"
+            >
+              <span
+                className={cn(
+                  "mt-0.5 shrink-0 rounded-full px-2 py-px font-mono text-[10px] font-medium uppercase",
+                  e.kind === "qa" ? "bg-info-tint text-info-text" : "bg-chip text-text-3"
+                )}
+                aria-hidden
+              >
+                {e.kind === "qa" ? "P/R" : "Texto"}
+              </span>
               <div className="min-w-0 flex-1 text-sm">
                 {e.kind === "qa" ? (
                   <>
@@ -379,7 +468,6 @@ function KbSection({
             </p>
           )}
         </ul>
-      </CardContent>
-    </Card>
+    </Panel>
   );
 }

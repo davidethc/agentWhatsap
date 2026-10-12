@@ -4,11 +4,17 @@ import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { delta, type Comparable, type RateDto } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
-/** El marco común de las tarjetas de indicador. */
+/**
+ * El marco común de las tarjetas de indicador: kicker arriba, número grande
+ * en medio y la referencia abajo. Vive dentro de una sección elevada, así que
+ * va hundida (`bg-subtle`) y se aclara un poco al pasar el cursor.
+ */
 function Tile({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="min-w-0 rounded-md border bg-subtle px-3 py-2.5">
-      <p className="text-xs font-medium text-text-2">{label}</p>
+    <div className="flex min-w-0 flex-col rounded-lg border border-transparent bg-subtle px-3.5 py-3 transition-colors hover:border-border hover:bg-background">
+      <p className="kicker truncate" title={label}>
+        {label}
+      </p>
       {children}
     </div>
   );
@@ -40,26 +46,32 @@ export function StatCard({
 
   return (
     <Tile label={label}>
-      <p className="mt-0.5 truncate text-xl font-semibold">{value}</p>
+      <p className="mt-2 truncate text-[26px] font-semibold leading-none tracking-tight tabular-nums">
+        {value}
+      </p>
       {compare && (
         <p
           className={cn(
-            "mt-1 flex items-center gap-1 text-xs",
-            mejor === null ? "text-text-3" : mejor ? "text-success-text" : "text-danger-text"
+            "mt-2.5 inline-flex max-w-full items-center gap-1 self-start rounded-full px-2 py-0.5 text-[11px] font-medium",
+            mejor === null
+              ? "bg-chip text-text-3"
+              : mejor
+                ? "bg-success-tint text-success-text"
+                : "bg-danger-tint text-danger-text"
           )}
         >
-          <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <Icon className="h-3 w-3 shrink-0" aria-hidden />
           {d === null ? (
-            <span>sin base previa ({compare.previous})</span>
+            <span className="truncate">sin base previa ({compare.previous})</span>
           ) : (
-            <span>
+            <span className="truncate">
               {d > 0 ? "+" : ""}
               {d}% vs. {compare.previous} antes
             </span>
           )}
         </p>
       )}
-      {hint && <p className="mt-1 text-[11px] text-text-3">{hint}</p>}
+      {hint && <p className="mt-2 text-[11px] leading-snug text-text-3">{hint}</p>}
     </Tile>
   );
 }
@@ -76,16 +88,16 @@ export function RateCard({
 }) {
   return (
     <Tile label={label}>
-      <p className="mt-0.5 text-xl font-semibold">
+      <p className="mt-2 text-[26px] font-semibold leading-none tracking-tight tabular-nums">
         {rate.value === null ? "—" : `${rate.value}%`}
       </p>
-      <p className="mt-1 text-xs">
+      <p className="mt-2.5 text-[11px] leading-snug">
         {rate.value === null ? (
           <span className="text-text-3">sin casos en el periodo</span>
         ) : (
           <span className="text-text-3">
             de {rate.sample} {unit}
-            {!rate.reliable && " · muestra chica"}
+            {!rate.reliable && <span className="text-warning-text"> · muestra chica</span>}
           </span>
         )}
       </p>

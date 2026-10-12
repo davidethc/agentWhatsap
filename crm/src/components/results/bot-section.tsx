@@ -2,7 +2,7 @@
 
 import type { BotBlockDto } from "@/lib/analytics";
 import { BarChart } from "./bar-chart";
-import { Rate, Section, Subhead } from "./section";
+import { Panel, Rate, Section, Subhead } from "./section";
 import { RateCard, StatCard } from "./stat-card";
 
 /**
@@ -26,6 +26,7 @@ export function BotSection({
     <Section
       id="agente"
       title="El agente"
+      kicker="03 · Agente"
       hint={
         agenda
           ? "Si contesta, qué tan rápido, cuándo pasa a un humano y cómo salen las citas."
@@ -38,8 +39,8 @@ export function BotSection({
       emptyText="Todavía no hay conversaciones en este periodo."
     >
       {data && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+        <div className="space-y-2.5">
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
             <StatCard label="Conversaciones nuevas" value={String(data.conversations)} />
             <RateCard
               label="Contestó el agente"
@@ -67,12 +68,12 @@ export function BotSection({
           </div>
 
           {agenda && data.sessions && (
-            <div>
+            <div className="pt-2">
               <Subhead>Citas del periodo</Subhead>
               {data.sessions.booked === 0 ? (
                 <p className="text-sm text-text-3">Ninguna cita cae en este periodo.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-5">
+                <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5">
                   <StatCard
                     label="Citas"
                     value={String(data.sessions.booked)}
@@ -91,16 +92,16 @@ export function BotSection({
             </div>
           )}
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div>
+          <div className="grid gap-2.5 lg:grid-cols-2">
+            <Panel>
               <Subhead>Por qué pasó a un humano</Subhead>
               <BarChart
                 items={data.handoffs}
                 emptyText="Ninguna conversación del periodo pasó a un humano."
               />
-            </div>
+            </Panel>
 
-            <div>
+            <Panel>
               <Subhead>Ficha del paciente</Subhead>
               {data.fichaCoverage === null ? (
                 // `null` NO es 0 %: es que el agente de esta instancia no escribe
@@ -121,7 +122,7 @@ export function BotSection({
                   </p>
                 </>
               )}
-            </div>
+            </Panel>
           </div>
         </div>
       )}

@@ -3,13 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -142,8 +137,8 @@ export function AdsClient() {
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <Card>
+    <div className="max-w-3xl space-y-2.5 sm:space-y-4">
+      <SettingsCard>
         <CardHeader>
           <CardTitle>Conversiones de anuncios</CardTitle>
           <CardDescription>
@@ -235,9 +230,9 @@ export function AdsClient() {
             ) : null}
           </div>
         </CardContent>
-      </Card>
+      </SettingsCard>
 
-      <Card>
+      <SettingsCard>
         <CardHeader>
           <CardTitle>Actividad reciente</CardTitle>
           <CardDescription>
@@ -298,7 +293,7 @@ export function AdsClient() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </SettingsCard>
     </div>
   );
 }

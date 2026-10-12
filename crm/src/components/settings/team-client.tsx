@@ -5,7 +5,8 @@ import { UserPlus } from "lucide-react";
 import { ContactAvatar } from "@/components/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -72,8 +73,8 @@ export function TeamClient() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <Card>
+    <div className="max-w-2xl space-y-2.5 sm:space-y-4">
+      <SettingsCard>
         <CardHeader>
           <CardTitle>Crear cuenta de equipo</CardTitle>
           <CardDescription>
@@ -117,7 +118,7 @@ export function TeamClient() {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           {created && (
-            <div className="rounded-md border border-success-soft bg-success-tint p-3 text-sm">
+            <div className="rounded-lg border border-success-soft bg-success-tint p-3 text-sm">
               <p className="font-medium text-success-text">Cuenta creada ✓</p>
               <p className="mt-1 text-success-text opacity-90">
                 Comparte estos datos ahora (no se volverán a mostrar):
@@ -137,18 +138,20 @@ export function TeamClient() {
             {saving ? "Creando…" : "Crear cuenta"}
           </Button>
         </CardContent>
-      </Card>
+      </SettingsCard>
 
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="kicker px-1">
           Miembros
         </p>
         {members.map((m) => (
           <div
             key={m.id}
-            className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3"
+            className="card-surface card-surface-hover flex items-center gap-3 px-4 py-3"
           >
-            <ContactAvatar name={m.name} seed={m.id} size="sm" />
+            <span className="shrink-0 rounded-full ring-2 ring-border ring-offset-2 ring-offset-popover">
+              <ContactAvatar name={m.name} seed={m.id} size="sm" />
+            </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{m.name}</p>
               <p className="text-xs text-muted-foreground">{m.email}</p>

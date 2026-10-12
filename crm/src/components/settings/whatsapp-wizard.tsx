@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -70,7 +71,7 @@ export function WhatsappWizard() {
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       {connection?.status === "reconnect_required" && (
         <div className="flex flex-wrap items-start gap-2 rounded-lg border border-danger-soft bg-danger-tint p-4 text-sm">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
@@ -288,7 +289,7 @@ function ConnectForm({
   }
 
   return (
-    <Card>
+    <SettingsCard>
       <CardHeader>
         <CardTitle>
           {existing ? "Reconectar / actualizar el número" : "Conectar tu número de WhatsApp"}
@@ -300,10 +301,10 @@ function ConnectForm({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 rounded-md border bg-background p-4 text-sm">
+        <div className="grid gap-3 rounded-lg bg-subtle p-4 text-sm">
           <p className="font-medium">¿De dónde sale el token?</p>
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-md border p-3">
+            <div className="rounded-lg bg-popover p-3 shadow-sm">
               <p className="mb-1 font-medium text-primary">Modo directo</p>
               <p className="text-muted-foreground">
                 El negocio tiene su propia app en{" "}
@@ -313,7 +314,7 @@ function ConnectForm({
                 configurar también el App Secret para la firma del webhook.
               </p>
             </div>
-            <div className="rounded-md border p-3">
+            <div className="rounded-lg bg-popover p-3 shadow-sm">
               <p className="mb-1 font-medium text-primary">Modo agencia (Tech Provider)</p>
               <p className="text-muted-foreground">
                 Tu agencia hace el Embedded Signup en SU plataforma y su
@@ -391,7 +392,7 @@ function ConnectForm({
           </Button>
         </div>
       </CardContent>
-    </Card>
+    </SettingsCard>
   );
 }
 
@@ -431,7 +432,7 @@ function RegistrationNotice({
     );
   }
   return (
-    <p className="flex items-start gap-2 rounded-md border border-warning-soft bg-warning-tint p-3 text-xs text-warning-text">
+    <p className="flex items-start gap-2 rounded-lg border border-warning-soft bg-warning-tint p-3 text-xs text-warning-text">
       <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
       <span>
         {registration.ok ? (
@@ -497,7 +498,7 @@ function WebhookCard({
   }
 
   return (
-    <Card>
+    <SettingsCard>
       <CardHeader>
         <CardTitle>Webhook de WhatsApp</CardTitle>
         <CardDescription>
@@ -522,7 +523,7 @@ function WebhookCard({
           </div>
         )}
         {!webhook.isHttps && (
-          <p className="flex items-start gap-2 rounded-md border border-warning-soft bg-warning-tint p-3 text-xs text-warning-text">
+          <p className="flex items-start gap-2 rounded-lg border border-warning-soft bg-warning-tint p-3 text-xs text-warning-text">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             La URL configurada no es https: Meta exige https para los webhooks.
             Ajusta APP_BASE_URL con tu dominio público.
@@ -585,6 +586,6 @@ function WebhookCard({
           </p>
         )}
       </CardContent>
-    </Card>
+    </SettingsCard>
   );
 }

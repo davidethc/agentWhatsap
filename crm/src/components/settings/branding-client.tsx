@@ -23,7 +23,8 @@ import { useResolvedTheme } from "@/components/use-theme";
 import { BrandLogo } from "@/components/brand-mark";
 import { navItemClass } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -107,8 +108,8 @@ export function BrandingClient({
   if (!loaded) return <p className="text-sm text-text-3">Cargando…</p>;
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <Card>
+    <div className="max-w-2xl space-y-2.5 sm:space-y-4">
+      <SettingsCard>
         <CardHeader>
           <CardTitle>Marca del CRM</CardTitle>
           <CardDescription>
@@ -236,7 +237,7 @@ export function BrandingClient({
             {saving ? "Guardando…" : "Guardar marca"}
           </Button>
         </CardContent>
-      </Card>
+      </SettingsCard>
     </div>
   );
 }

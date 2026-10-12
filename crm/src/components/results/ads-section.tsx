@@ -5,7 +5,7 @@ import type { AdRowDto, AdsBlockDto, RateDto } from "@/lib/analytics";
 import { etiquetaDeOrigen, titularDeOrigen } from "@/lib/anuncios";
 import { cn } from "@/lib/utils";
 import { MiniaturaDeAnuncio } from "@/components/anuncio-origen";
-import { Section, Subhead } from "./section";
+import { Panel, Section, Subhead } from "./section";
 import { RateCard, StatCard } from "./stat-card";
 
 type Conteos = { conversations: number; leads: number; won: number; winRate: RateDto };
@@ -34,6 +34,7 @@ export function AdsSection({
     <Section
       id="origen"
       title="Origen y anuncios"
+      kicker="02 · Origen"
       hint="Por dónde llegan las conversaciones y qué anuncio trae gente que compra."
       loading={loading}
       error={error}
@@ -42,8 +43,8 @@ export function AdsSection({
       emptyText="No empezó ninguna conversación en este periodo."
     >
       {data && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:max-w-xl">
+        <div className="space-y-2.5">
+          <div className="grid grid-cols-2 gap-2.5 lg:max-w-xl">
             <StatCard
               label="Conversaciones nuevas"
               value={String(data.conversations.current)}
@@ -56,7 +57,7 @@ export function AdsSection({
             />
           </div>
 
-          <div>
+          <Panel>
             <Subhead>Por origen</Subhead>
             <Filas
               primera="Origen"
@@ -66,9 +67,9 @@ export function AdsSection({
                 conteos: s,
               }))}
             />
-          </div>
+          </Panel>
 
-          <div>
+          <Panel>
             <Subhead>Por anuncio</Subhead>
             {data.ads.length === 0 ? (
               <p className="text-sm text-text-3">
@@ -85,9 +86,9 @@ export function AdsSection({
                 }))}
               />
             )}
-          </div>
+          </Panel>
 
-          <div className="space-y-1 text-[11px] text-text-3">
+          <div className="space-y-1 px-1 pt-1 text-[11px] text-text-3">
             <p>
               «Ventas» son los pacientes del periodo que hoy están en Ganado; «Cierre» es
               ventas entre pacientes, atenuado con menos de 10 (muestra chica).
@@ -110,9 +111,13 @@ type Fila = { key: string; titulo: ReactNode; conteos: Conteos; sourceId?: strin
 function Filas({ primera, filas }: { primera: string; filas: Fila[] }) {
   return (
     <>
-      <ul className="divide-y border-y text-sm sm:hidden">
+      <ul className="space-y-2 text-sm sm:hidden">
         {filas.map((f) => (
-          <li key={f.key} className="py-2.5" data-anuncio={f.sourceId ?? undefined}>
+          <li
+            key={f.key}
+            className="rounded-lg bg-popover p-3 shadow-sm"
+            data-anuncio={f.sourceId ?? undefined}
+          >
             {f.titulo}
             <dl className="mt-2 grid grid-cols-4 gap-2 text-center">
               <Dato etiqueta="conversaciones" valor={f.conteos.conversations} />
@@ -132,11 +137,11 @@ function Filas({ primera, filas }: { primera: string; filas: Fila[] }) {
         ))}
       </ul>
 
-      <div className="hidden overflow-x-auto sm:block">
+      <div className="hidden overflow-x-auto rounded-lg bg-popover shadow-sm sm:block">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b text-xs text-text-3">
-              <th scope="col" className="py-1.5 pr-2 text-left font-medium">
+            <tr className="kicker border-b">
+              <th scope="col" className="py-2.5 pl-3 pr-2 text-left font-medium">
                 {primera}
               </th>
               <Num>Conversaciones</Num>
@@ -147,8 +152,12 @@ function Filas({ primera, filas }: { primera: string; filas: Fila[] }) {
           </thead>
           <tbody>
             {filas.map((f) => (
-              <tr key={f.key} className="border-b last:border-0" data-anuncio={f.sourceId ?? undefined}>
-                <td className="py-2 pr-3">{f.titulo}</td>
+              <tr
+                key={f.key}
+                className="border-b transition-colors last:border-0 hover:bg-row-hover"
+                data-anuncio={f.sourceId ?? undefined}
+              >
+                <td className="py-2.5 pl-3 pr-3">{f.titulo}</td>
                 <Cell>{f.conteos.conversations}</Cell>
                 <Cell>{f.conteos.leads}</Cell>
                 <Cell>{f.conteos.won}</Cell>
@@ -196,14 +205,14 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: number }) {
 
 function Num({ children }: { children: ReactNode }) {
   return (
-    <th scope="col" className="py-1.5 pl-2 text-right font-medium">
+    <th scope="col" className="py-2.5 pl-2 pr-3 text-right font-medium">
       {children}
     </th>
   );
 }
 
 function Cell({ children }: { children: ReactNode }) {
-  return <td className="py-2 pl-2 text-right tabular-nums">{children}</td>;
+  return <td className="py-2.5 pl-2 pr-3 text-right tabular-nums">{children}</td>;
 }
 
 /**

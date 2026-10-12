@@ -14,14 +14,15 @@ import {
   TrendingUp,
   XCircle,
 } from "lucide-react";
+import { ContactAvatar } from "@/components/avatar";
 import { useEvents } from "@/components/use-events";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 type Run = {
   id: string;
@@ -120,10 +121,12 @@ export function LabClient() {
 
   if (!aiConfigured) {
     return (
-      <div className="flex h-full flex-col">
+      <div className="flex h-full flex-col bg-subtle">
         <Header running={false} launching={false} onLaunch={() => {}} disabled />
-        <div className="m-6 rounded-lg border border-brand-soft bg-brand-tint p-8 text-center">
-          <Sparkles className="mx-auto mb-2 h-8 w-8 text-primary" />
+        <div className="card-surface m-3 p-8 text-center sm:m-6">
+          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-tint text-brand ring-4 ring-brand-soft">
+            <Sparkles className="h-6 w-6" />
+          </span>
           <p className="font-medium">
             Configura tu proveedor de IA para usar el Laboratorio
           </p>
@@ -145,24 +148,31 @@ export function LabClient() {
   const running = runs.some((r) => r.status === "running");
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
+    <div className="flex h-full flex-col overflow-y-auto bg-subtle">
       <Header
         running={running}
         launching={launching}
         onLaunch={() => void launch()}
         disabled={false}
       />
-      {error && <p className="px-4 pt-3 text-sm text-destructive sm:px-6">{error}</p>}
+      {error && (
+        <p className="mx-3 mt-3 rounded-lg bg-danger-tint px-3 py-2 text-sm text-danger-text sm:mx-6">
+          {error}
+        </p>
+      )}
 
       {running && progress && (
-        <div className="mx-6 mt-4 rounded-lg border bg-card p-4">
+        <div className="card-surface mx-3 mt-3 p-4 sm:mx-6 sm:mt-4">
           <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="font-medium">Evaluando personas…</span>
-            <span className="text-muted-foreground">
+            <span className="flex items-center gap-2 font-medium">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-brand" aria-hidden />
+              Evaluando personas…
+            </span>
+            <span className="rounded-full bg-chip px-2 py-px font-mono text-xs text-text-2">
               {progress.done} / {progress.total}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-secondary">
+          <div className="h-2 overflow-hidden rounded-full bg-chip">
             <div
               className="h-full rounded-full bg-primary transition-all"
               style={{ width: `${(progress.done / progress.total) * 100}%` }}
@@ -171,7 +181,7 @@ export function LabClient() {
         </div>
       )}
 
-      <div className="grid gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-[280px_1fr]">
+      <div className="grid gap-2.5 p-3 sm:gap-4 sm:p-6 lg:grid-cols-[300px_1fr] lg:items-start">
         <HistoryList
           runs={runs}
           selectedRunId={selectedRunId}
@@ -182,7 +192,7 @@ export function LabClient() {
         ) : (
           <EmptyState
             icon={FlaskConical}
-            className="rounded-lg border border-dashed p-10"
+            className="rounded-lg border border-dashed border-border-strong bg-background p-10"
             title={runs.length === 0 ? "Sin corridas todavía" : "Elige una corrida"}
             description={
               runs.length === 0
@@ -208,16 +218,17 @@ function Header({
   disabled: boolean;
 }) {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 sm:py-4">
-      <div>
-        <h2 className="flex items-center gap-2 text-[17px] font-bold tracking-tight">
-          <FlaskConical className="h-4 w-4 text-primary" /> Laboratorio
+    <header className="board-head mb-0 items-center border-b bg-background px-4 py-4 sm:px-6">
+      <div className="min-w-0">
+        <p className="kicker mb-1.5">Sandbox · evaluación</p>
+        <h2 className="flex items-center gap-2 text-[20px] font-bold leading-tight tracking-tight">
+          <FlaskConical className="h-5 w-5 text-primary" /> Laboratorio
         </h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Sandbox interno — no envía mensajes reales
         </p>
       </div>
-      <Button onClick={onLaunch} disabled={disabled || running || launching}>
+      <Button onClick={onLaunch} disabled={disabled || running || launching} className="rounded-full">
         <Play className="h-4 w-4" />
         {running ? "Corrida en curso…" : "Correr evaluación"}
       </Button>
@@ -235,28 +246,37 @@ function HistoryList({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="space-y-2">
-      <p className="kicker">
-        Historial
-      </p>
+    <div className="board-col max-h-none overflow-visible lg:sticky lg:top-0 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto">
+      <div className="flex items-center justify-between px-1 pt-0.5">
+        <p className="kicker">
+          Historial
+        </p>
+        <span className="rounded-full bg-chip px-2 py-px font-mono text-[10.5px] text-text-3">
+          {runs.length}
+        </span>
+      </div>
       {runs.length === 0 && (
-        <p className="text-xs text-muted-foreground">Sin corridas todavía.</p>
+        <p className="px-1 pb-1 text-xs text-muted-foreground">Sin corridas todavía.</p>
       )}
       {runs.map((run) => (
         <button
           key={run.id}
           onClick={() => onSelect(run.id)}
-          className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-accent ${
-            selectedRunId === run.id ? "border-brand bg-brand-tint" : "border-border-strong bg-card"
-          }`}
+          aria-pressed={selectedRunId === run.id}
+          className={cn(
+            "card-surface card-surface-hover w-full p-3 text-left",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            selectedRunId === run.id && "border-brand ring-1 ring-brand"
+          )}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <ScoreBadge run={run} />
             {run.delta !== null && run.delta !== 0 && (
               <span
-                className={`flex items-center gap-0.5 text-xs font-medium ${
-                  run.delta > 0 ? "text-success" : "text-destructive"
-                }`}
+                className={cn(
+                  "flex items-center gap-0.5 rounded-full px-2 py-px text-xs font-medium",
+                  run.delta > 0 ? "bg-success-tint text-success-text" : "bg-danger-tint text-danger-text"
+                )}
               >
                 {run.delta > 0 ? (
                   <TrendingUp className="h-3.5 w-3.5" />
@@ -268,7 +288,7 @@ function HistoryList({
               </span>
             )}
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-2 font-mono text-[11px] text-muted-foreground">
             {new Date(run.startedAt).toLocaleString("es-MX", {
               day: "numeric",
               month: "short",
@@ -290,6 +310,12 @@ function ScoreBadge({ run }: { run: Run }) {
   return <Badge variant={variant}>Score {score}</Badge>;
 }
 
+const VEREDICTO_TILE: Record<"verde" | "amarillo" | "rojo", string> = {
+  verde: "bg-success-tint text-success-text",
+  amarillo: "bg-warning-tint text-warning-text",
+  rojo: "bg-danger-tint text-danger-text",
+};
+
 function Report({
   detail,
   onApplied,
@@ -299,29 +325,30 @@ function Report({
 }) {
   const { run, cases } = detail;
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Reporte</CardTitle>
-            <ScoreBadge run={run} />
+    <div className="flex min-w-0 flex-col gap-2.5">
+      <section className="card-surface p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="kicker mb-1.5">Corrida · resultado</p>
+            <h3 className="text-[17px] font-bold leading-tight tracking-tight">Reporte</h3>
           </div>
-          {run.status === "failed" && (
-            <p className="text-sm text-destructive">
-              La corrida falló: {run.error ?? "error desconocido"}. Vuelve a
-              intentarlo.
-            </p>
-          )}
-        </CardHeader>
+          <ScoreBadge run={run} />
+        </div>
+        {run.status === "failed" && (
+          <p className="mt-3 rounded-lg bg-danger-tint px-3 py-2 text-sm text-danger-text">
+            La corrida falló: {run.error ?? "error desconocido"}. Vuelve a
+            intentarlo.
+          </p>
+        )}
         {run.status === "done" && (
-          <CardContent>
-            <div className="grid grid-cols-3 gap-3 text-center text-sm">
+          <>
+            <div className="mt-4 grid grid-cols-3 gap-2.5 text-center text-sm">
               {(["verde", "amarillo", "rojo"] as const).map((v) => (
-                <div key={v} className="rounded-md border p-3">
-                  <p className="text-2xl font-bold">
+                <div key={v} className={cn("rounded-lg px-3 py-3.5", VEREDICTO_TILE[v])}>
+                  <p className="text-[28px] font-semibold leading-none tabular-nums">
                     {cases.filter((c) => c.veredicto === v).length}
                   </p>
-                  <p className="capitalize text-muted-foreground">{v}s</p>
+                  <p className="kicker mt-2 capitalize text-current">{v}s</p>
                 </div>
               ))}
             </div>
@@ -331,9 +358,9 @@ function Report({
                 veredicto (el juez no respondió válido); excluidos del score.
               </p>
             )}
-          </CardContent>
+          </>
         )}
-      </Card>
+      </section>
 
       {cases.map((c) => (
         <CaseCard key={c.id} testCase={c} onApplied={onApplied} />
@@ -355,33 +382,47 @@ function CaseCard({ testCase, onApplied }: { testCase: Case; onApplied: () => vo
     ) : (
       <AlertTriangle className="h-4 w-4 text-muted-foreground" />
     );
+  const anillo =
+    c.veredicto === "verde"
+      ? "ring-success-soft"
+      : c.veredicto === "amarillo"
+        ? "ring-warning-soft"
+        : c.veredicto === "rojo"
+          ? "ring-danger-soft"
+          : "ring-border";
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <button
-          className="flex w-full items-center justify-between"
-          onClick={() => setOpen(!open)}
-        >
-          <span className="flex items-center gap-2 text-sm font-semibold">
-            {icon}
-            {c.personaLabel}
-            {c.status === "judge_failed" && (
-              <Badge variant="secondary">sin veredicto</Badge>
-            )}
+    <div className="card-surface card-surface-hover">
+      <button
+        className="flex w-full items-center justify-between gap-3 rounded-lg p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-4"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+      >
+        <span className="flex min-w-0 items-center gap-3 text-sm font-semibold">
+          <span className={cn("shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-popover", anillo)}>
+            <ContactAvatar name={c.personaLabel} seed={c.persona} />
           </span>
-          <span className="flex items-center gap-2 text-xs text-muted-foreground">
-            {c.hallazgos.length > 0 && `${c.hallazgos.length} hallazgo(s)`}
-            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </span>
-        </button>
-      </CardHeader>
+          {icon}
+          <span className="truncate">{c.personaLabel}</span>
+          {c.status === "judge_failed" && (
+            <Badge variant="secondary">sin veredicto</Badge>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+          {c.hallazgos.length > 0 && (
+            <span className="rounded-full bg-warning-tint px-2 py-px font-medium text-warning-text">
+              {`${c.hallazgos.length} hallazgo(s)`}
+            </span>
+          )}
+          {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </span>
+      </button>
       {open && (
-        <CardContent className="space-y-3">
+        <div className="space-y-2.5 border-t px-3.5 pb-3.5 pt-3 sm:px-4">
           {c.hallazgos.map((h, i) => (
             <HallazgoCard key={i} hallazgo={h} caseId={c.id} index={i} onApplied={onApplied} />
           ))}
-          <div className="rounded-md border bg-background p-3">
+          <div className="rounded-lg bg-subtle p-3">
             <p className="mb-2 kicker">
               Transcript
             </p>
@@ -390,7 +431,7 @@ function CaseCard({ testCase, onApplied }: { testCase: Case; onApplied: () => vo
                 <p key={i}>
                   <span
                     className={
-                      t.role === "cliente" ? "text-info" : "text-primary"
+                      t.role === "cliente" ? "font-medium text-info-text" : "font-medium text-brand-text"
                     }
                   >
                     {t.role === "cliente" ? "Cliente" : "Agente"}:
@@ -400,12 +441,11 @@ function CaseCard({ testCase, onApplied }: { testCase: Case; onApplied: () => vo
               ))}
             </div>
           </div>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
-
 function HallazgoCard({
   hallazgo,
   caseId,
@@ -439,7 +479,7 @@ function HallazgoCard({
   }
 
   return (
-    <div className="rounded-md border border-warning-soft bg-warning-tint p-3">
+    <div className="rounded-lg border border-warning-soft bg-warning-tint p-3">
       <div className="flex items-center justify-between">
         <Badge variant="warning">{TIPO_LABELS[hallazgo.tipo]}</Badge>
         {hallazgo.sugerencia && !applied && !editing && (
@@ -448,7 +488,7 @@ function HallazgoCard({
           </Button>
         )}
         {applied && (
-          <span className="text-xs text-success">Agregado al conocimiento ✓</span>
+          <span className="rounded-full bg-success-tint px-2 py-px text-xs font-medium text-success-text">Agregado al conocimiento ✓</span>
         )}
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
@@ -456,7 +496,7 @@ function HallazgoCard({
         {hallazgo.evidencia}
       </p>
       {editing && hallazgo.sugerencia && (
-        <div className="mt-3 space-y-2 rounded-md border bg-card p-3">
+        <div className="mt-3 space-y-2 rounded-lg border bg-popover p-3 shadow-sm">
           <div className="space-y-1">
             <Label htmlFor={`sug-q-${caseId}-${index}`}>Pregunta</Label>
             <Input

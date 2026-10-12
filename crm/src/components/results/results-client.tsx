@@ -95,22 +95,25 @@ export function ResultsClient({
   }, []);
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-6 sm:py-4">
+    <div className="flex h-full flex-col bg-subtle">
+      <header className="board-head mb-0 border-b bg-background px-4 py-4 sm:px-6">
         <div className="min-w-0">
-          <h2 className="text-[17px] font-bold tracking-tight">Resultados</h2>
-          <p className="text-xs text-text-3">
+          <p className="kicker mb-1.5">Tablero · periodo</p>
+          <h2 className="text-[20px] font-bold leading-tight tracking-tight">Resultados</h2>
+          <p className="mt-0.5 text-xs text-text-3">
             Ventas, el trabajo del agente, de dónde llegan y qué se está cayendo.
           </p>
         </div>
         <RangePicker value={range} onChange={setRange} today={today} timezone={timezone} />
       </header>
 
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3 sm:p-6">
-        <SalesSection {...sales} currency={currency} />
-        <AdsSection {...ads} />
-        <BotSection {...bot} agenda={agenda} />
-        <HygieneSection {...hygiene} currency={currency} />
+      <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-2.5 sm:gap-4">
+          <SalesSection {...sales} currency={currency} />
+          <AdsSection {...ads} />
+          <BotSection {...bot} agenda={agenda} />
+          <HygieneSection {...hygiene} currency={currency} />
+        </div>
       </div>
     </div>
   );

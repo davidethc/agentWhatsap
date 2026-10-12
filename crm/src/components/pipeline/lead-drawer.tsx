@@ -136,11 +136,13 @@ export function LeadDrawer({
           {/* Quién */}
           <section className="border-b p-4">
             <div className="flex items-center gap-3">
-              <ContactAvatar
-                name={lead.contact.name}
-                seed={lead.contact.id}
-                size="md"
-              />
+              <span className="flex shrink-0 rounded-full ring-2 ring-border">
+                <ContactAvatar
+                  name={lead.contact.name}
+                  seed={lead.contact.id}
+                  size="md"
+                />
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-[650]">{lead.contact.name}</p>
                 <p className="text-xs text-text-3">
@@ -261,8 +263,10 @@ export function LeadDrawer({
                     className={cn(
                       "rounded-full border px-2.5 py-1 text-xs transition-colors",
                       actual
-                        ? "border-brand bg-brand-tint font-semibold text-brand-text"
-                        : "border-border text-text-2 hover:bg-accent"
+                        ? s.kind === "won"
+                          ? "border-success bg-success-tint font-semibold text-success-text"
+                          : "border-brand bg-brand-tint font-semibold text-brand-text"
+                        : "border-border text-text-2 hover:bg-row-hover"
                     )}
                   >
                     {s.name}

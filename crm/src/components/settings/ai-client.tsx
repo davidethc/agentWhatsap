@@ -3,13 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -247,8 +242,8 @@ export function AiClient() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <Card>
+    <div className="max-w-2xl space-y-2.5 sm:space-y-4">
+      <SettingsCard>
         <CardHeader>
           <CardTitle>Proveedor de IA</CardTitle>
           <CardDescription>
@@ -263,7 +258,7 @@ export function AiClient() {
           ) : cred ? (
             <EstadoGuardado cred={cred} vista={vista} />
           ) : vista.respaldoEntorno ? (
-            <div className="rounded-md border p-3 text-sm">
+            <div className="rounded-lg bg-subtle p-3 text-sm">
               <p>
                 Hoy el agente usa las variables del entorno de la instancia:{" "}
                 <code className="font-mono">{vista.respaldoEntorno.modelo || "sin modelo"}</code>{" "}
@@ -422,14 +417,14 @@ export function AiClient() {
             </div>
           </form>
         </CardContent>
-      </Card>
+      </SettingsCard>
     </div>
   );
 }
 
 function EstadoGuardado({ cred, vista }: { cred: Credencial; vista: Vista }) {
   return (
-    <div className="rounded-md border p-3 text-sm" data-ai-estado={cred.estado}>
+    <div className="rounded-lg bg-subtle p-3 text-sm" data-ai-estado={cred.estado}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span>
           Llave conectada: <code className="font-mono">••••{cred.tokenLast4}</code>
@@ -460,7 +455,7 @@ function EstadoGuardado({ cred, vista }: { cred: Credencial; vista: Vista }) {
 /** Lo que hay que saber ANTES de pegar nada. Plegado: no estorba al que ya lo sabe. */
 function AyudaLlave({ provider }: { provider: AiProviderId }) {
   return (
-    <details className="rounded-lg border p-3 text-sm">
+    <details className="rounded-lg bg-subtle p-3 text-sm">
       <summary className="cursor-pointer font-medium">¿Cómo consigo mi llave?</summary>
       {provider === "openrouter" ? (
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-muted-foreground">

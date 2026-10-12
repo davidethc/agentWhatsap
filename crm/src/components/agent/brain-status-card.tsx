@@ -44,8 +44,13 @@ export function BrainStatusCard({
   const lastSeenAt = status.external.lastSeenAt;
 
   return (
-    <Card data-brain-card data-warning={status.warning ?? "ninguno"}>
+    <Card
+      data-brain-card
+      data-warning={status.warning ?? "ninguno"}
+      className="card-surface border-border bg-popover"
+    >
       <CardHeader className="pb-4">
+        <p className="kicker">Cerebro · ruteo</p>
         <CardTitle>Quién responde a tus clientes</CardTitle>
         <CardDescription>
           Lo que contesta los WhatsApp de esta instancia. Tiene que ser uno solo:
@@ -68,7 +73,7 @@ export function BrainStatusCard({
           </Callout>
         )}
 
-        <dl className="divide-y rounded-md border">
+        <dl className="divide-y overflow-hidden rounded-lg bg-subtle">
           <BrainRow
             id="embedded"
             icon={Sparkles}
@@ -282,13 +287,15 @@ function BrainRow({
       className="grid gap-1.5 p-3 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] sm:gap-4 sm:p-4"
     >
       <dt className="flex items-start gap-2.5">
-        <Icon aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-text-3" strokeWidth={1.7} />
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-popover text-text-2 shadow-sm ring-1 ring-border">
+          <Icon aria-hidden className="h-4 w-4" strokeWidth={1.7} />
+        </span>
         <div className="min-w-0">
           <p className="text-sm font-medium">{label}</p>
           <p className="text-xs text-muted-foreground">{hint}</p>
         </div>
       </dt>
-      <dd className="flex min-w-0 items-start gap-2 pl-[26px] sm:pl-0">
+      <dd className="flex min-w-0 items-start gap-2 pl-[42px] sm:pl-0">
         <span aria-hidden className={cn("mt-[7px] h-2 w-2 shrink-0 rounded-full", DOT[view.tone])} />
         <div className="min-w-0">
           <p className="break-words text-sm">{view.headline}</p>
@@ -316,7 +323,7 @@ function Callout({
     <div
       role={tone === "danger" ? "alert" : "status"}
       className={cn(
-        "flex items-start gap-2.5 rounded-md border p-3",
+        "flex items-start gap-2.5 rounded-lg border p-3",
         tone === "danger"
           ? "border-danger-soft bg-danger-tint text-danger-text"
           : "border-warning-soft bg-warning-tint text-warning-text"

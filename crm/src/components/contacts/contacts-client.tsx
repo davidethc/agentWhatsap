@@ -13,9 +13,8 @@ import {
   Users,
 } from "lucide-react";
 import type { ContactDto } from "@/lib/types";
-import { formatPhone } from "@/lib/utils";
+import { cn, formatPhone } from "@/lib/utils";
 import { ContactAvatar } from "@/components/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -88,16 +87,21 @@ export function ContactsClient() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:gap-4 sm:px-6 sm:py-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-[17px] font-bold tracking-tight">Pacientes</h2>
+      <header className="board-head mb-0 px-4 pb-3 pt-4 sm:px-6 sm:pt-5">
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <p className="kicker">
+              Directorio{contacts.length > 0 ? ` · ${contacts.length}` : ""}
+            </p>
+            <h2 className="text-[17px] font-bold tracking-tight">Pacientes</h2>
+          </div>
           <Button size="sm" onClick={() => setCreando(true)}>
             <UserPlus className="mr-1.5 h-4 w-4" strokeWidth={1.8} />
             Nuevo paciente
           </Button>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <label className="flex items-center gap-2 rounded-full border bg-subtle px-3 py-1.5 text-xs text-text-2">
             <input
               type="checkbox"
               checked={showArchived}
@@ -111,7 +115,7 @@ export function ContactsClient() {
               value={stage}
               onChange={(e) => setStage(e.target.value)}
               aria-label="Filtrar por etapa del embudo"
-              className="h-9 rounded-md border border-input bg-card px-2 text-sm"
+              className="h-9 rounded-full border border-input bg-popover px-3 text-sm"
             >
               <option value="all">Toda etapa</option>
               {stages.map((s) => (
@@ -122,80 +126,104 @@ export function ContactsClient() {
             </select>
           )}
           <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-3" />
             <Input
               ref={inputRef}
               placeholder="Buscar por nombre o teléfono…"
               aria-label="Buscar paciente"
               defaultValue=""
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full pl-8 sm:w-72"
+              className="w-full bg-popover pl-8 sm:w-72"
             />
           </div>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div className="flex-1 overflow-y-auto px-2 pb-4 sm:px-4 sm:pb-6">
         {contacts.length === 0 ? (
-          query.trim() || stage !== "all" ? (
-            <EmptyState
-              icon={Search}
-              className="h-full"
-              title="Sin resultados"
-              description={
-                <>
-                  Nadie coincide con
-                  {query.trim() ? ` «${query.trim()}»` : ""}
-                  {query.trim() && stage !== "all" ? " en" : ""}
-                  {stage !== "all" ? ` la etapa «${stage}»` : ""}.
-                </>
-              }
-            />
-          ) : (
-            <EmptyState
-              icon={Users}
-              className="h-full"
-              title="Sin pacientes"
-              description="Cada persona que escriba a tu WhatsApp quedará registrada aquí automáticamente."
-            />
-          )
+          <div className="board-col h-full">
+            {query.trim() || stage !== "all" ? (
+              <EmptyState
+                icon={Search}
+                className="h-full"
+                title="Sin resultados"
+                description={
+                  <>
+                    Nadie coincide con
+                    {query.trim() ? ` «${query.trim()}»` : ""}
+                    {query.trim() && stage !== "all" ? " en" : ""}
+                    {stage !== "all" ? ` la etapa «${stage}»` : ""}.
+                  </>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={Users}
+                className="h-full"
+                title="Sin pacientes"
+                description="Cada persona que escriba a tu WhatsApp quedará registrada aquí automáticamente."
+              />
+            )}
+          </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="board-col grid overflow-visible sm:grid-cols-2 2xl:grid-cols-3">
             {contacts.map((c) => (
               <li
                 key={c.id}
-                className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border bg-card px-3 py-3 sm:flex-nowrap sm:gap-x-4 sm:px-4"
+                className={cn(
+                  "card-surface card-surface-hover flex flex-col gap-3 p-3.5 hover:border-border-strong",
+                  c.archivedAt && "opacity-75"
+                )}
               >
-                <ContactAvatar name={c.name} seed={c.id} />
-                {/* El 60% mínimo es lo que empuja los botones a su propio
-                    renglón en el teléfono en vez de exprimir el nombre. */}
-                <div className="min-w-[60%] flex-1 sm:min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate text-sm font-medium">
-                      {c.name}
-                    </span>
-                    {c.priority && <PriorityBadge value={c.priority} />}
+                <div className="flex items-start gap-3">
+                  <span className="shrink-0 rounded-full ring-2 ring-brand-soft ring-offset-2 ring-offset-popover">
+                    <ContactAvatar name={c.name} seed={c.id} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-semibold">
+                        {c.name}
+                      </span>
+                      {c.priority && <PriorityBadge value={c.priority} />}
+                    </div>
+                    <p className="truncate font-mono text-[12px] text-text-3">
+                      {formatPhone(c.phone)}
+                    </p>
+                  </div>
+                </div>
+
+                {(c.stageName ||
+                  c.archivedAt ||
+                  c.source?.source === "capturada") && (
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {c.stageName && (
-                      <Badge variant="outline">{c.stageName}</Badge>
+                      <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-medium text-brand-text">
+                        {c.stageName}
+                      </span>
                     )}
                     {c.archivedAt && (
-                      <Badge variant="secondary">Archivado</Badge>
+                      <span className="rounded-full bg-chip px-2 py-0.5 text-[11px] font-medium text-text-2">
+                        Archivado
+                      </span>
                     )}
                     {/* Solo la fuente que alguien capturó: presentar una
                         deducción como dato la volvería un número inventado en
                         cuanto se cuente por fuente. */}
                     {c.source?.source === "capturada" && (
-                      <Badge variant="secondary">
+                      <span className="rounded-full bg-info-tint px-2 py-0.5 text-[11px] font-medium text-info-text">
                         {SOURCE_LABELS[c.source.value]}
-                      </Badge>
+                      </span>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {formatPhone(c.phone)}
-                    {c.notes ? ` · ${c.notes.slice(0, 60)}` : ""}
+                )}
+
+                {c.notes && (
+                  <p className="line-clamp-2 text-xs text-text-2">
+                    {c.notes.slice(0, 160)}
                   </p>
-                </div>
-                <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                )}
+
+                <div className="mt-auto flex items-center gap-1 border-t pt-2.5">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -203,34 +231,36 @@ export function ContactsClient() {
                   >
                     Editar
                   </Button>
-                  {/* A quien nunca escribió hay que abrirle la conversación con
-                      una plantilla: es regla de Meta, no del CRM. */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Escribir primero"
-                    title="Escribir primero (con plantilla)"
-                    onClick={() => setEscribiendo(c)}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                  <Link href={`/inbox?contact=${c.id}`}>
-                    <Button variant="ghost" size="icon" aria-label="Abrir conversación">
-                      <MessageSquareText className="h-4 w-4" />
+                  <div className="ml-auto flex items-center gap-1">
+                    {/* A quien nunca escribió hay que abrirle la conversación con
+                        una plantilla: es regla de Meta, no del CRM. */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Escribir primero"
+                      title="Escribir primero (con plantilla)"
+                      onClick={() => setEscribiendo(c)}
+                    >
+                      <Send className="h-4 w-4" />
                     </Button>
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={c.archivedAt ? "Desarchivar" : "Archivar"}
-                    onClick={() => void patch(c.id, { archived: !c.archivedAt })}
-                  >
-                    {c.archivedAt ? (
-                      <ArchiveRestore className="h-4 w-4" />
-                    ) : (
-                      <Archive className="h-4 w-4" />
-                    )}
-                  </Button>
+                    <Link href={`/inbox?contact=${c.id}`}>
+                      <Button variant="ghost" size="icon" aria-label="Abrir conversación">
+                        <MessageSquareText className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={c.archivedAt ? "Desarchivar" : "Archivar"}
+                      onClick={() => void patch(c.id, { archived: !c.archivedAt })}
+                    >
+                      {c.archivedAt ? (
+                        <ArchiveRestore className="h-4 w-4" />
+                      ) : (
+                        <Archive className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </li>
             ))}

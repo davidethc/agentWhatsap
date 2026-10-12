@@ -102,13 +102,13 @@ export function TimeGrid({
   return (
     <div
       ref={scrollRef}
-      className="relative min-h-0 flex-1 overflow-auto rounded-lg border bg-card"
+      className="card-surface relative min-h-0 flex-1 overflow-auto"
       style={{ "--cal-hour": `${HOUR_PX}px` } as React.CSSProperties}
     >
       <div className="grid" style={{ gridTemplateColumns: columns, minWidth: multi ? "40rem" : undefined }}>
         {/* Encabezados: pegados arriba mientras se desplaza la rejilla. Capas:
             esquina > días > horas > columnas (cada columna aísla las suyas). */}
-        <div className="sticky left-0 top-0 z-40 flex items-end justify-end border-b border-r bg-card px-1.5 pb-1.5 font-mono text-[10px] text-text-3">
+        <div className="sticky left-0 top-0 z-40 flex items-end justify-end border-b border-r bg-popover px-1.5 pb-1.5 font-mono text-[10px] text-text-3">
           {tzLabel}
         </div>
         {days.map((day) => {
@@ -121,7 +121,7 @@ export function TimeGrid({
               onClick={() => onOpenDay(day)}
               disabled={!multi}
               aria-label={`Ver el ${h.weekday} ${h.day} en la vista de día`}
-              className="sticky top-0 z-30 flex flex-col items-center gap-0.5 border-b border-l bg-card py-2 transition-colors enabled:hover:bg-row-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-soft"
+              className="sticky top-0 z-30 flex flex-col items-center gap-0.5 border-b border-l bg-popover py-2 transition-colors enabled:hover:bg-row-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-soft"
             >
               <span className={cn("kicker", isToday && "text-brand-text")}>{h.weekday}</span>
               <span
@@ -137,7 +137,7 @@ export function TimeGrid({
         })}
 
         {/* Columna de horas. */}
-        <div className="sticky left-0 z-20 border-r bg-card" style={{ height: DAY_PX }}>
+        <div className="sticky left-0 z-20 border-r bg-popover" style={{ height: DAY_PX }}>
           {Array.from({ length: 23 }, (_, i) => i + 1).map((h) => (
             <span
               key={h}
@@ -264,13 +264,13 @@ function EventBlock({
       }}
       aria-label={`${title}, ${start} a ${end}`}
       className={cn(
-        "absolute z-10 overflow-hidden rounded-[6px] border text-left leading-tight shadow-sm transition-[box-shadow,filter] hover:brightness-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
+        "absolute z-10 overflow-hidden rounded-md border text-left leading-tight shadow-sm transition-[box-shadow,filter] hover:shadow-md hover:brightness-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
         cols > 1 ? "px-1" : "px-1.5",
         // En una línea, la hora que no cabe junto al nombre salta a una
         // segunda línea que queda oculta: se ve entera o no se ve.
         compact ? "flex flex-wrap content-start items-center gap-x-1 text-[11px]" : "py-1 text-[11.5px]",
         bookingTone(b).box,
-        selected && "ring-2 ring-brand ring-offset-1 ring-offset-background"
+        selected && "ring-2 ring-brand ring-offset-1 ring-offset-popover"
       )}
       style={{
         top: top + 1,

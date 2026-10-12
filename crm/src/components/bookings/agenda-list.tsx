@@ -5,7 +5,15 @@ import { AlertTriangle, CalendarDays, Sparkles, Video } from "lucide-react";
 import { bookingSegments, hhmm, longDayLabel, spanLabel, type DateRange } from "@/lib/time/calendar";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
-import { STATUS_LABEL, bookingTitle, bookingTone, hasDeliveryIssue, type Booking } from "./booking-look";
+import {
+  STATUS_LABEL,
+  bookingTitle,
+  bookingTone,
+  hasDeliveryIssue,
+  isUpcoming,
+  statusChip,
+  type Booking,
+} from "./booking-look";
 
 /**
  * 215 — La Lista: las citas del rango, agrupadas por día, como la «Agenda» de
@@ -17,6 +25,7 @@ export function AgendaList({
   bookings,
   timezone,
   today,
+  nowMinutes,
   selectedId,
   onSelect,
 }: {
@@ -24,6 +33,8 @@ export function AgendaList({
   bookings: Booking[];
   timezone: string;
   today: string;
+  /** Minuto actual en la zona del negocio: decide qué cita «viene». */
+  nowMinutes: number;
   selectedId: string | null;
   onSelect: (b: Booking) => void;
 }) {
@@ -47,7 +58,7 @@ export function AgendaList({
     return (
       <EmptyState
         icon={CalendarDays}
-        className="min-h-0 flex-1 rounded-lg border bg-card p-8"
+        className="card-surface min-h-0 flex-1 p-8"
         title={`Nada agendado del ${spanLabel(range)}`}
         description="Aquí aparecen las citas que agenda la IA o tu equipo. El horario que se ofrece se configura en Ajustes → Agenda."
       />
@@ -55,9 +66,9 @@ export function AgendaList({
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-auto rounded-lg border bg-card">
+    <div className="board-col min-h-0 flex-1">
       {groups.map(({ day, items }) => (
-        <section key={day}>
+        <section key={day} className="card-surface shrink-0 overflow-clip">
           <h3 className="sticky top-0 z-10 flex items-center gap-2 border-b bg-subtle px-4 py-2 text-[13px] font-semibold first-letter:uppercase">
             {longDayLabel(day)}
             {day === today && (
@@ -65,52 +76,71 @@ export function AgendaList({
                 Hoy
               </span>
             )}
+            <span className="kicker ml-auto">
+              {items.length} {items.length === 1 ? "evento" : "eventos"}
+            </span>
           </h3>
           <ul className="divide-y">
-            {items.map(({ booking: b, startMin, endMin }) => (
-              <li key={b.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(b)}
-                  className={cn(
-                    "flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-row-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-soft",
-                    b.id === selectedId && "bg-row-hover"
-                  )}
-                >
-                  <span className="w-[6.5rem] shrink-0 font-mono text-[12px] text-text-2">
-                    {hhmm(startMin)} – {hhmm(endMin)}
-                  </span>
-                  <span aria-hidden className={cn("h-2.5 w-2.5 shrink-0 rounded-full", bookingTone(b).dot)} />
-                  <span className="min-w-0 flex-1">
+            {items.map(({ booking: b, startMin, endMin }) => {
+              const upcoming = isUpcoming(b, day, startMin, today, nowMinutes);
+              return (
+                <li key={b.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(b)}
+                    className={cn(
+                      "flex w-full items-center gap-3 border-l-[3px] px-4 py-2.5 text-left transition-colors hover:bg-row-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-soft",
+                      // Lo que viene lleva el borde de acento; lo demás, uno
+                      // transparente para que las horas no bailen.
+                      upcoming ? "border-l-brand" : "border-l-transparent",
+                      b.id === selectedId && "bg-row-hover"
+                    )}
+                  >
                     <span
                       className={cn(
-                        "flex items-center gap-1.5 truncate text-sm font-semibold",
-                        b.status === "cancelada" && "text-text-3 line-through"
+                        "w-[6.5rem] shrink-0 font-mono text-[12px]",
+                        upcoming ? "font-medium text-brand-ink" : "text-text-2"
                       )}
                     >
-                      <span className="truncate">{bookingTitle(b)}</span>
-                      {b.source === "ai" && b.kind === "session" && (
-                        <Sparkles aria-label="Agendó la IA" className="h-3.5 w-3.5 shrink-0 text-brand-text" />
+                      {hhmm(startMin)} – {hhmm(endMin)}
+                    </span>
+                    <span aria-hidden className={cn("h-2.5 w-2.5 shrink-0 rounded-full", bookingTone(b).dot)} />
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={cn(
+                          "flex items-center gap-1.5 truncate text-sm font-semibold",
+                          b.status === "cancelada" && "text-text-3 line-through"
+                        )}
+                      >
+                        <span className="truncate">{bookingTitle(b)}</span>
+                        {b.source === "ai" && b.kind === "session" && (
+                          <Sparkles aria-label="Agendó la IA" className="h-3.5 w-3.5 shrink-0 text-brand-text" />
+                        )}
+                      </span>
+                      <span className="block truncate text-xs text-text-3">
+                        {b.kind === "block"
+                          ? `Bloqueo · ${b.durationMinutes} min`
+                          : `${b.durationMinutes} min · ${b.source === "ai" ? "Agendó la IA" : "Manual"}${b.isTest ? " · Prueba" : ""}`}
+                      </span>
+                    </span>
+                    {hasDeliveryIssue(b) && (
+                      <AlertTriangle aria-label="Sin enlace de la reunión" className="h-4 w-4 shrink-0 text-warning-text" />
+                    )}
+                    {b.meetingLink && b.status === "agendada" && (
+                      <Video aria-label="Tiene enlace de reunión" className="hidden h-4 w-4 shrink-0 text-text-3 sm:block" />
+                    )}
+                    <span
+                      className={cn(
+                        "hidden shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium sm:block",
+                        statusChip(b)
                       )}
+                    >
+                      {b.kind === "block" ? (b.status === "cancelada" ? "Bloqueo quitado" : "Bloqueo") : STATUS_LABEL[b.status]}
                     </span>
-                    <span className="block truncate text-xs text-text-3">
-                      {b.kind === "block"
-                        ? `Bloqueo · ${b.durationMinutes} min`
-                        : `${b.durationMinutes} min · ${b.source === "ai" ? "Agendó la IA" : "Manual"}${b.isTest ? " · Prueba" : ""}`}
-                    </span>
-                  </span>
-                  {hasDeliveryIssue(b) && (
-                    <AlertTriangle aria-label="Sin enlace de la reunión" className="h-4 w-4 shrink-0 text-warning-text" />
-                  )}
-                  {b.meetingLink && b.status === "agendada" && (
-                    <Video aria-label="Tiene enlace de reunión" className="hidden h-4 w-4 shrink-0 text-text-3 sm:block" />
-                  )}
-                  <span className="hidden shrink-0 text-xs font-medium text-text-2 sm:block">
-                    {b.kind === "block" ? (b.status === "cancelada" ? "Bloqueo quitado" : "Bloqueo") : STATUS_LABEL[b.status]}
-                  </span>
-                </button>
-              </li>
-            ))}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ))}

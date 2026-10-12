@@ -3,7 +3,7 @@
 import type { SalesBlockDto } from "@/lib/analytics";
 import { formatMoneyCents } from "@/lib/money";
 import { Funnel } from "./funnel";
-import { Section, Subhead } from "./section";
+import { Panel, Section, Subhead } from "./section";
 import { RateCard, StatCard } from "./stat-card";
 import { TimeBars } from "./time-bars";
 
@@ -26,6 +26,7 @@ export function SalesSection({
     <Section
       id="ventas"
       title="Ventas"
+      kicker="01 · Ventas"
       hint="Lo que entró, lo que se cerró y dónde se atoran los tratos."
       loading={loading}
       error={error}
@@ -34,8 +35,8 @@ export function SalesSection({
       emptyText="No hay pacientes ni cierres en este periodo. Prueba con un rango más amplio."
     >
       {data && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="space-y-2.5">
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-3 xl:grid-cols-6">
             <StatCard
               label="Pacientes nuevos"
               value={String(data.kpis.newLeads.current)}
@@ -73,7 +74,7 @@ export function SalesSection({
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-2.5 lg:grid-cols-2">
             <TimeBars
               title="Pacientes nuevos"
               unit="pacientes"
@@ -93,14 +94,14 @@ export function SalesSection({
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div>
+          <div className="grid gap-2.5 lg:grid-cols-2">
+            <Panel>
               <Subhead>Embudo de los que entraron en este periodo</Subhead>
               <Funnel steps={data.funnel} />
-            </div>
+            </Panel>
 
-            <div className="space-y-6">
-              <div>
+            <div className="flex flex-col gap-2.5">
+              <Panel>
                 <Subhead>Dónde se atoran</Subhead>
                 {data.timing.length === 0 ? (
                   <p className="text-sm text-text-3">
@@ -117,7 +118,7 @@ export function SalesSection({
                     </thead>
                     <tbody>
                       {data.timing.map((t) => (
-                        <tr key={t.stageId ?? t.name} className="border-b last:border-0">
+                        <tr key={t.stageId ?? t.name} className="border-b border-border last:border-0">
                           <td className="py-1.5 pr-2">{t.name}</td>
                           <td className="py-1.5 text-right tabular-nums">
                             {t.avgDays ?? "—"} días
@@ -139,9 +140,9 @@ export function SalesSection({
                     en promedio.
                   </p>
                 )}
-              </div>
+              </Panel>
 
-              <div>
+              <Panel>
                 <Subhead>Por qué se perdieron</Subhead>
                 {data.lossReasons.length === 0 ? (
                   <p className="text-sm text-text-3">Ningún trato perdido en este periodo.</p>
@@ -155,7 +156,7 @@ export function SalesSection({
                     </thead>
                     <tbody>
                       {data.lossReasons.map((r) => (
-                        <tr key={r.reason} className="border-b last:border-0">
+                        <tr key={r.reason} className="border-b border-border last:border-0">
                           <td className="py-1.5 pr-2">{r.label}</td>
                           <td className="py-1.5 text-right tabular-nums">{r.count}</td>
                         </tr>
@@ -163,16 +164,16 @@ export function SalesSection({
                     </tbody>
                   </table>
                 )}
-              </div>
+              </Panel>
             </div>
           </div>
 
-          <div>
+          <div className="pt-2">
             <Subhead>Hoy en el embudo</Subhead>
             <p className="-mt-1 mb-2 text-xs text-text-3">
               No depende del periodo: son los tratos abiertos en este momento.
             </p>
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:max-w-xl">
+            <div className="grid grid-cols-2 gap-2.5 lg:max-w-xl">
               <StatCard label="Dinero en tratos abiertos" value={money(data.pipeline.openCents)} />
               <StatCard
                 label="Tratos sin monto"
@@ -181,7 +182,7 @@ export function SalesSection({
               />
             </div>
             {data.pipeline.otherCurrency > 0 && (
-              <p className="mt-3 rounded-md border border-warning-soft bg-warning-tint px-3 py-2 text-xs text-warning-text">
+              <p className="mt-3 rounded-lg border border-warning-soft bg-warning-tint px-3 py-2 text-xs text-warning-text">
                 {plural(data.pipeline.otherCurrency, "trato", "tratos")} con monto en otra
                 moneda no {data.pipeline.otherCurrency === 1 ? "entra" : "entran"} en los
                 totales: mezclar monedas daría una suma falsa.

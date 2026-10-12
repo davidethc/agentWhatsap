@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { bookingSegments, hhmm, weekdayShortNames } from "@/lib/time/calendar";
 import { cn } from "@/lib/utils";
-import { bookingTitle, bookingTone, type Booking } from "./booking-look";
+import { bookingTitle, bookingTone, isUpcoming, type Booking } from "./booking-look";
 
 /**
  * 215 — La vista de mes: de lunes a domingo, hasta tres citas por día y
@@ -19,6 +19,7 @@ export function MonthGrid({
   bookings,
   timezone,
   today,
+  nowMinutes,
   selectedId,
   onSelect,
   onOpenDay,
@@ -29,6 +30,8 @@ export function MonthGrid({
   bookings: Booking[];
   timezone: string;
   today: string;
+  /** Minuto actual en la zona del negocio: decide qué cita «viene». */
+  nowMinutes: number;
   selectedId: string | null;
   onSelect: (b: Booking) => void;
   onOpenDay: (day: string) => void;
@@ -48,8 +51,8 @@ export function MonthGrid({
   }, [bookings, timezone]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-auto rounded-lg border bg-card">
-      <div className="grid min-w-[36rem] grid-cols-7 border-b">
+    <div className="card-surface flex min-h-0 flex-1 flex-col overflow-auto">
+      <div className="grid min-w-[36rem] grid-cols-7 border-b bg-subtle">
         {weekdayShortNames().map((w) => (
           <div key={w} className="kicker border-l px-2 py-2 text-center first:border-l-0">
             {w}
@@ -101,7 +104,11 @@ export function MonthGrid({
                     onSelect(b);
                   }}
                   className={cn(
-                    "flex w-full min-w-0 items-center gap-1.5 rounded-[5px] px-1 py-px text-left text-[11.5px] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
+                    "flex w-full min-w-0 items-center gap-1.5 rounded-md border-l-2 px-1 py-px text-left text-[11.5px] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
+                    // Lo que viene: borde de acento sobre su tinta.
+                    isUpcoming(b, day, startMin, today, nowMinutes)
+                      ? "border-l-brand bg-brand-tint"
+                      : "border-l-transparent",
                     b.id === selectedId && "bg-accent",
                     b.status === "cancelada" && "text-text-3 line-through"
                   )}
@@ -120,7 +127,7 @@ export function MonthGrid({
                     e.stopPropagation();
                     onOpenDay(day);
                   }}
-                  className="w-full rounded-[5px] px-1 text-left text-[11px] font-semibold text-text-2 hover:bg-accent"
+                  className="w-fit rounded-full bg-chip px-2 text-left text-[11px] font-semibold text-text-2 transition-colors hover:bg-accent"
                 >
                   +{extra} más
                 </button>

@@ -297,7 +297,7 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
       >
         {selected ? (
           <>
-            <header className="flex items-center justify-between gap-1 border-b bg-background px-2 py-2.5 md:px-4">
+            <header className="flex items-center justify-between gap-1 border-b bg-popover px-2 py-2.5 shadow-sm md:px-4">
               {/* Volver a la lista: en móvil el hilo ocupa toda la pantalla. */}
               <button
                 onClick={() => setSelectedId(null)}
@@ -307,11 +307,13 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
                 <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
               </button>
               <div className="flex min-w-0 flex-1 items-center gap-3 p-1">
-                <ContactAvatar
-                  name={selected.contact.name}
-                  seed={selected.contact.id}
-                  size="md"
-                />
+                <span className="shrink-0 rounded-full ring-2 ring-border ring-offset-2 ring-offset-popover">
+                  <ContactAvatar
+                    name={selected.contact.name}
+                    seed={selected.contact.id}
+                    size="md"
+                  />
+                </span>
                 <div className="min-w-0">
                   <p className="flex min-w-0 items-center gap-1.5 text-[15px] font-bold leading-tight tracking-tight">
                     {multiChannel && <ChannelBadge channel={selected.channel} />}
@@ -319,12 +321,15 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
                   </p>
                   <p
                     className={cn(
-                      "mt-0.5 font-mono text-[10.5px] tracking-[0.04em]",
+                      "mt-1 inline-flex items-center gap-1 rounded-full font-mono text-[10.5px] tracking-[0.04em]",
                       selected.windowOpen
-                        ? "font-medium text-success-text"
+                        ? "bg-success-tint px-2 py-px font-medium text-success-text"
                         : "text-text-3"
                     )}
                   >
+                    {selected.windowOpen && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                    )}
                     {selected.windowOpen
                       ? "ventana abierta"
                       : selected.contact.phone
@@ -339,7 +344,7 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
                 <button
                   onClick={() => togglePanel(true)}
                   aria-label="Mostrar detalles"
-                  className="shrink-0 rounded-full border border-border-strong p-1.5 text-text-3 transition-colors hover:border-text-3 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="shrink-0 rounded-full border border-border bg-chip p-1.5 text-text-3 transition-colors hover:border-border-strong hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <PanelRight className="h-4 w-4" strokeWidth={1.7} />
                 </button>
@@ -358,10 +363,10 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
           </>
         ) : (
           <div className="thread-bg flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
+            <p className="kicker">Bandeja · tiempo real</p>
             <p className="font-serif text-[24px] italic leading-tight text-text-2">
               Elige una conversación para ver el hilo
             </p>
-            <p className="kicker">Bandeja · tiempo real</p>
           </div>
         )}
       </section>
@@ -388,7 +393,9 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
         )}
       >
         {selected && (
-          <div className="h-full w-[320px] max-xl:w-[min(320px,88vw)]">
+          // En escritorio el panel es una tarjeta del tablero sobre el hueco
+          // hundido; como cajón (debajo de xl) ocupa el borde a borde.
+          <div className="h-full w-[320px] max-xl:w-[min(320px,88vw)] xl:bg-subtle xl:p-2.5">
             <ContactPanel
               conversation={selected}
               refreshKey={detailRev}

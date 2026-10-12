@@ -2,13 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -163,8 +158,8 @@ export function AgendaClient() {
   if (!settings) return <p className="text-sm text-text-3">Cargando…</p>;
 
   return (
-    <div className="max-w-2xl space-y-4">
-      <Card>
+    <div className="max-w-2xl space-y-2.5 sm:space-y-4">
+      <SettingsCard>
         <CardHeader>
           <CardTitle>Horario de atención</CardTitle>
           <CardDescription>
@@ -235,9 +230,9 @@ export function AgendaClient() {
             );
           })}
         </CardContent>
-      </Card>
+      </SettingsCard>
 
-      <Card>
+      <SettingsCard>
         <CardHeader>
           <CardTitle>Cómo se generan los huecos</CardTitle>
         </CardHeader>
@@ -296,9 +291,9 @@ export function AgendaClient() {
             />
           </div>
         </CardContent>
-      </Card>
+      </SettingsCard>
 
-      <Card>
+      <SettingsCard>
         <CardHeader>
           <CardTitle>Cómo se entrega la reunión</CardTitle>
           <CardDescription>
@@ -343,10 +338,10 @@ export function AgendaClient() {
             );
           })}
         </CardContent>
-      </Card>
+      </SettingsCard>
 
       {settings.connector === "enlace-fijo" && (
-        <Card>
+        <SettingsCard>
           <CardHeader>
             <CardTitle>Tu sala de siempre</CardTitle>
             <CardDescription>
@@ -362,7 +357,7 @@ export function AgendaClient() {
               placeholder="https://…  (opcional)"
             />
           </CardContent>
-        </Card>
+        </SettingsCard>
       )}
 
       <div className="flex items-center gap-3">
@@ -379,7 +374,7 @@ export function AgendaClient() {
         <ConnectorCredentials connector={settings.connector} />
       )}
 
-      <Card>
+      <SettingsCard>
         <CardHeader>
           <CardTitle>Próximos huecos</CardTitle>
           <CardDescription>
@@ -402,7 +397,7 @@ export function AgendaClient() {
             </ul>
           )}
         </CardContent>
-      </Card>
+      </SettingsCard>
     </div>
   );
 }

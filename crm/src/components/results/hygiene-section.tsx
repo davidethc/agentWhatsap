@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import type { HygieneBlockDto } from "@/lib/analytics";
 import { formatMoneyCents } from "@/lib/money";
-import { Section, Subhead } from "./section";
+import { Panel, Section, Subhead } from "./section";
 
 /**
  * 019 — Lo que se está cayendo AHORA.
@@ -30,6 +30,7 @@ export function HygieneSection({
     <Section
       id="higiene"
       title="Qué se está cayendo"
+      kicker="04 · Ahora"
       hint="No depende del periodo: es lo que está pasando ahora mismo."
       loading={loading}
       error={error}
@@ -37,17 +38,17 @@ export function HygieneSection({
     >
       {data &&
         (data.clean ? (
-          <p className="flex items-center justify-center gap-2 py-6 text-sm text-success-text">
+          <p className="flex items-center justify-center gap-2 rounded-lg bg-success-tint px-4 py-6 text-sm text-success-text">
             <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden />
             Nada pendiente: ni silencios, ni mensajes fallidos, ni ventanas por cerrarse.
           </p>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="min-w-0">
+          <div className="grid gap-2.5 lg:grid-cols-3">
+            <Panel>
               <Subhead>
                 En silencio más de una semana
                 {data.silentCount > 0 && (
-                  <span className="ml-1.5 font-normal text-text-3">({data.silentCount})</span>
+                  <span className="ml-1.5 rounded-full bg-warning-tint px-1.5 py-px text-[11px] font-semibold text-warning-text">({data.silentCount})</span>
                 )}
               </Subhead>
               {data.silentAmountCents > 0 && (
@@ -61,7 +62,7 @@ export function HygieneSection({
                 <>
                   <ul className="space-y-1.5 text-sm">
                     {data.silent.slice(0, enLista).map((l) => (
-                      <li key={l.leadId} className="flex items-baseline justify-between gap-2">
+                      <li key={l.leadId} className="flex items-center justify-between gap-2 rounded-lg bg-popover px-2.5 py-2 shadow-sm">
                         <Link
                           href={`/inbox?contact=${l.contactId}`}
                           className="min-w-0 truncate text-brand-text hover:underline"
@@ -82,16 +83,16 @@ export function HygieneSection({
                   )}
                 </>
               )}
-            </div>
+            </Panel>
 
-            <div className="min-w-0">
+            <Panel>
               <Subhead>Mensajes que no llegaron (30 días)</Subhead>
               {data.failedMessages.length === 0 ? (
                 <p className="text-sm text-text-3">Ningún envío fallido.</p>
               ) : (
                 <ul className="space-y-1.5 text-sm">
                   {data.failedMessages.map((m) => (
-                    <li key={m.error} className="flex items-baseline justify-between gap-2">
+                    <li key={m.error} className="flex items-center justify-between gap-2 rounded-lg bg-popover px-2.5 py-2 shadow-sm">
                       <span className="min-w-0 truncate" title={m.error}>
                         {m.error}
                       </span>
@@ -102,9 +103,9 @@ export function HygieneSection({
                   ))}
                 </ul>
               )}
-            </div>
+            </Panel>
 
-            <div className="min-w-0">
+            <Panel>
               <Subhead>Ventanas de 24 h por cerrarse</Subhead>
               {data.closingWindows.length === 0 ? (
                 <p className="text-sm text-text-3">Ninguna conversación esperando respuesta.</p>
@@ -113,7 +114,7 @@ export function HygieneSection({
                   {data.closingWindows.map((c) => (
                     <li
                       key={c.conversationId}
-                      className="flex items-baseline justify-between gap-2"
+                      className="flex items-center justify-between gap-2 rounded-lg bg-popover px-2.5 py-2 shadow-sm"
                     >
                       <Link
                         href={`/inbox?contact=${c.contactId}`}
@@ -121,14 +122,14 @@ export function HygieneSection({
                       >
                         {c.name}
                       </Link>
-                      <span className="shrink-0 text-xs text-warning-text tabular-nums">
+                      <span className="shrink-0 rounded-full bg-warning-tint px-2 py-px text-xs font-medium text-warning-text tabular-nums">
                         quedan {c.hoursLeft} h
                       </span>
                     </li>
                   ))}
                 </ul>
               )}
-            </div>
+            </Panel>
           </div>
         ))}
     </Section>

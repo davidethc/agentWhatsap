@@ -2,13 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CONNECTOR_META, type ConnectorId } from "@/lib/agenda-connectors";
@@ -159,7 +154,7 @@ export function ConnectorCredentials({
   }
 
   return (
-    <Card>
+    <SettingsCard>
       <CardHeader>
         <CardTitle>Conectar {meta.label}</CardTitle>
         <CardDescription>{help.title}.</CardDescription>
@@ -230,6 +225,6 @@ export function ConnectorCredentials({
           )}
         </div>
       </CardContent>
-    </Card>
+    </SettingsCard>
   );
 }

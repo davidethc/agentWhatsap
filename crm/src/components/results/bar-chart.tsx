@@ -24,11 +24,13 @@ export function BarChart({
         <li key={i.key}>
           <div className="flex items-baseline justify-between gap-2 text-sm">
             <span className="min-w-0 truncate">{i.label}</span>
-            <span className="shrink-0 tabular-nums">{i.count}</span>
+            <span className="shrink-0 rounded-full bg-popover px-2 py-px text-xs font-semibold tabular-nums shadow-sm">
+              {i.count}
+            </span>
           </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-[4px] bg-subtle" aria-hidden>
+          <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-chip" aria-hidden>
             <div
-              className="h-full rounded-r-[4px] bg-brand"
+              className="h-full rounded-full bg-brand"
               style={{ width: `${Math.max(1, (i.count / max) * 100)}%` }}
             />
           </div>

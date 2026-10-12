@@ -44,7 +44,7 @@ export function PriorityPicker({
           onClick={() => onChange(p)}
           aria-pressed={value === p}
           className={cn(
-            "rounded-full border px-2.5 py-1 text-xs transition-colors",
+            "rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
             value === p ? TONO[p] : "text-text-2 hover:bg-accent"
           )}
         >
@@ -55,7 +55,7 @@ export function PriorityPicker({
         onClick={() => onChange(null)}
         aria-pressed={value === null}
         className={cn(
-          "rounded-full border px-2.5 py-1 text-xs transition-colors",
+          "rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
           value === null
             ? "border-border bg-secondary text-text-2"
             : "text-text-3 hover:bg-accent"

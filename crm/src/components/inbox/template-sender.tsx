@@ -52,7 +52,7 @@ export function TemplateSender({
     return (
       <p className="text-sm text-muted-foreground">
         Aún no hay plantillas aprobadas. Créalas en{" "}
-        <a href="/settings/templates" className="text-primary hover:underline">
+        <a href="/settings/templates" className="rounded-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           Configuración → Plantillas
         </a>{" "}
         y espera la aprobación de Meta.

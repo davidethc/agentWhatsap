@@ -285,7 +285,7 @@ function HowItWorks({ defaultOpen }: { defaultOpen: boolean }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 p-4 text-left"
+        className="flex w-full items-center gap-3 rounded-lg p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
       >
         <Sparkles className="h-5 w-5 shrink-0 text-primary" />
         <span className="flex-1">
@@ -476,6 +476,7 @@ function CreateForm({
                 key={c}
                 className={cn(
                   "cursor-pointer rounded-lg border p-3 text-sm transition-colors",
+                  "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-popover",
                   category === c ? "border-primary bg-brand-tint" : "bg-subtle hover:border-border-strong hover:bg-accent"
                 )}
               >

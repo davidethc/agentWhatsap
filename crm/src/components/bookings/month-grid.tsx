@@ -52,9 +52,9 @@ export function MonthGrid({
 
   return (
     <div className="card-surface flex min-h-0 flex-1 flex-col overflow-auto">
-      <div className="grid min-w-[36rem] grid-cols-7 border-b bg-subtle">
+      <div className="grid min-w-[36rem] grid-cols-7 border-b border-border-strong bg-subtle">
         {weekdayShortNames().map((w) => (
-          <div key={w} className="kicker border-l px-2 py-2 text-center first:border-l-0">
+          <div key={w} className="kicker border-l border-border-strong px-2 py-2 text-center first:border-l-0">
             {w}
           </div>
         ))}
@@ -73,7 +73,7 @@ export function MonthGrid({
               key={day}
               onClick={() => onOpenDay(day)}
               className={cn(
-                "flex min-w-0 cursor-pointer flex-col gap-0.5 border-l border-t p-1 transition-colors hover:bg-row-hover",
+                "flex min-w-0 cursor-pointer flex-col gap-0.5 border-l border-t border-border-strong p-1 transition-colors hover:bg-row-hover",
                 i % 7 === 0 && "border-l-0",
                 i < 7 && "border-t-0",
                 outside && "bg-subtle"
@@ -87,7 +87,7 @@ export function MonthGrid({
                 }}
                 aria-label={`Ver el día ${Number(day.slice(8))}`}
                 className={cn(
-                  "mx-auto flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[12.5px] font-semibold tabular-nums hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
+                  "mx-auto flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[12.5px] font-semibold tabular-nums hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:ring-offset-popover",
                   isToday && "bg-brand text-brand-fg hover:bg-brand-hover",
                   !isToday && outside && "text-text-3",
                   !isToday && !outside && "text-foreground"
@@ -104,7 +104,7 @@ export function MonthGrid({
                     onSelect(b);
                   }}
                   className={cn(
-                    "flex w-full min-w-0 items-center gap-1.5 rounded-md border-l-2 px-1 py-px text-left text-[11.5px] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
+                    "flex w-full min-w-0 items-center gap-1.5 rounded-md border-l-2 px-1 py-px text-left text-[11.5px] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
                     // Lo que viene: borde de acento sobre su tinta.
                     isUpcoming(b, day, startMin, today, nowMinutes)
                       ? "border-l-brand bg-brand-tint"
@@ -127,7 +127,7 @@ export function MonthGrid({
                     e.stopPropagation();
                     onOpenDay(day);
                   }}
-                  className="w-fit rounded-full bg-chip px-2 text-left text-[11px] font-semibold text-text-2 transition-colors hover:bg-accent"
+                  className="w-fit rounded-full bg-chip px-2 text-left text-[11px] font-semibold text-text-2 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   +{extra} más
                 </button>

@@ -104,7 +104,7 @@ export function BookingDrawer({
             autoFocus
             onClick={onClose}
             aria-label="Cerrar el panel de la cita"
-            className="rounded p-1 text-text-3 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft"
+            className="rounded p-1 text-text-3 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             <X className="h-4 w-4" strokeWidth={1.7} />
           </button>
@@ -367,7 +367,7 @@ function Reschedule({
                   onClick={() => setDay(d)}
                   aria-pressed={d === selected}
                   className={cn(
-                    "flex shrink-0 flex-col items-center rounded-md border px-2.5 py-1.5 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
+                    "flex shrink-0 flex-col items-center rounded-md border px-2.5 py-1.5 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
                     d === selected ? "border-brand bg-brand-tint text-brand-text" : "hover:bg-accent"
                   )}
                 >
@@ -388,7 +388,7 @@ function Reschedule({
                 data-start={s.startUtc}
                 disabled={busy}
                 onClick={() => onPick(s.startUtc)}
-                className="rounded-md border px-1 py-1.5 font-mono text-[12.5px] transition-colors hover:border-brand hover:bg-brand-tint hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft disabled:opacity-50"
+                className="rounded-md border px-1 py-1.5 font-mono text-[12.5px] transition-colors hover:border-brand hover:bg-brand-tint hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50"
               >
                 {s.time}
               </button>

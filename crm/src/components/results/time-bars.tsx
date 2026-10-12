@@ -63,8 +63,8 @@ export function TimeBars({
             aria-hidden
           >
             {/* Una sola referencia de escala, recesiva: el tope, y la base. */}
-            <div className="absolute inset-x-0 top-0 border-t border-border" />
-            <span className="absolute right-0 top-0 -translate-y-full pb-0.5 text-[10px] leading-none text-text-3">
+            <div className="absolute inset-x-0 top-0 border-t border-dashed border-border-strong" />
+            <span className="absolute right-0 top-0 -translate-y-full pb-0.5 font-mono text-[10px] leading-none text-text-2">
               {format(tope)}
             </span>
             <div className="absolute inset-x-0 bottom-0 border-t border-border-strong" />
@@ -80,7 +80,7 @@ export function TimeBars({
                   {p.value > 0 && (
                     <div
                       className={cn(
-                        "w-[70%] max-w-[24px] rounded-t-[4px] bg-brand transition-opacity",
+                        "w-[70%] max-w-[24px] rounded-t-[4px] bg-brand-ink transition-opacity",
                         activo !== null && activo !== i && "opacity-45"
                       )}
                       style={{ height: `${Math.max(2, (p.value / tope) * 100)}%` }}
@@ -101,7 +101,7 @@ export function TimeBars({
             )}
           </div>
 
-          <div className="relative mt-1 h-4 text-[11px] text-text-3" aria-hidden>
+          <div className="relative mt-1 h-4 font-mono text-[10.5px] text-text-2" aria-hidden>
             {points.map((p, i) =>
               i % cada === 0 ? (
                 <span

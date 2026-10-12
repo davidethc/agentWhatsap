@@ -33,7 +33,7 @@ export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
               </span>
             </div>
             <div
-              className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-chip"
+              className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-border"
               role="img"
               aria-label={`${step.reached} pacientes llegaron a ${step.name}`}
             >
@@ -42,14 +42,14 @@ export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
                   className={
                     step.kind === "won"
                       ? "h-full rounded-full bg-success"
-                      : "h-full rounded-full bg-brand"
+                      : "h-full rounded-full bg-brand-ink"
                   }
                   style={{ width: `${Math.max(1, (step.reached / max) * 100)}%` }}
                 />
               )}
             </div>
             {siguiente && step.advanceRate && step.reached > 0 && (
-              <p className="mt-1 text-[11px] text-text-3">
+              <p className="mt-1 text-[11px] text-text-2">
                 pasan a {siguiente.name}:{" "}
                 <Rate rate={step.advanceRate} unit="pacientes" className="text-[11px]" />
               </p>

@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
  */
 function Tile({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-col rounded-lg border border-transparent bg-subtle px-3.5 py-3 transition-colors hover:border-border hover:bg-background">
+    <div className="card-surface-hover flex min-w-0 flex-col rounded-lg border border-transparent bg-subtle px-3.5 py-3 hover:border-border hover:bg-popover">
       <p className="kicker truncate" title={label}>
         {label}
       </p>

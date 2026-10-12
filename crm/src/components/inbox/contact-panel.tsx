@@ -181,7 +181,7 @@ export function ContactPanel({
         <button
           onClick={onClose}
           aria-label="Ocultar panel"
-          className="rounded-full p-1 text-text-3 transition-colors hover:bg-accent hover:text-foreground"
+          className="rounded-full p-1 text-text-3 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ChevronRight className="h-4 w-4" strokeWidth={1.7} />
         </button>
@@ -267,7 +267,7 @@ export function ContactPanel({
                   </p>
                   <Link
                     href="/agent"
-                    className="mt-1 inline-block font-medium underline underline-offset-2"
+                    className="mt-1 inline-block rounded-sm font-medium underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     Revisar en Agente →
                   </Link>
@@ -289,7 +289,7 @@ export function ContactPanel({
                   hasta que vuelva.
                   <Link
                     href="/agent"
-                    className="ml-1 whitespace-nowrap font-medium text-brand-text underline underline-offset-2 hover:text-brand"
+                    className="ml-1 whitespace-nowrap rounded-sm font-medium text-brand-text underline underline-offset-2 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     Ver en Agente →
                   </Link>
@@ -307,7 +307,7 @@ export function ContactPanel({
                     : "Falta el proveedor de IA (o está pausado) para que el agente responda, o conecta tu propio bot por la API."}
                   <Link
                     href={aiConfigured ? "/agent" : "/settings/ai"}
-                    className="ml-1 whitespace-nowrap font-medium text-brand-text underline underline-offset-2 hover:text-brand"
+                    className="ml-1 whitespace-nowrap rounded-sm font-medium text-brand-text underline underline-offset-2 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {aiConfigured ? "Configurar agente →" : "Configurar la IA →"}
                   </Link>
@@ -345,7 +345,7 @@ export function ContactPanel({
                       onClick={() => void moveToStage(s.id)}
                       aria-label={`Mover a ${s.name}`}
                       className={cn(
-                        "relative z-10 mt-0.5 flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full transition-colors",
+                        "relative z-10 mt-0.5 flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                         done && "bg-brand text-brand-fg",
                         current && "bg-brand ring-4 ring-brand-soft",
                         !done && !current && "border border-border-strong bg-background hover:border-brand"
@@ -356,7 +356,7 @@ export function ContactPanel({
                     <button
                       onClick={() => void moveToStage(s.id)}
                       className={cn(
-                        "text-left text-[13px]",
+                        "rounded-sm text-left text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         current ? "font-[650] text-brand-text" : "text-text-2 hover:text-foreground"
                       )}
                     >

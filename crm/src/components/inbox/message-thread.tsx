@@ -61,7 +61,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
           )}
           {coords && (
             <a
-              className="text-[12.5px] text-brand-ink underline-offset-2 hover:underline"
+              className="rounded-sm text-[12.5px] text-brand-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               href={`https://maps.google.com/?q=${loc.latitude},${loc.longitude}`}
               target="_blank"
               rel="noreferrer noopener"
@@ -120,7 +120,13 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
 
   if (media.kind === "image" || media.kind === "sticker") {
     return (
-      <a href={src} target="_blank" rel="noreferrer noopener" title="Ver completa">
+      <a
+        href={src}
+        target="_blank"
+        rel="noreferrer noopener"
+        title="Ver completa"
+        className="block rounded-[12px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
@@ -144,7 +150,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
   // document
   return (
     <a
-      className="flex items-center gap-2 rounded-lg border bg-popover px-2.5 py-2 transition-colors hover:border-border-strong hover:bg-accent"
+      className="flex items-center gap-2 rounded-lg border bg-popover px-2.5 py-2 transition-colors hover:border-border-strong hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       href={src}
       download={media.fileName ?? undefined}
       target="_blank"
@@ -193,7 +199,7 @@ export function MessageThread({ messages }: { messages: MessageDto[] }) {
   return (
     <div
       ref={scrollRef}
-      className="thread-bg flex flex-1 flex-col gap-[3px] overflow-y-auto px-3 py-5 sm:px-[6%]"
+      className="thread-bg flex flex-1 flex-col gap-[3px] overflow-y-auto px-2.5 py-4 sm:px-[6%] sm:py-5"
     >
       {messages.map((m, i) => {
         const prev = messages[i - 1];
@@ -210,7 +216,7 @@ export function MessageThread({ messages }: { messages: MessageDto[] }) {
             {newDay && (
               // Separador de día: kicker entre dos filetes, como las
               // cabeceras de columna del tablero.
-              <div className="my-4 flex items-center gap-3" role="separator">
+              <div className="my-4 flex items-center gap-2 sm:gap-3" role="separator">
                 <span className="h-px flex-1 bg-border" />
                 <span className="kicker rounded-full border bg-popover px-3 py-1 text-text-2 shadow-sm">
                   {dayLabel(m.createdAt)}
@@ -231,7 +237,7 @@ export function MessageThread({ messages }: { messages: MessageDto[] }) {
                   // con 64% cada mensaje se parte en tres líneas.
                   // Burbujas del mockup de la landing: el cliente entra en
                   // verde WhatsApp, el CRM contesta con el lavado del acento.
-                  "max-w-[85%] rounded-[18px] border px-3.5 pb-1.5 pt-2 text-[13.5px] leading-[1.5] shadow-sm sm:max-w-[64%]",
+                  "min-w-0 max-w-[88%] rounded-[18px] border px-3 pb-1.5 pt-2 text-[13.5px] leading-[1.5] shadow-sm sm:max-w-[64%] sm:px-3.5",
                   out
                     ? "border-bubble-out-border bg-bubble-out text-bubble-out-text"
                     : "border-bubble-in-border bg-bubble-in",

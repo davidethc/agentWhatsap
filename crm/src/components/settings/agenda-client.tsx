@@ -158,7 +158,7 @@ export function AgendaClient() {
   if (!settings) return <p className="text-sm text-text-3">Cargando…</p>;
 
   return (
-    <div className="max-w-2xl space-y-2.5 sm:space-y-4">
+    <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       <SettingsCard>
         <CardHeader>
           <CardTitle>Horario de atención</CardTitle>
@@ -177,7 +177,8 @@ export function AgendaClient() {
                   type="button"
                   onClick={() => toggleDay(day.key)}
                   className={cn(
-                    "w-24 shrink-0 rounded-sm px-2 py-1 text-left text-sm font-medium transition-colors sm:mt-1",
+                    "w-24 shrink-0 rounded-full px-3 py-1 text-left text-sm font-medium transition-colors sm:mt-1",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                     open
                       ? "bg-brand-tint text-brand-text"
                       : "text-text-3 hover:bg-accent"
@@ -209,7 +210,7 @@ export function AgendaClient() {
                       <button
                         type="button"
                         onClick={() => removeInterval(day.key, i)}
-                        className="text-sm text-text-3 hover:text-foreground"
+                        className="rounded-full px-1.5 text-sm text-text-3 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
                         aria-label="Quitar franja"
                       >
                         ×
@@ -220,7 +221,7 @@ export function AgendaClient() {
                     <button
                       type="button"
                       onClick={() => addInterval(day.key)}
-                      className="text-xs text-brand-text hover:underline"
+                      className="rounded-full px-1 text-xs text-brand-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
                     >
                       + otra franja
                     </button>
@@ -312,7 +313,8 @@ export function AgendaClient() {
                 type="button"
                 onClick={() => patch({ connector: id })}
                 className={cn(
-                  "block w-full rounded-sm border px-3 py-2.5 text-left transition-colors",
+                  "block w-full rounded-lg border px-3 py-2.5 text-left transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                   active
                     ? "border-brand bg-brand-tint"
                     : "border-border hover:bg-accent"

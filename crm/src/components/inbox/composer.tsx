@@ -225,7 +225,7 @@ export function Composer({
           {templates.slice(0, 4).map((t) => (
             <button
               key={t.id}
-              className="rounded-full border border-border bg-chip px-3 py-1 text-xs font-semibold text-text-2 transition-colors hover:border-brand hover:bg-brand-tint hover:text-brand-text"
+              className="rounded-full border border-border bg-chip px-3 py-1 text-xs font-semibold text-text-2 transition-colors hover:border-brand hover:bg-brand-tint hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               onClick={() => {
                 const firstName = conversation.contact.name.split(" ")[0] ?? "";
                 setText(t.body.replace(/\{\{\s*1\s*\}\}/g, firstName));
@@ -261,7 +261,7 @@ export function Composer({
           <button
             onClick={() => pickFile(null)}
             aria-label="Quitar adjunto"
-            className="rounded p-1 text-text-3 hover:bg-secondary hover:text-foreground"
+            className="rounded p-1 text-text-3 hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" strokeWidth={1.7} />
           </button>
@@ -291,14 +291,14 @@ export function Composer({
           <button
             onClick={() => void submitLocation()}
             disabled={sending}
-            className="rounded-full bg-brand px-3.5 py-1.5 text-sm font-semibold text-brand-fg shadow-sm hover:bg-brand-hover disabled:opacity-40"
+            className="rounded-full bg-brand px-3.5 py-1.5 text-sm font-semibold text-brand-fg shadow-sm hover:bg-brand-hover disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Enviar ubicación
           </button>
           <button
             onClick={() => setPanel(null)}
             aria-label="Cancelar"
-            className="rounded p-1 text-text-3 hover:bg-secondary"
+            className="rounded p-1 text-text-3 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" strokeWidth={1.7} />
           </button>
@@ -328,14 +328,14 @@ export function Composer({
           <button
             onClick={() => void submitContact()}
             disabled={sending}
-            className="rounded-full bg-brand px-3.5 py-1.5 text-sm font-semibold text-brand-fg shadow-sm hover:bg-brand-hover disabled:opacity-40"
+            className="rounded-full bg-brand px-3.5 py-1.5 text-sm font-semibold text-brand-fg shadow-sm hover:bg-brand-hover disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Enviar contacto
           </button>
           <button
             onClick={() => setPanel(null)}
             aria-label="Cancelar"
-            className="rounded p-1 text-text-3 hover:bg-secondary"
+            className="rounded p-1 text-text-3 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" strokeWidth={1.7} />
           </button>
@@ -355,7 +355,7 @@ export function Composer({
             onClick={() => fileRef.current?.click()}
             aria-label="Adjuntar archivo"
             title="Adjuntar imagen, video, audio o documento"
-            className="rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-foreground"
+            className="rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Paperclip className="h-[18px] w-[18px]" strokeWidth={1.7} />
           </button>
@@ -364,7 +364,7 @@ export function Composer({
             aria-label="Enviar ubicación"
             title="Enviar ubicación"
             className={cn(
-              "rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-foreground",
+              "rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               panel === "location" && "bg-secondary text-brand"
             )}
           >
@@ -375,7 +375,7 @@ export function Composer({
             aria-label="Compartir contacto"
             title="Compartir contacto"
             className={cn(
-              "rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-foreground",
+              "rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               panel === "contact" && "bg-secondary text-brand"
             )}
           >
@@ -404,7 +404,7 @@ export function Composer({
           disabled={sending || !canSubmit}
           aria-label="Enviar"
           className={cn(
-            "flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-brand text-brand-fg transition-[opacity,background-color] hover:bg-brand-hover",
+            "flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-brand text-brand-fg transition-[opacity,background-color] hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             (sending || !canSubmit) && "opacity-40"
           )}
         >

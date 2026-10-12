@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LOSS_REASON_LABEL, type LossReason } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -49,11 +50,12 @@ export function LossReasonDialog({
               type="button"
               onClick={() => setReason(r)}
               aria-pressed={reason === r}
-              className={
+              className={cn(
+                "w-full rounded-md border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                 reason === r
-                  ? "w-full rounded-md border border-brand bg-brand-tint px-3 py-2 text-left text-sm font-medium"
-                  : "w-full rounded-md border px-3 py-2 text-left text-sm hover:bg-subtle"
-              }
+                  ? "border-brand bg-brand-tint font-medium"
+                  : "hover:bg-subtle"
+              )}
             >
               {LOSS_REASON_LABEL[r]}
             </button>

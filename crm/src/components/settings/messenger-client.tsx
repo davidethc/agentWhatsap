@@ -198,6 +198,7 @@ export function MessengerClient() {
                   aria-pressed={source === s}
                   className={cn(
                     "rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                     source === s
                       ? "border-brand bg-brand-tint text-brand-text"
                       : "border-border-strong hover:bg-accent"

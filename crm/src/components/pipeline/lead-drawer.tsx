@@ -126,7 +126,7 @@ export function LeadDrawer({
           <button
             onClick={onClose}
             aria-label="Cerrar el panel del trato"
-            className="rounded p-1 text-text-3 hover:bg-accent hover:text-foreground"
+            className="rounded p-1 text-text-3 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
           >
             <X className="h-4 w-4" strokeWidth={1.7} />
           </button>
@@ -154,7 +154,7 @@ export function LeadDrawer({
             {lead.conversationId ? (
               <Link
                 href={`/inbox?contact=${lead.contact.id}`}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border bg-secondary px-3 py-2 text-sm font-medium hover:bg-accent"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border bg-secondary px-3 py-2 text-sm font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
               >
                 <MessageSquareText className="h-4 w-4" /> Abrir conversación
               </Link>
@@ -225,7 +225,7 @@ export function LeadDrawer({
                 onClick={() => setEditandoMonto(true)}
                 aria-label="Editar el monto"
                 className={cn(
-                  "w-full rounded px-1 py-1 text-left text-sm tabular-nums hover:bg-accent",
+                  "w-full rounded px-1 py-1 text-left text-sm tabular-nums hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                   lead.amountCents === null
                     ? "text-text-3"
                     : "font-semibold text-foreground"
@@ -261,7 +261,7 @@ export function LeadDrawer({
                     aria-pressed={actual}
                     aria-label={`Mover a ${s.name}`}
                     className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                      "rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                       actual
                         ? s.kind === "won"
                           ? "border-success bg-success-tint font-semibold text-success-text"

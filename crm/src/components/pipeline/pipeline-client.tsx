@@ -356,8 +356,10 @@ function StageColumn({
 
       <div
         className={cn(
+          // `border-strong` y no `border`: en oscuro el hueco hundido casi se
+          // funde con la página, y el borde normal no llega a separarlos.
           "board-col flex-1 border transition-[box-shadow,border-color]",
-          won ? "border-success" : "border-transparent",
+          won ? "border-success" : "border-border-strong",
           isOver && "border-brand ring-[3px] ring-brand-soft"
         )}
       >
@@ -463,7 +465,7 @@ function DraggableLead({
       }}
       aria-label={`Abrir el trato de ${lead.contact.name}`}
       className={cn(
-        "rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring",
+        "rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-subtle",
         isDragging && "opacity-40"
       )}
     >
@@ -498,8 +500,10 @@ function LeadCard({
   return (
     <div
       className={cn(
-        "card-surface card-surface-hover cursor-grab p-3 hover:border-border-strong",
-        won && "border-success-soft",
+        "card-surface card-surface-hover cursor-grab p-3",
+        won
+          ? "border-success-soft hover:border-success"
+          : "hover:border-border-strong",
         overlay && "rotate-2 cursor-grabbing shadow-pop"
       )}
     >
@@ -528,7 +532,7 @@ function LeadCard({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
             aria-label="Abrir conversación"
-            className="rounded-full p-1.5 text-text-3 transition-colors hover:bg-brand-tint hover:text-brand-text"
+            className="rounded-full p-1.5 text-text-3 transition-colors hover:bg-brand-tint hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
           >
             <MessageSquareText className="h-4 w-4" />
           </Link>
@@ -560,7 +564,7 @@ function LeadCard({
               onEditAmount(lead);
             }}
             className={cn(
-              "rounded-full px-2 py-0.5 font-mono text-xs tabular-nums transition-colors",
+              "rounded-full px-2 py-0.5 font-mono text-xs tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
               monto === null
                 ? "border border-dashed border-border-strong text-text-3 hover:border-brand hover:text-brand-text"
                 : won

@@ -112,7 +112,7 @@ export function CalendarToolbar({
                 el.focus();
               }
             }}
-            className="flex items-center gap-1 rounded-md px-1.5 py-1 text-[17px] font-semibold tracking-tight hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft"
+            className="flex items-center gap-1 rounded-md px-1.5 py-1 text-[17px] font-semibold tracking-tight hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label={`${label}. Elegir otra fecha`}
           >
             {label}
@@ -145,7 +145,7 @@ export function CalendarToolbar({
               aria-pressed={view === v}
               onClick={() => onView(v)}
               className={cn(
-                "h-7 rounded-full px-3 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
+                "h-7 rounded-full px-3 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
                 view === v ? "bg-popover text-foreground shadow-sm" : "text-text-3 hover:text-foreground"
               )}
             >
@@ -177,7 +177,7 @@ function NavButton({
       onClick={onClick}
       aria-label={label.charAt(0).toUpperCase() + label.slice(1)}
       title={label.charAt(0).toUpperCase() + label.slice(1)}
-      className="flex h-8 w-8 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft"
+      className="flex h-8 w-8 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
     >
       {children}
     </button>

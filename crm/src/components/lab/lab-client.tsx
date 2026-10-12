@@ -265,7 +265,7 @@ function HistoryList({
           aria-pressed={selectedRunId === run.id}
           className={cn(
             "card-surface card-surface-hover w-full p-3 text-left",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
             selectedRunId === run.id && "border-brand ring-1 ring-brand"
           )}
         >
@@ -394,7 +394,7 @@ function CaseCard({ testCase, onApplied }: { testCase: Case; onApplied: () => vo
   return (
     <div className="card-surface card-surface-hover">
       <button
-        className="flex w-full items-center justify-between gap-3 rounded-lg p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-4"
+        className="flex w-full items-center justify-between gap-3 rounded-lg p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover sm:px-4"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >

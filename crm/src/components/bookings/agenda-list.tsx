@@ -68,7 +68,10 @@ export function AgendaList({
   return (
     <div className="board-col min-h-0 flex-1">
       {groups.map(({ day, items }) => (
-        <section key={day} className="card-surface shrink-0 overflow-clip">
+        <section
+          key={day}
+          className={cn("card-surface shrink-0 overflow-clip", day === today && "border-brand-soft")}
+        >
           <h3 className="sticky top-0 z-10 flex items-center gap-2 border-b bg-subtle px-4 py-2 text-[13px] font-semibold first-letter:uppercase">
             {longDayLabel(day)}
             {day === today && (
@@ -89,7 +92,7 @@ export function AgendaList({
                     type="button"
                     onClick={() => onSelect(b)}
                     className={cn(
-                      "flex w-full items-center gap-3 border-l-[3px] px-4 py-2.5 text-left transition-colors hover:bg-row-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-soft",
+                      "flex w-full items-center gap-3 border-l-[3px] px-4 py-2.5 text-left transition-colors hover:bg-row-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand",
                       // Lo que viene lleva el borde de acento; lo demás, uno
                       // transparente para que las horas no bailen.
                       upcoming ? "border-l-brand" : "border-l-transparent",

@@ -171,7 +171,7 @@ export function ContactsClient() {
               <li
                 key={c.id}
                 className={cn(
-                  "card-surface card-surface-hover flex flex-col gap-3 p-3.5 hover:border-border-strong",
+                  "card-surface card-surface-hover flex flex-col gap-3 p-3.5 focus-within:border-brand-soft hover:border-border-strong",
                   c.archivedAt && "opacity-75"
                 )}
               >

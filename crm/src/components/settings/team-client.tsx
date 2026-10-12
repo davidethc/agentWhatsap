@@ -73,7 +73,7 @@ export function TeamClient() {
   }
 
   return (
-    <div className="max-w-2xl space-y-2.5 sm:space-y-4">
+    <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       <SettingsCard>
         <CardHeader>
           <CardTitle>Crear cuenta de equipo</CardTitle>

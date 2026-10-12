@@ -13,7 +13,7 @@ export default async function BrandingSettingsPage() {
   const branding = await getBranding(session?.organizationId);
 
   return (
-    <div className="max-w-2xl space-y-2.5 sm:space-y-4">
+    <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       {/* El logo viaja como prop: al subirlo o quitarlo, FaviconCard refresca
           la página y la vista previa de la marca lo sigue sin recargar. */}
       <BrandingClient favicon={branding.favicon} />

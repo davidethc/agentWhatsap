@@ -38,7 +38,7 @@ export function RangePicker({
             onClick={() => onChange(a.range)}
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
               activo?.label === a.label
                 ? "bg-popover text-brand-text shadow-sm"
                 : "text-text-2 hover:bg-accent hover:text-foreground"
@@ -54,7 +54,7 @@ export function RangePicker({
           value={value.from}
           max={value.to}
           onChange={(e) => e.target.value && onChange({ ...value, from: e.target.value })}
-          className="h-8 rounded-full border border-input bg-background px-3 text-xs text-foreground"
+          className="h-8 rounded-full border border-input bg-background px-3 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
           aria-label="Desde"
         />
         <span aria-hidden>a</span>
@@ -63,7 +63,7 @@ export function RangePicker({
           value={value.to}
           min={value.from}
           onChange={(e) => e.target.value && onChange({ ...value, to: e.target.value })}
-          className="h-8 rounded-full border border-input bg-background px-3 text-xs text-foreground"
+          className="h-8 rounded-full border border-input bg-background px-3 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
           aria-label="Hasta"
         />
       </div>

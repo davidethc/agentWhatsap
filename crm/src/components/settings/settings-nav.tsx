@@ -46,7 +46,7 @@ export function SettingsNav({
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "block shrink-0 whitespace-nowrap rounded-full px-3 py-2 text-[13.5px] font-semibold transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                   active
                     ? "bg-brand-tint text-brand-text"
                     : "text-text-2 hover:bg-accent hover:text-foreground"

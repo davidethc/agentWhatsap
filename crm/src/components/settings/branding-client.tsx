@@ -108,7 +108,7 @@ export function BrandingClient({
   if (!loaded) return <p className="text-sm text-text-3">Cargando…</p>;
 
   return (
-    <div className="max-w-2xl space-y-2.5 sm:space-y-4">
+    <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       <SettingsCard>
         <CardHeader>
           <CardTitle>Marca del CRM</CardTitle>
@@ -165,6 +165,7 @@ export function BrandingClient({
                   aria-label={preset.label}
                   className={cn(
                     "flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                     accent.toLowerCase() === hex
                       ? "border-text-2 bg-secondary"
                       : "border-border-strong hover:bg-accent"

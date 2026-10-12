@@ -207,7 +207,7 @@ export function ConnectorCredentials({
               type="button"
               onClick={disconnect}
               disabled={busy}
-              className="text-sm text-text-3 hover:text-foreground"
+              className="rounded-full px-1 text-sm text-text-3 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
             >
               Desconectar
             </button>

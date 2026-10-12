@@ -222,7 +222,7 @@ export function ConversationList({
             <button
               onClick={clearQuery}
               aria-label="Limpiar búsqueda"
-              className="shrink-0 rounded-full p-0.5 text-text-3 hover:bg-accent hover:text-foreground"
+              className="shrink-0 rounded-full p-0.5 text-text-3 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
@@ -313,15 +313,17 @@ export function ConversationList({
                   className={cn(
                     "card-surface card-surface-hover relative flex w-full items-start gap-[11px] overflow-hidden px-3.5 py-[var(--row-py)] text-left",
                     FOCO_SEPARADO,
+                    // `ring` es el acento afinado por tema: en oscuro, el
+                    // sólido queda bajo 3:1 sobre la tarjeta elevada.
                     active
-                      ? "border-brand ring-1 ring-brand"
+                      ? "border-ring shadow-md ring-1 ring-ring"
                       : "hover:border-border-strong"
                   )}
                 >
                   {/* Filo del acento: la conversación abierta se lee de un
                       vistazo aunque el borde quede fino en oscuro. */}
                   {active && (
-                    <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
+                    <span className="absolute inset-y-0 left-0 w-[3px] bg-ring" />
                   )}
                   <span className="relative shrink-0 rounded-full ring-2 ring-border ring-offset-2 ring-offset-popover">
                     <ContactAvatar name={c.contact.name} seed={c.contact.id} size="md" />

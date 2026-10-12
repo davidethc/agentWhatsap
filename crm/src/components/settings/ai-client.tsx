@@ -242,7 +242,7 @@ export function AiClient() {
   }
 
   return (
-    <div className="max-w-2xl space-y-2.5 sm:space-y-4">
+    <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       <SettingsCard>
         <CardHeader>
           <CardTitle>Proveedor de IA</CardTitle>
@@ -409,7 +409,7 @@ export function AiClient() {
                   type="button"
                   onClick={quitar}
                   disabled={ocupado !== null}
-                  className="text-sm text-text-3 hover:text-foreground"
+                  className="rounded-full px-1 text-sm text-text-3 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
                 >
                   Quitar
                 </button>

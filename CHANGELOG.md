@@ -6,6 +6,10 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli Panel: nombre completo desde la cita (pedido del usuario).** Migración
+  `20261012000100_nombre_completo_desde_cita.sql`: cuando Eli agenda (`cita_reservada` con `nombre`),
+  el titular pasa del nombre de WhatsApp (o «Sin nombre») al nombre completo, auditado con actor
+  `eli`. Un nombre editado a mano en el panel no se pisa. Prueba pgTAP `11_nombre_desde_cita`.
 - **Eli Panel: contraseñas más fuertes (QA S-3).** `supabase/config.toml`: mínimo 12 caracteres con
   minúsculas, mayúsculas y dígitos; el registro público sigue cerrado. La contraseña de la doctora de
   prueba del seed pasa a `EliPanel-local-2026`, porque la anterior no cumplía. En la nube lo aplica el

@@ -125,7 +125,7 @@ Supabase). La función valida el JSON y llama a `registrar_evento_eli`. Responde
 |---|---|---|---|
 | `mensaje_entrante` | `telefono`, `nombre_whatsapp`, `message_id`, `en` (**sin `texto`**) | Crea la conversación y el titular en **Nuevo** si es la primera vez; registra que hubo mensaje (sin su contenido); suma un turno; con 2 turnos o más, Nuevo → **Conversando**; Perdido → **Conversando** (reactivación) | `id_externo = message_id` (el mismo del dedup de n8n) |
 | `mensaje_saliente` | `telefono`, `execution_id`, `en` (**sin `texto`**) | Registra que Eli respondió (sin su contenido) | `id_externo = 'out:' + execution_id` |
-| `cita_reservada` | `telefono`, `gcal_event_id`, `inicio`, `fin`, `servicio`, `nombre` | Crea o actualiza la cita (origen eli) ligada al titular; paciente → **Agendó** | `unique(gcal_event_id)` |
+| `cita_reservada` | `telefono`, `gcal_event_id`, `inicio`, `fin`, `servicio`, `nombre` | Crea o actualiza la cita (origen eli) ligada al titular; paciente → **Agendó**. `nombre` reemplaza el nombre automático (WhatsApp o «Sin nombre»), nunca uno editado en el panel | `unique(gcal_event_id)` |
 
 **En n8n:** un workflow nuevo, `Eli → CRM` (`workflows/eli-crm.json`): entrada interna → HTTP Request
 (timeout 5 s, 2 reintentos) → si falla, guarda el error en `v4:crm:errores` (Redis, lista recortada a

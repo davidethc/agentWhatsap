@@ -24,7 +24,7 @@ ISO 8601 con zona (`2026-10-13T10:00:00-05:00`).
 |---|---|---|---|---|
 | `mensaje_entrante` | `telefono`, `message_id` | `nombre_whatsapp`, `en` (por defecto ahora) | Crea la conversación y el titular en **Nuevo** si es la primera vez; registra el mensaje (dirección y hora); suma un turno; 2.º turno: Nuevo → **Conversando**; Perdido → **Conversando** | `message_id` (el del dedup de n8n) |
 | `mensaje_saliente` | `telefono`, `execution_id` (cadena o número) | `en` | Registra la respuesta de Eli (dirección y hora); no cuenta turnos | `out:<execution_id>` |
-| `cita_reservada` | `telefono`, `gcal_event_id`, `inicio` | `fin` (por defecto +1 h), `servicio`, `nombre` | Crea o actualiza la cita (origen `eli`, `sync = ok`) ligada al titular; paciente → **Agendó**. `nombre` solo se usa si hay que crear al titular | `gcal_event_id` |
+| `cita_reservada` | `telefono`, `gcal_event_id`, `inicio` | `fin` (por defecto +1 h), `servicio`, `nombre` | Crea o actualiza la cita (origen `eli`, `sync = ok`) ligada al titular; paciente → **Agendó**. `nombre` (el nombre completo que dio el paciente): crea al titular con él, o reemplaza el nombre automático (el de WhatsApp o «Sin nombre»); nunca pisa uno editado en el panel. El cambio queda auditado con actor `eli` | `gcal_event_id` |
 
 Todo lo que cambia queda con **actor = eli** en `cambios_etapa` y `auditoria`.
 

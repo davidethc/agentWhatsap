@@ -21,9 +21,9 @@ export function Tarjeta({ paciente, ahora, flotante, className, children, ...res
     <div
       {...resto}
       className={cn(
-        "group flex flex-col gap-1 rounded-lg border bg-card p-3 text-sm shadow-xs outline-none",
+        "card-surface card-surface-hover group flex flex-col gap-1 p-3 text-sm",
         "cursor-grab touch-manipulation focus-visible:ring-3 focus-visible:ring-ring/50 active:cursor-grabbing",
-        flotante && "rotate-1 shadow-lg",
+        flotante && "rotate-1 shadow-card",
         className
       )}
     >

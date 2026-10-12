@@ -59,7 +59,7 @@ export function DatosClinicosFicha({ pacienteId, consentimientoFirmadoEn, datosC
   }
 
   return (
-    <Card>
+    <Card className="card-surface-hover">
       <CardHeader>
         <CardTitle>Datos clínicos</CardTitle>
         <CardDescription>

@@ -16,7 +16,7 @@ export function CumpleanosYRetornos({ cumpleanosHoy, cumpleanosSemana, retornos,
   const esteSemana = cumpleanosSemana.filter((c) => c.cumple !== hoy)
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Card>
+      <Card className="card-surface-hover">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Cake className="size-4 text-primary" aria-hidden />
@@ -57,7 +57,7 @@ export function CumpleanosYRetornos({ cumpleanosHoy, cumpleanosSemana, retornos,
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="card-surface-hover">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Undo2 className="size-4 text-primary" aria-hidden />

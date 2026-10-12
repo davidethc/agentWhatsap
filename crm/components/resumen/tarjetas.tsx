@@ -16,10 +16,12 @@ export function Tarjetas({ numeros }: { numeros: Resumen["tarjetas"] }) {
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {items.map(({ titulo, ayuda, valor, icono: Icono }) => (
-        <Card key={titulo}>
+        <Card key={titulo} className="card-surface-hover">
           <CardHeader>
             <CardDescription className="flex items-center gap-2">
-              <Icono className="size-4 text-primary" aria-hidden />
+              <span className="flex size-7 items-center justify-center rounded-md border border-primary-soft bg-primary-tint text-primary-text">
+                <Icono className="size-4" aria-hidden />
+              </span>
               {titulo}
             </CardDescription>
             <CardTitle className="text-3xl tabular-nums">{valor}</CardTitle>

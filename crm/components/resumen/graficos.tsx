@@ -23,7 +23,7 @@ export function Graficos({ nuevosPorDia, canales }: Pick<Resumen, "nuevosPorDia"
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Card>
+      <Card className="card-surface-hover">
         <CardHeader>
           <CardTitle>Pacientes nuevos por día</CardTitle>
           <CardDescription>Esta semana, de lunes a domingo.</CardDescription>
@@ -41,7 +41,7 @@ export function Graficos({ nuevosPorDia, canales }: Pick<Resumen, "nuevosPorDia"
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="card-surface-hover">
         <CardHeader>
           <CardTitle>Por dónde llegan</CardTitle>
           <CardDescription>Pacientes nuevos de la semana, según el canal.</CardDescription>

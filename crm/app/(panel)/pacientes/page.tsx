@@ -10,8 +10,11 @@ export default function PacientesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pacientes</h1>
+        <div className="flex flex-col gap-1">
+          <span className="kicker">Eli Panel · Embudo</span>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Pacientes <em className="font-serif font-normal italic">en etapa</em>
+          </h1>
           <p className="text-sm text-muted-foreground">
             Arrastra una tarjeta a otra columna para cambiar la etapa del paciente.
           </p>

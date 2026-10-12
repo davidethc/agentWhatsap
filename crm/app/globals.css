@@ -10,9 +10,25 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-heading: var(--font-sans);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-text: var(--primary-text);
+  --color-destructive-tint: var(--destructive-tint);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-text: var(--destructive-text);
+  --color-success-tint: var(--success-tint);
+  --color-success-soft: var(--success-soft);
+  --color-success-text: var(--success-text);
+  --color-warning-tint: var(--warning-tint);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-text: var(--warning-text);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -44,6 +60,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --shadow-surface: var(--shadow-surface);
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -52,8 +71,6 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
-
-
 
 @layer base {
   * {
@@ -64,5 +81,101 @@
   }
   html {
     @apply font-sans;
+  }
+  ::selection {
+    @apply bg-primary text-primary-foreground;
+  }
+}
+
+@layer components {
+  /* Etiqueta editorial en mono, como en la landing: "01 · RESUMEN", "ETAPA" */
+  .kicker {
+    @apply font-mono text-[10.5px] font-medium uppercase tracking-[0.16em] text-text-3;
+  }
+
+  /* Tarjeta del tablero: fondo elevado + borde + radio + sombra ligera.
+     `.card-surface-hover` se eleva al pasar el cursor. */
+  .card-surface {
+    @apply rounded-lg border bg-popover shadow-surface;
+  }
+  .card-surface-hover {
+    @apply transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:shadow-card;
+  }
+
+  /* Columna del tablero: el hueco donde viven las tarjetas (columnas del
+     pipeline). Fondo hundido, margen interno. */
+  .board-col {
+    @apply flex flex-col gap-2.5 rounded-lg bg-muted p-2.5;
+  }
+
+  /* Cabeza de una columna/pantalla: kicker arriba + título + acción a la
+     derecha, con margen fijo hacia abajo. */
+  .board-head {
+    @apply mb-4 flex flex-wrap items-start justify-between gap-3;
+  }
+
+  /* Mosaico de marca: degradado del acento, como el favicon */
+  .brand-tile {
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  }
+
+  /* Rejilla difuminada del hero de la landing (login) */
+  .brand-grid {
+    background-image:
+      linear-gradient(to right, var(--primary-soft) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--primary-soft) 1px, transparent 1px);
+    background-size: 52px 52px;
+    opacity: 0.3;
+    -webkit-mask-image: radial-gradient(
+      ellipse 90% 80% at 50% 20%,
+      #000 30%,
+      transparent 75%
+    );
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 30%, transparent 75%);
+  }
+
+  /* Resplandores suaves que flotan detrás del formulario */
+  .brand-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+  }
+  .brand-glow-a {
+    width: 640px;
+    height: 640px;
+    right: -160px;
+    top: -120px;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--primary) 16%, transparent),
+      transparent 65%
+    );
+    animation: brand-drift 14s ease-in-out infinite alternate;
+  }
+  .brand-glow-b {
+    width: 460px;
+    height: 460px;
+    left: -140px;
+    bottom: -180px;
+    background: radial-gradient(circle, rgba(0, 198, 245, 0.14), transparent 65%);
+    animation: brand-drift 18s ease-in-out infinite alternate-reverse;
+  }
+  @keyframes brand-drift {
+    from {
+      transform: translate(0, 0) scale(1);
+    }
+    to {
+      transform: translate(-40px, 30px) scale(1.08);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

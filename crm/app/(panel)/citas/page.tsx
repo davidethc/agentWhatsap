@@ -39,7 +39,10 @@ async function Citas({ searchParams }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Citas</h1>
+          <span className="kicker">Eli Panel · Agenda</span>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Citas <em className="font-serif font-normal italic">de la semana</em>
+          </h1>
           <p className="text-sm text-muted-foreground">{tituloSemana(lunes)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -56,8 +59,8 @@ async function Citas({ searchParams }: Props) {
         </div>
       </div>
       {sinVincular > 0 && (
-        <p role="status" className="flex items-center gap-2 rounded-xl border border-amber-500 bg-amber-50 px-4 py-3 text-sm font-medium dark:bg-amber-950/30">
-          <TriangleAlert className="size-4 shrink-0 text-amber-600" />
+        <p role="status" className="flex items-center gap-2 rounded-xl border border-warning-soft bg-warning-tint px-4 py-3 text-sm font-medium text-warning-text">
+          <TriangleAlert className="size-4 shrink-0" />
           {sinVincular === 1 ? "1 cita sin vincular" : `${sinVincular} citas sin vincular`} a un paciente esta semana.
         </p>
       )}

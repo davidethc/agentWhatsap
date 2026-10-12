@@ -37,6 +37,10 @@ Ecuador.
   `.gitignore` cubre las copias. Paso a paso de TK-12 para aprobar:
   [docs/crm/tk-12-proyecto-remoto.md](docs/crm/tk-12-proyecto-remoto.md).
 - **Integración Eli → CRM en n8n (TK-18, TK-19)**: sub-workflow `Eli → CRM` ([workflows/eli-crm.json](workflows/eli-crm.json), inactivo) y una COPIA inactiva de version4 con 3 ramas sin esperar ([workflows/pruebas/eli-version4-crm-copia.json](workflows/pruebas/eli-version4-crm-copia.json), generada con `scripts/crm-copia-version4.jq`). `version4` real sin cambios. La copia se regeneró el 11-oct-2026 sobre el `version4` de `main` 4dbbf07 (medios con Gemini, respaldo OpenRouter, fechas de Ecuador, seguimientos): `mensaje_entrante` se cuelga tras `¿Mensaje nuevo?` leyendo `Leer webhook`. Plan exacto de TK-20 (sin ejecutar) en [docs/crm/integracion-version4.md](docs/crm/integracion-version4.md); arnés de pruebas `scripts/crm-arnes-copia.jq`.
+- **QA del Eli Panel, ronda 5** ([docs/crm/qa.md](docs/crm/qa.md)): TK-39 (seguridad y datos de salud),
+  TK-36 (panel HU-1 a HU-9) y TK-37 (Eli → CRM con la copia inactiva y el arnés, incluido el CRM caído)
+  pasan. Revisión del código del panel: un defecto menor (F-5, botón «Vincular» en citas no agendadas) y
+  recomendaciones antes de publicar (cabeceras de seguridad, `/salir` por POST, contraseñas del remoto).
 - **QA del Eli Panel, ronda 4** ([docs/crm/qa.md](docs/crm/qa.md)): TK-25, TK-26, TK-28, TK-30 y TK-34
   pasan con Playwright (números iguales a SQL, búsqueda y tiempo real con curl a `eli-evento`, datos
   clínicos solo con consentimiento, vista de semana y vincular citas). Hallazgo F-5: «Vincular» aparece en

@@ -1,0 +1,10 @@
+[
+  {
+    "action": { "tool": "buscar_mis_citas", "toolInput": { "fecha": "2026-10-26" }, "log": "Calling buscar_mis_citas", "messageLog": [], "toolCallId": "c0", "type": "tool_call" },
+    "observation": "[{\"id\":\"evA\"}]"
+  },
+  {
+    "action": { "tool": "ver_turnos_libres", "toolInput": { "fecha": "2026-10-28" }, "log": "Calling ver_turnos_libres", "messageLog": [], "toolCallId": "c1", "type": "tool_call" },
+    "observation": "[{\"ok\":true}]"
+  }
+]

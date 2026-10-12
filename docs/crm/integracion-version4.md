@@ -5,9 +5,13 @@
 
 ## En una frase
 
-Al `version4` real se le **agregan 6 nodos y 3 conexiones** (tres ramas en paralelo que avisan al CRM
+Al `version4` real se le **agregan 8 nodos y 3 conexiones** (cuatro ramas en paralelo que avisan al CRM
 sin esperar). **Ningún nodo existente cambia**: ni el modelo de Gemini, ni el prompt, ni la cadena de
 medios, ni los seguimientos. Si el CRM falla, Eli responde igual.
+
+> El filtro `scripts/crm-copia-version4.jq` es **idempotente**: se puede aplicar sobre el `version4` de
+> `main` o sobre el vivo aunque ya tenga ramas CRM (reemplaza por nombre los nodos `CRM: …` y no duplica
+> conexiones). Así, si el vivo ya trae las 3 primeras ramas, solo se suman los cambios de agenda.
 
 ## Qué cambia exactamente
 
@@ -15,6 +19,7 @@ medios, ni los seguimientos. Si el CRM falla, Eli responde igual.
 |---|---|---|
 | `¿Mensaje nuevo?` (salida «sí») → además de `¿Tiene medios?` | `CRM: armar mensaje_entrante` → `CRM: enviar mensaje_entrante (sin esperar)` | `mensaje_entrante` |
 | `Responder por WhatsApp` → además de `Leer pendientes` y `Seg: leer (Eli)` | `CRM: armar mensaje_saliente` → `CRM: enviar mensaje_saliente (sin esperar)` | `mensaje_saliente` |
+| `Responder por WhatsApp` (la rama va la primera) | `CRM: armar cambios de agenda` → `CRM: enviar cambios de agenda (sin esperar)` (una llamada por evento) | `cita_movida` y `cita_cancelada` |
 | `Crear evento` → además de `Cita reservada` | `CRM: armar cita_reservada` → `CRM: enviar cita_reservada (sin esperar)` | `cita_reservada` |
 
 - Cada rama nueva va **primero** en su conexión y no devuelve nada a Eli. La respuesta de la
@@ -22,7 +27,12 @@ medios, ni los seguimientos. Si el CRM falla, Eli responde igual.
 - Los nodos nuevos tienen «continuar si hay error»; el nodo de envío **no espera** al sub-workflow.
 - Los eventos **no llevan el texto del mensaje** (decisión TK-41 / ADR 0012): solo `tipo`, `telefono`,
   `nombre_whatsapp`, `message_id` o `execution_id`, y `en` (en la cita: id del evento, hora, servicio, nombre).
-- Total: 47 nodos → 53. Lo demás (credenciales, webhook, prompts, modelos) queda idéntico.
+- **Cambios de agenda:** cuando Eli usa `mover_cita` o `cancelar_cita` (van directo a Google Calendar),
+  `CRM: armar cambios de agenda` lee los pasos del agente (`intermediateSteps`: `action.tool`,
+  `action.toolInput`, `observation`) y arma `cita_movida` `{telefono, gcal_event_id, inicio, fin}` o
+  `cita_cancelada` `{telefono, gcal_event_id}` **solo de las llamadas que no fallaron**; si no hubo
+  cambios, no manda nada. Requiere `returnIntermediateSteps` del agente (ya está activo en `main`).
+- Total: 47 nodos → 55 (53 → 55 si el vivo ya trae las 3 primeras ramas). Lo demás (credenciales, webhook, prompts, modelos) queda idéntico.
 - Dónde se genera: [`scripts/crm-copia-version4.jq`](../../scripts/crm-copia-version4.jq). La copia ya
   probada es [`workflows/pruebas/eli-version4-crm-copia.json`](../../workflows/pruebas/eli-version4-crm-copia.json).
 
@@ -99,12 +109,13 @@ CRM_REAL=1 jq -f scripts/crm-copia-version4.jq /tmp/v4-vivo-obj.json > /tmp/v4-c
 Comprobaciones (todas deben dar lo indicado **antes** de seguir):
 
 ```bash
-jq '.nodes | length' /tmp/v4-vivo-obj.json /tmp/v4-con-crm.json            # 47 y 53
+jq '.nodes | length' /tmp/v4-vivo-obj.json /tmp/v4-con-crm.json            # 47 (o 53) y 55
+jq '[.nodes[].name] | group_by(.) | map(select(length>1)) | length' /tmp/v4-con-crm.json   # 0 (sin nodos repetidos)
 jq -r '.name, .id' /tmp/v4-con-crm.json                                      # version4 y u4hWSJLdLFVSTtjQ
 diff <(jq -S '[.nodes[]|select(.credentials!=null)|{name,credentials}]' /tmp/v4-vivo-obj.json) \
      <(jq -S '[.nodes[]|select(.credentials!=null)|{name,credentials}]' /tmp/v4-con-crm.json) && echo "credenciales intactas"
 jq -n --slurpfile a /tmp/v4-vivo-obj.json --slurpfile b /tmp/v4-con-crm.json \
-  '[ $a[0].nodes[] as $x | ($b[0].nodes[]|select(.name==$x.name)) as $y | select($x != $y) | $x.name ]'   # []  (ningún nodo existente cambió)
+  '[ $a[0].nodes[] as $x | ($b[0].nodes[]|select(.name==$x.name)) as $y | select($x != $y) | $x.name ]'   # []  (ningún nodo existente cambió; si el vivo ya traía ramas CRM, solo pueden salir nodos «CRM: …»)
 grep -ciE "x-eli-secreto|private_key|sk-" /tmp/v4-con-crm.json              # 0
 ```
 

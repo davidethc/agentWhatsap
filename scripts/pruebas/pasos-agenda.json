@@ -1,0 +1,30 @@
+[
+  {
+    "action": { "tool": "buscar_mis_citas", "toolInput": { "fecha": "2026-10-26" }, "log": "Calling buscar_mis_citas", "messageLog": [], "toolCallId": "c0", "type": "tool_call" },
+    "observation": "[{\"id\":\"evA\",\"summary\":\"Limpieza - Paciente Prueba\"}]"
+  },
+  {
+    "action": { "tool": "mover_cita", "toolInput": { "event_id": "evA", "nueva_fecha": "2026-10-28", "nueva_hora": "15:00" }, "log": "Calling mover_cita", "messageLog": [], "toolCallId": "c1", "type": "tool_call" },
+    "observation": "[{\"id\":\"evA\",\"status\":\"confirmed\",\"start\":{\"dateTime\":\"2026-10-28T15:00:00-05:00\",\"timeZone\":\"America/Guayaquil\"},\"end\":{\"dateTime\":\"2026-10-28T16:00:00-05:00\",\"timeZone\":\"America/Guayaquil\"}}]"
+  },
+  {
+    "action": { "tool": "mover_cita", "toolInput": { "event_id": "evFALLA", "nueva_fecha": "2026-10-29", "nueva_hora": "10:00" }, "log": "Calling mover_cita", "messageLog": [], "toolCallId": "c2", "type": "tool_call" },
+    "observation": "{\"error\":\"Not Found\",\"errorType\":\"NodeApiError\"}"
+  },
+  {
+    "action": { "tool": "cancelar_cita", "toolInput": { "event_id": "evB" }, "log": "Calling cancelar_cita", "messageLog": [], "toolCallId": "c3", "type": "tool_call" },
+    "observation": "[{\"success\":true}]"
+  },
+  {
+    "action": { "tool": "cancelar_cita", "toolInput": { "event_id": "evC" }, "log": "Calling cancelar_cita", "messageLog": [], "toolCallId": "c4", "type": "tool_call" },
+    "observation": "{\"error\":\"The resource you are requesting could not be found\"}"
+  },
+  {
+    "action": { "tool": "mover_cita", "toolInput": { "event_id": "evD", "nueva_fecha": "2026-10-30", "nueva_hora": "09:00" }, "log": "Calling mover_cita", "messageLog": [], "toolCallId": "c5", "type": "tool_call" },
+    "observation": "[{\"id\":\"evD\"}]"
+  },
+  {
+    "action": { "tool": "ver_turnos_libres", "toolInput": { "fecha": "2026-10-28" }, "log": "Calling ver_turnos_libres", "messageLog": [], "toolCallId": "c6", "type": "tool_call" },
+    "observation": "\"\""
+  }
+]

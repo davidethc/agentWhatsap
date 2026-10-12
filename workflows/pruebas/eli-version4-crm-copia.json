@@ -1423,6 +1423,49 @@
       "onError": "continueRegularOutput",
       "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
       "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Eli → CRM: cambios de agenda que Eli hizo con mover_cita / cancelar_cita (van directo a Google Calendar).\n// Lee los pasos del agente (intermediateSteps: action.tool, action.toolInput, observation) y cuenta SOLO las\n// llamadas que no fallaron. Un ítem por evento; ninguno si no hubo cambios. No lleva texto del mensaje.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to) return [];\nlet salida;\ntry { salida = $('Agente version4').itemMatching(0).json; } catch (e) { salida = $('Agente version4').last().json; }\nconst pasos = Array.isArray(salida?.intermediateSteps) ? salida.intermediateSteps : [];\nconst leer = (v) => { if (typeof v !== 'string') return v ?? null; try { return JSON.parse(v); } catch (e) { return null; } };\nconst fallo = (obs) => { const o = leer(obs); const l = Array.isArray(o) ? o : (o == null || o === '' ? [] : [o]); return l.length === 0 || l.some((x) => !x || typeof x !== 'object' || x.error); };\nconst eventos = new Map();\nfor (const p of pasos) {\n  const tool = p?.action?.tool;\n  if (tool !== 'mover_cita' && tool !== 'cancelar_cita') continue;\n  if (fallo(p.observation)) continue;\n  let a = leer(p.action.toolInput) ?? {};\n  if (typeof a.input === 'string') a = leer(a.input) ?? a; else if (a.input && typeof a.input === 'object') a = a.input;\n  const id = String(a.event_id ?? '').trim();\n  if (!id) continue;\n  if (tool === 'cancelar_cita') { eventos.set(id, { tipo: 'cita_cancelada', telefono: n.to, gcal_event_id: id }); continue; }\n  const obs = leer(p.observation);\n  const ev = Array.isArray(obs) ? obs[0] : obs;\n  let inicio = ev?.start?.dateTime;\n  let fin = ev?.end?.dateTime;\n  if (!inicio && a.nueva_fecha && a.nueva_hora) {\n    const d = DateTime.fromISO(a.nueva_fecha + 'T' + a.nueva_hora, { zone: 'America/Guayaquil' });\n    if (d.isValid) { inicio = d.toISO(); fin = d.plus({ hours: 1 }).toISO(); }\n  }\n  if (!inicio) continue;\n  if (!fin) fin = DateTime.fromISO(inicio).plus({ hours: 1 }).toISO();\n  eventos.set(id, { tipo: 'cita_movida', telefono: n.to, gcal_event_id: id, inicio, fin });\n}\nreturn [...eventos.values()].map((json) => ({ json }));"
+      },
+      "id": "c19a0001-0000-4000-8000-000000000007",
+      "name": "CRM: armar cambios de agenda",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5456,
+        -648
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "EliCrmSubwf00001",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "passthrough"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        },
+        "mode": "each"
+      },
+      "id": "c19a0001-0000-4000-8000-000000000008",
+      "name": "CRM: enviar cambios de agenda (sin esperar)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        5696,
+        -648
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
+      "notesInFlow": true
     }
   ],
   "connections": {
@@ -1602,6 +1645,11 @@
     "Responder por WhatsApp": {
       "main": [
         [
+          {
+            "node": "CRM: armar cambios de agenda",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "CRM: armar mensaje_saliente",
             "type": "main",
@@ -1949,6 +1997,17 @@
         [
           {
             "node": "CRM: enviar cita_reservada (sin esperar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM: armar cambios de agenda": {
+      "main": [
+        [
+          {
+            "node": "CRM: enviar cambios de agenda (sin esperar)",
             "type": "main",
             "index": 0
           }

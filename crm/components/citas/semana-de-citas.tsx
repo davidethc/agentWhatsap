@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import type { Cita } from "@/lib/data/tipos"
 import { ESTADO_CITA } from "@/lib/dominio/etiquetas"
 import { claveDia, diaLargo, hora } from "@/lib/dominio/fechas"
-import { agruparPorDia } from "@/lib/citas/semana"
+import { agruparPorDia, sePuedeVincular } from "@/lib/citas/semana"
 import { cn } from "@/lib/utils"
 
 import { AccionesCita } from "./acciones-cita"
@@ -43,7 +43,7 @@ export function SemanaDeCitas({ lunes, citas, pacientes }: { lunes: string; cita
 
 function TarjetaCita({ cita: c, pacientes }: { cita: Cita; pacientes: PacienteOpcion[] }) {
   const cancelada = c.estado === "cancelada"
-  const sinVincular = c.pacienteId === null && !cancelada
+  const sinVincular = sePuedeVincular(c)
   return (
     <li
       className={cn(

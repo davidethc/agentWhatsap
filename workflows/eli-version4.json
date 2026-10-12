@@ -196,7 +196,8 @@
           "maxIterations": 8,
           "returnIntermediateSteps": true,
           "enableStreaming": false
-        }
+        },
+        "needsFallback": true
       },
       "id": "d2d7529f-c68a-4d7d-bbd8-1fd27ee9af28",
       "name": "Agente version4",
@@ -231,7 +232,7 @@
           "name": "Google Gemini(PaLM) Api account"
         }
       },
-      "notes": "Modelo de lenguaje del agente (gemini-3.5-flash-lite). No cambiar sin avisar."
+      "notes": "Modelo principal del agente (gemini-3.5-flash-lite). Si falla (p. ej. se acabó la cuota), responde el modelo de respaldo de OpenRouter."
     },
     {
       "parameters": {
@@ -1271,6 +1272,31 @@
       ],
       "notesInFlow": true,
       "notes": "Mensaje final: une el texto con lo que Gemini entendió. Los demás nodos leen este nodo."
+    },
+    {
+      "parameters": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 1024,
+          "timeout": 60000
+        }
+      },
+      "id": "aa697ab8-8caf-4512-8953-a1e793630b7e",
+      "name": "OpenRouter (respaldo)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        3728,
+        128
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "name": "OpenRouter account"
+        }
+      },
+      "notes": "Respaldo GRATIS (OpenRouter, nvidia/nemotron-3-super-120b-a12b:free, 50 peticiones/día sin crédito). Solo responde si Gemini falla. Si los dos fallan, se envía «Avisar error al cliente».",
+      "notesInFlow": true
     }
   ],
   "connections": {
@@ -1740,6 +1766,17 @@
             "node": "Seg: leer (paciente)",
             "type": "main",
             "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter (respaldo)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_languageModel",
+            "index": 1
           }
         ]
       ]

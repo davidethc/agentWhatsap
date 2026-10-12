@@ -6,6 +6,10 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Modelo de respaldo gratis**: si Gemini falla (cuota agotada, caída), el agente responde con
+  OpenRouter `nvidia/nemotron-3-super-120b-a12b:free` (50 peticiones/día sin crédito). Si fallan los dos,
+  se envía el aviso con el número del consultorio. `google/gemma-4-31b-it:free` se descartó: su cupo
+  gratis compartido devuelve 429 seguido.
 - **Fecha y hora de Ecuador más claras** para Eli: ubicación (Loja, hora de Quito, UTC-5), saludo según
   la hora, «CONSULTORIO AHORA» (abierto o cerrado y cuándo vuelve a atender) y calendario con HOY,
   MAÑANA y PASADO MAÑANA. Si está cerrado ofrece turnos desde la próxima atención.

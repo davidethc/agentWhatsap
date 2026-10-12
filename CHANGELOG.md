@@ -6,6 +6,11 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli → CRM (Eli Panel)**: `version4` avisa al CRM sin esperar (sub-workflow `Eli → CRM`, Supabase en
+  la nube): mensaje entrante (crea el paciente en Nuevo), mensaje saliente, cita reservada (cita + Agendó y
+  nombre completo), cita movida y cita cancelada (leídas de los pasos del agente). Sin texto de mensajes.
+  Si el CRM falla, Eli responde igual y el evento queda en `v4:crm:errores`. Plan y vuelta atrás:
+  `docs/crm/integracion-version4.md` (rama `feat/crm`).
 - **Modelo de respaldo gratis**: si Gemini falla (cuota agotada, caída), el agente responde con
   OpenRouter `nvidia/nemotron-3-super-120b-a12b:free` (50 peticiones/día sin crédito). Si fallan los dos,
   se envía el aviso con el número del consultorio. `google/gemma-4-31b-it:free` se descartó: su cupo

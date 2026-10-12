@@ -120,6 +120,42 @@ Datos de QA dejados en la base local (inventados): pacientes «Paciente QA Nuevo
 (`593900000071`), la cita cancelada «Valoración QA» y la cita «QA Otra fecha» (insertada por SQL, porque hoy es
 domingo y el panel no deja agendar fuera de horario).
 
+## Ronda 4 · 11-oct-2026 · TK-25, TK-26, TK-28, TK-30, TK-34 y login (F-1)
+
+Rama `feat/crm-docs` tras `git merge feat/crm` (`2e16024`). Playwright contra Supabase local y la doctora de
+prueba, sobre el build de producción (`next start`, puerto 3100). Antes de empezar: `supabase test db`
+**PASS** (F-2 resuelto), `pnpm lint`, `typecheck`, `test` (101 pruebas) y `build` ✅. Sin calendario
+(TK-38). Datos inventados.
+
+| Tarea | Resultado | Evidencia (capturas `capturas/qa-*`) |
+|---|---|---|
+| **TK-25** Números y gráficos (HU-3) | ✅ Pasa | Las 4 tarjetas del panel (citas hoy **5**, nuevos **15**, agendadas **7**, no asistieron **2**) coinciden con SQL sobre la base y con `resumen_del_dia()` ejecutada como la doctora (`numeros`). Los canales suman 15 (WhatsApp 11, llamada 2, presencial 2, referido 0). Barras de nuevos por día (lun–dom) y dona de canales visibles a 1440 y 768 px (`qa-tk25-resumen-1440/768.png`). |
+| **TK-26** Cumpleaños y retornos (HU-4) | ✅ Pasa | Cumpleaños de hoy (Ana, Gabriela) y de la semana (Irene, sáb 10 oct) y retornos (Olga desde el 1 oct; Nicolás hoy) coinciden con la base; Jorge (vuelve en 2027) no aparece. Cada nombre enlaza a su ficha; ningún botón ni enlace `wa.me`/`tel:`/`mailto:` (solo se muestra). |
+| **TK-28** Búsqueda y tiempo real (HU-5.4) | ✅ Pasa | Caja «Buscar por nombre o teléfono»: «irene» → 1 tarjeta; `0900000008` y `+593 90 000 0008` → 1; «zzzz» → «Sin pacientes» en las 6 columnas (`qa-tk28-busqueda-1440.png`). **Con curl real a `eli-evento` local** (secreto aleatorio solo local) y el kanban abierto, sin recargar: `mensaje_entrante` → tarjeta en **Nuevo**; 2.º mensaje → **Conversando**; `cita_reservada` → **Agendó** (los tres 200 `duplicado:false`); repetir el mensaje → 200 `duplicado:true`; sin secreto → 401. Indicador «En vivo» (`qa-tk28-curl-*-1440.png`). |
+| **TK-30** Datos clínicos (HU-6.3) | ✅ Pasa | Sin consentimiento: aviso «Falta el consentimiento firmado», alergias/enfermedades/embarazo/miedo **deshabilitados** y Guardar deshabilitado (`qa-tk30-sin-consentimiento-1440.png`). «Marcar consentimiento firmado» pide la fecha; después se habilitan y se guardan (alergias, enfermedades, embarazo «No», miedo): sobreviven a recargar, `datos_clinicos` queda con `actor = personal` en `auditoria`. Con consentimiento previo (Mónica) los campos ya están habilitados. |
+| **TK-34** Semana y vincular (HU-9/10) | ✅ Pasa (con un hallazgo) | Vista de semana (lun–dom) con «Semana anterior», «Hoy» y «Semana siguiente» (5–11 → 12–18 → 28 sep–4 oct → Hoy) y aviso «1 cita sin vincular a un paciente esta semana». Vincular una cita **agendada** sin paciente a «Diego Demo» → «La cita quedó vinculada. El paciente pasó a Agendó.», desaparece el aviso, la cita queda con sync `pendiente` (`qa-tk34-vinculada-1440.png`). **Hallazgo F-5** abajo. |
+| **Login (F-1)** | ⚠️ No reproducido, sin arreglo confirmado | Frontend **no ha integrado** un arreglo (sin commits nuevos en el layout ni en `lib/auth`). Medición: **15 de 15 logins** correctos (contextos nuevos, 1440 y 768, mediana 0,48 s) y 0 errores `Date.now()` en el log; antes hubo un episodio de **4 cuelgues seguidos** mientras el runtime de funciones se reiniciaba y la máquina iba corta de memoria. Seguir marcado como riesgo. |
+
+### Hallazgos de la ronda 4
+
+| # | Qué | Impacto | Sugerencia |
+|---|---|---|---|
+| **F-5** | La pantalla de citas ofrece **«Vincular»** también en citas que ya no están agendadas (p. ej. «Asistió»), y al guardar responde en rojo «Solo se puede editar una cita agendada» (`qa-tk34-vinculada-…` de la primera prueba). | Botón que no puede funcionar. | `crm-frontend`: ocultar «Vincular» salvo en citas agendadas; o `crm-datos`: permitir vincular una cita ya atendida. |
+| F-6 | El runtime de Edge Functions es único: si dos sesiones lanzan `supabase functions serve` con secretos distintos, una sale sola y la otra responde 401 a la primera (pasó en rondas 1, 2 y 4). Tarda 20–40 s en estar listo. | Pruebas de integración con curl que fallan sin motivo. | Coordinar quién lo sirve; esperar a que `eli-evento` responda 401 sin secreto antes de probar. |
+| F-7 | Con poca memoria la página de login/citas tardó más de 30 s en cargar en un intento. | Solo entorno de pruebas. | — |
+
+### Limpieza de la ronda 4 (y arrastre de rondas 2–3)
+
+Borrados (todo inventado, por SQL como `postgres`): conversaciones 211, 256, 261 y 262 con sus pacientes
+(«QA Realtime», «QA Curl», «QA Curl Vivo» y el «Sin nombre» del `593900000094`), sus mensajes e historial
+de etapas, y las citas «Valoración QA» (2), «QA Otra fecha» y «QA Sin vincular». Restaurados: Olga Prueba
+(sin consentimiento ni datos clínicos), el correo de Irene Prueba y la etapa de Diego Demo (Nuevo).
+Quedan 22 pacientes (el seed).
+**No restaurado:** los cambios de etapa de las rondas 3 y 4 sobre fichas del seed (Jorge, Irene y Luis → Seguimiento/
+Perdido; Úrsula y Tomás → Conversando; Bruno → Perdido) y la conversación `593900000093` («Paciente Prueba», de
+otra sesión). Las filas de `auditoria` y `cambios_etapa` son inmutables. Un `supabase db reset` (lo decide el
+orquestador) devuelve el seed a su estado inicial.
+
 ## Observaciones (no son fallos de ningún criterio)
 
 | # | Qué | Impacto | Sugerencia |

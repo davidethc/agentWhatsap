@@ -79,6 +79,10 @@ Todo vive en un solo workflow ([`workflows/eli-version4.json`](../workflows/eli-
    `reservar_cita`). Valida el pedido, lee Google Calendar, calcula turnos de 1 hora y crea el evento.
    Antes de reservar vuelve a comprobar que el turno siga libre.
 
+**`Eli · Seguimiento`** ([`workflows/eli-seguimiento.json`](../workflows/eli-seguimiento.json)) corre cada 15 minutos,
+lee `v4:seg:*` en Redis y escribe a quien dejó de responder, con textos fijos y turnos reales que pide
+a la entrada interna de la agenda de `version4`.
+
 El agente también tiene `buscar_mis_citas`, `mover_cita` y `cancelar_cita`, que son herramientas
 directas de Google Calendar.
 
@@ -92,7 +96,8 @@ Los datos del consultorio se editan en el nodo **Validar pedido**: `HORARIO` (bl
 | `v4:dedup:<message_id>` | contador | 24 h | Ignorar el mismo mensaje entregado dos veces |
 | `v4:lock:<teléfono>` | contador | 120 s | Una sola respuesta a la vez por conversación |
 | `v4:pending:<teléfono>` | lista | hasta procesarse | Mensajes que llegaron mientras Eli respondía |
-| `v4:chat:<teléfono>` | memoria | 24 h, últimos 12 mensajes | Historial que lee la IA |
+| `v4:chat:<teléfono>` | memoria | 24 h, últimos 12 mensajes | Historial que lee la IA (incluye los seguimientos enviados) |
+| `v4:seg:<teléfono>` | JSON | hasta 24 h después del último mensaje del paciente | Estado para los seguimientos: últimos mensajes, número de mensajes, paso enviado, agendado, «no gracias» |
 
 La DB 0 es de n8n (claves `bull:*`): no se toca a mano.
 

@@ -7,6 +7,7 @@ personales: las credenciales van solo por nombre, y el calendario y el número u
 | Archivo | Estado | Qué es |
 |---|---|---|
 | [`eli-version4.json`](eli-version4.json) | **Producción** | Eli: webhook Kapso, agente Gemini con memoria en Redis y agenda interna en Google Calendar (ver [arquitectura](../docs/arquitectura.md)) |
+| [`eli-seguimiento.json`](eli-seguimiento.json) | **Producción** | Cada 15 min escribe a quien dejó de responder (dentro de 24 h), con textos fijos y turnos reales ([conversacion.md](../docs/conversacion.md)) |
 | [`eli-crm.json`](eli-crm.json) | **Nuevo, inactivo** (TK-18) | Sub-workflow `Eli → CRM`: POST a la Edge Function `eli-evento` (timeout 5 s, 2 reintentos); si falla guarda la entrada en la lista Redis local `v4:crm:errores` (máx. 200) y termina sin error. Credenciales: `Eli CRM secreto` (Header Auth) y `Redis local` |
 | [`pruebas/eli-version4-crm-copia.json`](pruebas/eli-version4-crm-copia.json) | Copia de prueba, inactiva (TK-19, regenerada para TK-20 sobre el `version4` de `main` d54e52b, con los seguimientos «Seg:») | `version4` + 3 ramas hacia `Eli → CRM` sin esperar (tras «¿Mensaje nuevo?», «Responder por WhatsApp» y «Crear evento»). Se genera con [`../scripts/crm-copia-version4.jq`](../scripts/crm-copia-version4.jq); lo único que cambia fuera de las ramas nuevas es el path del webhook |
 | [`pruebas/queue-selftest.json`](pruebas/queue-selftest.json) | Prueba | Webhook GET + Code: comprueba cola → worker → runner |

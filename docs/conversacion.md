@@ -28,7 +28,7 @@ flowchart TB
   Q -- "¿a qué hora era mi cita? · cambiar · cancelar" --> C["MI CITA<br>Busca su cita, la mueve<br>o la cancela, ofreciendo reagendar"]
   Q -- "¿eres un bot?" --> B["HONESTIDAD<br>Es la asistente virtual de EliDental;<br>la doctora atiende en persona"]
   Q -- "groserías · spam · nada que ver" --> G["LÍMITE<br>Una respuesta breve y respetuosa;<br>si sigue, no insiste"]
-  Q -- "no se entiende · audio" --> X["ACLARAR<br>Pide que lo escriba<br>o lo explique con otras palabras"]
+  Q -- "no se entiende" --> X["ACLARAR<br>Pide que lo escriba<br>o lo explique con otras palabras"]
 
   S --> N(["Siguiente paso:<br>llevar a la cita"])
   I --> N
@@ -69,7 +69,8 @@ Son ejemplos del tono, no textos fijos: la IA los adapta a cada conversación.
 | «¿eres un bot?» | Soy Eli, la asistente virtual de EliDental 😊 Le ayudo con citas e información; la Dra. Viviana Sucunuta le atiende en persona en la consulta. ¿En qué le ayudo? |
 | «¿es normal que me sangre después de la extracción?» | Eso lo debe revisar la doctora en consulta; si quiere, le agendo una valoración. Si el sangrado es abundante o no para, acuda a emergencias. |
 | Grosería o insulto | Entiendo que pueda estar molesto. Estoy aquí para ayudarle con su cita cuando lo necesite. (Si insiste, no responde más al insulto). |
-| Audio | Disculpe, por aquí no puedo escuchar audios. ¿Me lo podría escribir? |
+| Nota de voz | Eli la entiende (Kapso la transcribe) y responde normal. Solo si no se pudo transcribir: «Disculpe, no pude escuchar su audio. ¿Me lo podría escribir?» |
+| Foto o radiografía | Gemini la describe en pocas frases; Eli entiende qué necesita (p. ej. comprobante o diente roto), no diagnostica y ofrece agendar: la doctora lo revisa en la consulta. |
 
 ## 2. Cómo busca horarios
 
@@ -154,10 +155,10 @@ flowchart TB
     B1[/"ELI BIENVENIDA:<br>Responde el saludo como una persona.<br>¡Hola! 😊 Soy Eli, de EliDental.<br>¿En qué le puedo ayudar?<br>¿Desea agendar una cita<br>o tiene alguna molestia?"/]
     BT{{"⚡ DISPARADOR:<br>El paciente responde"}}
     BU{{"⚡ URGENCIA DETECTADA:<br>dolor fuerte, hinchazón,<br>diente roto, sangrado"}}
-    BW1("⏳ 🔧 Espera: 3 horas")
-    B2[/"🔧 ELI RECORDATORIO SUAVE:<br>Hola, ¿pudo ver mi mensaje?<br>Cuénteme con calma qué necesita<br>y le ayudo a encontrar un turno"/]
-    BW2("⏳ 🔧 Espera: hasta 23 h<br>desde su último mensaje")
-    B3[/"🔧 ELI ÚLTIMO MENSAJE (puerta abierta):<br>Imagino que tuvo un día ocupado.<br>No le escribo más para no molestar.<br>Cuando quiera agendar, escríbame aquí<br>y le busco un turno 🦷"/]
+    BW1("⏳ Espera: 3 horas")
+    B2[/"ELI RECORDATORIO SUAVE:<br>Hola, ¿pudo ver mi mensaje?<br>Cuénteme con calma qué necesita<br>y le ayudo a encontrar un turno"/]
+    BW2("⏳ Espera: desde 20 h<br>antes de que cierre la ventana")
+    B3[/"ELI ÚLTIMO MENSAJE (puerta abierta):<br>Imagino que tuvo un día ocupado.<br>No le escribo más para no molestar.<br>Cuando quiera agendar, escríbame aquí<br>y le busco un turno 🦷"/]
     BL(["🟥 Perdido: no respondió"])
  end
 
@@ -171,10 +172,10 @@ flowchart TB
     direction TB
     C1("🟩 IA conversa")
     C2[/"ELI CONVERSACIÓN NATURAL:<br>Escucha y valida el motivo.<br>Responde dudas con datos reales:<br>tratamientos, sedación si tiene miedo,<br>niños, dirección, horario.<br>Precio: lo confirma la doctora en la valoración.<br>Cierra ofreciendo 2 turnos concretos:<br>¿Le queda mejor el jueves 10:00<br>o el viernes 16:00?"/]
-    CW1("⏳ 🔧 Espera: 2 h sin respuesta")
-    C3[/"🔧 ELI NUDGE con turnos reales:<br>Le guardé estas opciones por si le sirven:<br>[mañana 10:00] o [jueves 16:00].<br>¿Cuál le queda mejor?"/]
-    CW2("⏳ 🔧 Espera: hasta 23 h")
-    C4[/"🔧 ELI VALOR (sin presión):<br>Le dejo un dato útil:<br>una limpieza cada 6 meses evita caries<br>y molestias mayores.<br>Cuando quiera, aquí estoy para agendar 🤍"/]
+    CW1("⏳ Espera: 2 h sin respuesta")
+    C3[/"ELI NUDGE con turnos reales:<br>Tengo estas opciones libres por si le sirven:<br>[mañana 10:00] o [jueves 16:00].<br>¿Cuál le queda mejor?"/]
+    CW2("⏳ Espera: desde 20 h<br>antes de que cierre la ventana")
+    C4[/"ELI VALOR (sin presión):<br>Le dejo un dato útil:<br>una limpieza cada 6 meses ayuda a prevenir caries<br>y molestias mayores.<br>Cuando quiera, aquí estoy para agendar 🤍"/]
     CL(["🟥 Perdido: indeciso"])
     CD("👩‍⚕️ Pasa a la doctora:<br>clínico o foto: ofrece valoración<br>queja: WhatsApp 099 970 1778")
     CT{{"⚡ DISPARADOR:<br>El paciente elige turno y dice sí<br>(reservar_cita = ok)"}}
@@ -359,16 +360,19 @@ El diseño completo del recordatorio está en [elidental.md](elidental.md#record
 | Urgencia: empatía, primer turno libre e indicación de emergencias | Urgencia | `version4` | ✅ En producción |
 | Derivación al WhatsApp del consultorio (099 970 1778) | Conversación | `version4` | ✅ En producción |
 | Confirmación de la cita con la dirección | Cita agendada | `version4` | ✅ En producción |
-| Estado de cada paciente: `v4:stage:<tel>` (bienvenida, conversación, agendado, atendido), `v4:last_in:<tel>` (hora de su último mensaje), `v4:nudge:<tel>` (seguimientos enviados) | Todas | Redis | 🔧 |
-| Seguimientos por tiempo: 3 h y 23 h en la bienvenida; 2 h y 23 h en la conversación. Revisa cada 15 min y para si el paciente respondió | Bienvenida, conversación | Workflow `Eli · Seguimiento` | 🔧 |
+| Estado de cada conversación: `v4:seg:<tel>` (JSON con la hora del último mensaje del paciente y de Eli, número de mensajes, seguimiento enviado, si agendó y si pidió no más mensajes). Se borra solo al cerrarse la ventana de 24 h | Bienvenida, conversación | Redis, mantenido por `version4` | ✅ En producción |
+| Seguimientos por tiempo, de 08:00 a 20:00: a las 3 h (bienvenida) o 2 h (conversación) sin respuesta, y un último mensaje desde las 20 h y antes de que cierre la ventana. Textos fijos con turnos reales; no usa la IA. Para si el paciente respondió, agendó o dijo «no gracias» | Bienvenida, conversación | Workflow `Eli · Seguimiento` (cada 15 min) | ✅ En producción |
 | Aviso a la doctora por urgencias, quejas y preguntas clínicas | Urgencia, conversación | Por definir | 🔧 |
 | Recordatorio del día anterior (18:00) y resumen para la doctora (07:00) | Cita agendada | Workflow `Eli · Recordatorios` | 🔧 Diseño listo |
 | No asistió, seguimiento del tratamiento, reseña y recall de limpieza. Hace falta marcar «asistió» en el evento del calendario | Cita agendada, atendido, volver | Workflow `Eli · Después de la cita` | 🔧 |
 | Controles de ortodoncia | Volver | Workflow `Eli · Después de la cita` | 🔧 |
 | Lista de espera: ofrecer un turno cancelado a quien lo pidió | Conversación | Por definir | 🔧 |
 
-Orden sugerido: 1) estado en Redis y seguimientos de la bienvenida y la conversación, que son gratis y
-dentro de la ventana; 2) recordatorios; 3) aviso a la doctora; 4) después de la cita y recall.
+Orden sugerido para lo que falta: 1) recordatorios; 2) aviso a la doctora; 3) después de la cita y recall.
+
+Cada seguimiento enviado se guarda también en la memoria de la conversación, así Eli sabe qué turnos
+ofreció si el paciente responde «el primero». Para probarlo sin esperar horas, baja temporalmente
+`MIN_BIENVENIDA` y `MIN_CONVERSACION` en el nodo *Elegir seguimientos*.
 
 ## 7. Cómo medirlo
 

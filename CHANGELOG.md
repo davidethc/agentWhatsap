@@ -82,6 +82,25 @@ Ecuador.
   (ronda 3, [docs/crm/qa.md](docs/crm/qa.md)): columna borrada, `registrar_evento_eli` y `eli-evento`
   rechazan `texto`, los nodos CRM de n8n no lo mandan y la ficha del panel no muestra conversación.
 - **Privacidad (TK-41): el CRM no guarda el contenido de los mensajes, por ahora.** Los eventos `mensaje_entrante` y `mensaje_saliente` ya no llevan `texto` (solo `tipo`, `telefono`, `nombre_whatsapp`, `message_id` o `execution_id` y `en`), y `Eli → CRM` descarta `texto` aunque alguien lo mande, tanto en el POST como en la lista Redis `v4:crm:errores`. La base no cambia: `texto` sigue siendo opcional y queda vacío.
+- **Modelo de respaldo gratis**: si Gemini falla (cuota agotada, caída), el agente responde con
+  OpenRouter `nvidia/nemotron-3-super-120b-a12b:free` (50 peticiones/día sin crédito). Si fallan los dos,
+  se envía el aviso con el número del consultorio. `google/gemma-4-31b-it:free` se descartó: su cupo
+  gratis compartido devuelve 429 seguido.
+- **Fecha y hora de Ecuador más claras** para Eli: ubicación (Loja, hora de Quito, UTC-5), saludo según
+  la hora, «CONSULTORIO AHORA» (abierto o cerrado y cuándo vuelve a atender) y calendario con HOY,
+  MAÑANA y PASADO MAÑANA. Si está cerrado ofrece turnos desde la próxima atención.
+- Cada nodo de `version4` tiene una nota que explica para qué sirve (visible en el lienzo de n8n).
+- **Notas de voz e imágenes** en `version4`: usa la transcripción automática de Kapso
+  (`kapso.transcript`); las imágenes, y los audios sin transcripción, los describe Gemini flash-lite
+  (≈1.100 tokens por imagen, tope de 3 por lote). Si una descarga falla, Eli pide que lo escriba. El
+  prompt ya no dice «no puedo escuchar audios». Los mensajes seguidos los sigue juntando el búfer de
+  Kapso (5 s) y la cola de Redis.
+- **Seguimientos automáticos** (workflow `Eli · Seguimiento`, cada 15 min, 08:00–20:00): escribe a quien
+  no respondió el saludo (3 h) o dejó la conversación (2 h), y un último mensaje desde las 20 h, siempre
+  dentro de la ventana de 24 h. Textos fijos con turnos reales, sin usar la IA. `version4` guarda el
+  estado en Redis (`v4:seg:<tel>`) y detecta si se agendó.
+- Prompt: usar el nombre del paciente, no insistir ante «no gracias» y continuar si el paciente elige un
+  turno de un seguimiento.
 - Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
 
 ### Cambiado

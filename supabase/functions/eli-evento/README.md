@@ -1,0 +1,73 @@
+# Edge Function `eli-evento` · Contrato Eli → CRM
+
+Entrada única de Eli (n8n) al Eli Panel. Plan: [docs/crm/plan.md §5](../../../docs/crm/plan.md).
+Valida el JSON y llama a `public.registrar_evento_eli(p_evento jsonb)` con la clave de servicio, que
+nunca sale de Supabase. **Idempotente:** reenviar el mismo evento no duplica nada.
+
+## Llamada
+
+```
+POST https://<proyecto>.supabase.co/functions/v1/eli-evento     (local: http://127.0.0.1:55321/functions/v1/eli-evento)
+x-eli-secreto: <ELI_EVENTO_SECRETO>
+Content-Type: application/json
+```
+
+- No lleva JWT de Supabase (`verify_jwt = false` en `config.toml`): la llave es el secreto.
+- n8n: timeout 5 s, 2 reintentos y **sin esperar** (Eli nunca depende de la respuesta).
+
+## Eventos
+
+`telefono` acepta `09…`, `9…`, `+593…`, `00593…` o `593…` y se guarda como `593…`. Las fechas van en
+ISO 8601 con zona (`2026-10-13T10:00:00-05:00`).
+
+| `tipo` | Obligatorios | Opcionales | Efecto | Idempotencia |
+|---|---|---|---|---|
+| `mensaje_entrante` | `telefono`, `message_id` | `nombre_whatsapp`, `en` (por defecto ahora) | Crea la conversación y el titular en **Nuevo** si es la primera vez; registra el mensaje (dirección y hora); suma un turno; 2.º turno: Nuevo → **Conversando**; Perdido → **Conversando** | `message_id` (el del dedup de n8n) |
+| `mensaje_saliente` | `telefono`, `execution_id` (cadena o número) | `en` | Registra la respuesta de Eli (dirección y hora); no cuenta turnos | `out:<execution_id>` |
+| `cita_reservada` | `telefono`, `gcal_event_id`, `inicio` | `fin` (por defecto +1 h), `servicio`, `nombre` | Crea o actualiza la cita (origen `eli`, `sync = ok`) ligada al titular; paciente → **Agendó**. `nombre` (el nombre completo que dio el paciente): crea al titular con él, o reemplaza el nombre automático (el de WhatsApp o «Sin nombre»); nunca pisa uno editado en el panel. El cambio queda auditado con actor `eli` | `gcal_event_id` |
+| `cita_movida` | `telefono`, `gcal_event_id`, `inicio` | `fin` (si falta, conserva la duración) | Cambia la hora de la cita (`sync = ok`). Si el CRM no la conoce, la crea como `cita_reservada`. Una cita atendida, no asistida o cancelada no se mueve | Misma hora → `duplicado: true` |
+| `cita_cancelada` | `telefono`, `gcal_event_id` | — | La cita pasa a **cancelada** (`sync = ok`), sin cambiar la etapa. Si el CRM no la conoce, no hace nada y responde 200 | Ya cancelada → `duplicado: true` |
+
+Todo lo que cambia queda con **actor = eli** en `cambios_etapa` y `auditoria`.
+
+**El CRM no guarda el contenido de los mensajes** (TK-41): solo dirección y hora. Si el evento trae
+`texto`, responde 400 «texto ya no se acepta: el CRM no guarda el contenido de los mensajes», para que
+nadie lo mande creyendo que se guarda.
+
+Ejemplo:
+
+```json
+{"tipo":"mensaje_entrante","telefono":"0900000091","nombre_whatsapp":"Paciente Prueba",
+ "message_id":"wamid.ABC","en":"2026-10-10T10:00:00-05:00"}
+```
+
+## Respuestas
+
+| HTTP | Cuerpo | Cuándo |
+|---|---|---|
+| 200 | `{"ok":true,"duplicado":false}` | Guardado |
+| 200 | `{"ok":true,"duplicado":true}` | Ya estaba (reintento o mensaje repetido) |
+| 400 | `{"ok":false,"error":"…"}` | JSON inválido, `tipo` desconocido, falta un campo, fecha o teléfono no válidos, o llega `texto` |
+| 401 | `{"ok":false,"error":"No autorizado"}` | Sin `x-eli-secreto` o incorrecto |
+| 405 | `{"ok":false,"error":"Use POST"}` | Otro método |
+| 500 | `{"ok":false,"error":"…"}` | Fallo interno; queda una fila en `errores_integracion` (origen `eli`) con el tipo y los ids, **sin teléfono** |
+
+## Probar en local
+
+Validación del contrato (sin base, datos inventados):
+
+```bash
+node --test supabase/functions/eli-evento/validar.test.ts   # Node 22.18+ (o: deno test …)
+```
+
+
+```bash
+cp supabase/functions/.env.example supabase/functions/.env   # y poner un secreto largo
+supabase functions serve --env-file supabase/functions/.env
+curl -i -X POST http://127.0.0.1:55321/functions/v1/eli-evento \
+  -H "x-eli-secreto: $ELI_EVENTO_SECRETO" \
+  -d '{"tipo":"mensaje_entrante","telefono":"0900000091","message_id":"wamid.prueba1"}'
+```
+
+Solo números claramente falsos (`5939000000xx`). En el proyecto remoto el secreto se pone con
+`supabase secrets set ELI_EVENTO_SECRETO=…` (TK-12) y el mismo valor en la credencial de n8n.

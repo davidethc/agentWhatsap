@@ -1,0 +1,84 @@
+import { eq } from "drizzle-orm";
+import { getDb, schema } from "@/lib/db";
+import { mediaDirStatus } from "@/server/media-dir";
+import { leerConfigDespacho } from "@/server/brains/config";
+import { iniciarWorker, tanda } from "@/server/dispatch/worker";
+
+/**
+ * 008 — Aviso al arranque si MEDIA_DIR no es escribible. Sin esto, el primer
+ * síntoma era un 500 al subir el logo o el icono, o adjuntos entrantes "no
+ * disponibles" (se reintentan al abrirlos, pero solo mientras Meta los
+ * conserve), con el EACCES enterrado en el log de un request. Se prueba
+ * escribiendo de verdad (lo mismo que hará saveMediaFile) y nunca tumba el
+ * arranque: el resto del CRM funciona sin adjuntos.
+ *
+ * El sondeo vive en `server/media-dir.ts` y es el mismo que `/api/health`
+ * expone como `mediaWritable` (#82): este resultado queda cacheado y el
+ * healthcheck lo reutiliza en vez de volver a escribir.
+ */
+export async function checkMediaDir(): Promise<void> {
+  const media = await mediaDirStatus();
+  // Sin entorno válido no hay nada que sondear: lo reporta, con detalle, el
+  // primer getEnv() de la app.
+  if (!media || media.writable) return;
+  console.error(
+    `[boot] MEDIA_DIR=${media.dir} no es escribible (${media.code}): los adjuntos entrantes, el logo y el icono NO se van a poder guardar. ` +
+      "En Docker: monta un volumen persistente en /data (la imagen ya usa /data/media) y arranca el contenedor como root —el default—, " +
+      "que el entrypoint le da el volumen al usuario de la app. Fuera de Docker: apunta MEDIA_DIR a un directorio escribible."
+  );
+}
+
+/**
+ * Limpieza al arranque (FR-034): corridas del Laboratorio que quedaron
+ * "running" tras un reinicio → fallidas. Solo corre en el runtime Node.
+ */
+export async function cleanupOrphanRuns(): Promise<void> {
+  try {
+    const db = getDb();
+    const updated = await db
+      .update(schema.agentTestRun)
+      .set({
+        status: "failed",
+        error: "Interrumpida por un reinicio del servidor",
+        finishedAt: new Date(),
+      })
+      .where(eq(schema.agentTestRun.status, "running"))
+      .returning({ id: schema.agentTestRun.id });
+    if (updated.length > 0) {
+      console.log(
+        `[boot] ${updated.length} corrida(s) del Laboratorio huérfana(s) marcada(s) como fallida(s)`
+      );
+    }
+  } catch (err) {
+    // La BD puede no estar lista aún (migraciones corren antes del server).
+    console.error("[boot] limpieza de corridas huérfanas falló:", err);
+  }
+}
+
+/**
+ * 021 — Reanuda el despacho al arrancar. Sin esto, un turno que quedó
+ * pendiente o a medio reintentar cuando el contenedor se reinició esperaría a
+ * que llegara OTRO mensaje para que alguien encendiera el worker.
+ *
+ * Solo con el despacho activo: una instancia sin cerebro no barre nada. Y lo
+ * mal configurado se dice aquí una vez, además de en la tarjeta «Quién
+ * responde»: es el log que alguien mira cuando el agente no contesta.
+ */
+export function resumeDispatch(): void {
+  const config = leerConfigDespacho();
+  if (config.active) {
+    iniciarWorker();
+    void tanda();
+    console.log(`[boot] despacho al cerebro activo → ${config.host}`);
+    return;
+  }
+  if (config.problem === "url") {
+    console.error(
+      "[boot] BRAIN_DISPATCH_URL no es una URL http:// o https:// válida (sin usuario:clave): el despacho al cerebro queda INACTIVO."
+    );
+  } else if (config.problem === "sin_llave") {
+    console.error(
+      "[boot] BRAIN_DISPATCH_URL está definida pero falta BOT_API_KEY (mínimo 16 caracteres): el despacho al cerebro queda INACTIVO."
+    );
+  }
+}

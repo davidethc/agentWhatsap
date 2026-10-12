@@ -11,6 +11,7 @@ dudas, busca un horario libre y deja la cita anotada en Google Calendar. Lo que 
 | | |
 |---|---|
 | **En producción** | Workflow `version4` como **Eli**: conversación natural, sin botones, con los datos reales de EliDental ([workflow](workflows/eli-version4.json)) |
+| **Eli Panel (CRM)** | Panel de la doctora (resumen, tablero de pacientes, fichas y citas) sobre Supabase, conectado a Eli con avisos sin esperar y **sin guardar el contenido de los mensajes**. Probado con datos inventados; falta conectarlo al `version4` real y Google Calendar ([guía](docs/crm/guia-doctora.md)) |
 | **Siguiente paso** | Seguimientos a quien deja de responder y recordatorios de cita ([qué falta](docs/conversacion.md)) |
 | **Piezas** | WhatsApp · Kapso · n8n 2.41.5 (queue mode) · Gemini · Google Calendar · PostgreSQL · Redis · Docker · ngrok |
 
@@ -49,6 +50,15 @@ Qué leer según lo que necesites. Cada documento tiene **un solo tema**, sin re
 | [docs/instalacion-windows.md](docs/instalacion-windows.md) | Lo mismo, paso a paso en **Windows** 10/11 |
 | [docs/operacion.md](docs/operacion.md) | El día a día: encender todo **después de reiniciar**, revisar que funcione, publicar cambios, respaldar, restaurar y problemas conocidos |
 | [docs/seguridad.md](docs/seguridad.md) | Reglas para no filtrar contraseñas ni datos de pacientes |
+
+### Eli Panel (CRM)
+
+| Documento | Para qué sirve |
+|---|---|
+| [docs/crm/guia-doctora.md](docs/crm/guia-doctora.md) | **Para la doctora.** Cómo entrar, el resumen, el tablero, la ficha, nuevo paciente y citas, sin tecnicismos |
+| [docs/crm/operacion.md](docs/crm/operacion.md) | **Para quien administra.** Arrancar en local, migraciones, copias de seguridad y qué hacer si el CRM cae |
+| [docs/crm/eli-crm.md](docs/crm/eli-crm.md) | Cómo se entera el CRM de lo que hace Eli (y por qué no guarda los mensajes) |
+| [docs/crm/](docs/crm/README.md) | Todo el proyecto: Spec, Plan, Tareas, informe de QA y decisiones |
 
 ### Para quien desarrolla
 

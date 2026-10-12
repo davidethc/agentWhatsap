@@ -11,6 +11,82 @@ Ecuador.
   nombre completo), cita movida y cita cancelada (leídas de los pasos del agente). Sin texto de mensajes.
   Si el CRM falla, Eli responde igual y el evento queda en `v4:crm:errores`. Plan y vuelta atrás:
   `docs/crm/integracion-version4.md` (rama `feat/crm`).
+- **Eli → CRM sincronizado: eventos `cita_movida` y `cita_cancelada` (pedido del usuario).** En la
+  misma migración `20261012000100`: mover cambia la hora de la cita (o la crea si el CRM no la
+  conocía) y cancelar la pasa a cancelada (o no hace nada si no existe). Las dos son idempotentes, quedan
+  en la auditoría con actor `eli` y no llevan contenido de mensajes. `eli-evento/validar.ts` acepta los
+  dos tipos y tiene pruebas (`validar.test.ts`, 11). Además, `fin` anterior a `inicio` ahora responde
+  400 en vez de 500. pgTAP `12_cita_movida_cancelada` (24). Contrato en `docs/crm/plan.md` §5.
+- **Eli Panel: nombre completo desde la cita (pedido del usuario).** Migración
+  `20261012000100_nombre_completo_desde_cita.sql`: cuando Eli agenda (`cita_reservada` con `nombre`),
+  el titular pasa del nombre de WhatsApp (o «Sin nombre») al nombre completo, auditado con actor
+  `eli`. Un nombre editado a mano en el panel no se pisa. Prueba pgTAP `11_nombre_desde_cita`.
+- **Eli Panel: contraseñas más fuertes (QA S-3).** `supabase/config.toml`: mínimo 12 caracteres con
+  minúsculas, mayúsculas y dígitos; el registro público sigue cerrado. La contraseña de la doctora de
+  prueba del seed pasa a `EliPanel-local-2026`, porque la anterior no cumplía. En la nube lo aplica el
+  orquestador con `supabase config push`, revisando antes la diferencia
+  ([tk-12-proyecto-remoto.md](docs/crm/tk-12-proyecto-remoto.md) §3).
+- **Eli Panel: revisión de seguridad y datos de salud (apoyo a TK-39 de QA).** `db lint` sin
+  hallazgos en `public`/`private`; RLS en las 11 tablas; `anon` sin privilegios; `security definer`
+  con `search_path` fijo; seed solo con datos inventados. Hallazgo corregido en la migración
+  `20261011000300_anon_sin_execute_por_defecto.sql`: las funciones futuras de `public` y `private`
+  ya no quedan ejecutables por `anon`. Prueba pgTAP `10_seguridad`. `docs/crm/backup-crm.md` explica
+  cómo correr la copia contra la nube.
+- **Eli Panel: permisos por columna (TK-39).** Migración `20261011000200_permisos_por_columna.sql`:
+  las funciones del panel pasan a `security definer`; el personal solo edita directo los datos básicos
+  y el consentimiento del paciente, los datos clínicos y el horario; etapas, citas y conversaciones
+  solo por funciones; `anon` sin privilegios en `public`. Prueba pgTAP `09_permisos` y 01/02/03
+  adaptadas. README de `supabase/`: 21 pacientes (20 + 1 dependiente) y 3 sin teléfono.
+- **Eli Panel: el CRM no guarda el contenido de los mensajes (TK-41).** Migración
+  `20261011000100_mensajes_sin_texto.sql` (borra `mensajes.texto`; `registrar_evento_eli` rechaza
+  `texto`), `eli-evento` responde 400 si llega `texto`, seed, pgTAP, tipos y capa de datos del panel
+  sin contenido.
+- **Eli Panel (CRM), fase de planificación con SDD** ([docs/crm/](docs/crm/README.md)): hub en
+  Notion como fuente de verdad (constitución, spec en borrador con 14 historias, clarificaciones,
+  flujos y tablero de tareas), `CLAUDE.md` con las reglas del proyecto, 6 agentes en
+  `.claude/agents/` (planificador, orquestador y 4 compañeros en paneles de tmux), permisos que
+  bloquean `git push` y `.env`, y skills de skills.sh instaladas en el proyecto. Se descartó Twenty CRM.
+- **Eli Panel: Spec, Plan y Tareas aprobados** (10-oct-2026, puntos de control 1 y 2): [spec.md](docs/crm/spec.md), [plan.md](docs/crm/plan.md) y [tasks.md](docs/crm/tasks.md) (TK-1 a TK-40). ADR [0008](docs/adr/0008-crm-supabase-eventos.md) (Supabase aparte + eventos de Eli sin esperar), [0009](docs/adr/0009-sync-google-calendar.md) (Calendar desde Supabase con cuenta de servicio), [0010](docs/adr/0010-netlify.md) (Netlify en vez de Vercel Hobby) y [0011](docs/adr/0011-reglas-embudo-en-la-base.md) (reglas del embudo en la base).
+- **Guía de Google Calendar (TK-14)** ([docs/crm/google-calendar.md](docs/crm/google-calendar.md)): paso a paso sin tarjeta para crear la cuenta de servicio, la clave JSON y un calendario de PRUEBA; `scripts/gcal-prueba.mjs` (lectura de prueba, solo Node) y `.gitignore` para que la clave nunca entre a git.
+- **Informe de QA del Eli Panel, ronda 1** ([docs/crm/qa.md](docs/crm/qa.md)): TK-1 a TK-11, TK-14
+  (solo la guía), TK-21 y TK-22 pasan (216 pruebas pgTAP, `eli-evento` por curl, lint/typecheck/build
+  y login de la doctora de prueba) y sin secretos ni datos reales en git; 5 observaciones.
+- **Copia de la base del Eli Panel (TK-13)**: `scripts/backup-crm.sh` (`supabase db dump` de roles,
+  esquema y datos, fechada, comprimida, fuera del repo en `~/EliPanel-copias`, con `CRM_DB_URL` por
+  variable de entorno) y [docs/crm/backup-crm.md](docs/crm/backup-crm.md) con la restauración;
+  `.gitignore` cubre las copias. Paso a paso de TK-12 para aprobar:
+  [docs/crm/tk-12-proyecto-remoto.md](docs/crm/tk-12-proyecto-remoto.md).
+- **Integración Eli → CRM en n8n (TK-18, TK-19)**: sub-workflow `Eli → CRM` ([workflows/eli-crm.json](workflows/eli-crm.json), inactivo) y una COPIA inactiva de version4 con 3 ramas sin esperar ([workflows/pruebas/eli-version4-crm-copia.json](workflows/pruebas/eli-version4-crm-copia.json), generada con `scripts/crm-copia-version4.jq`). `version4` real sin cambios. La copia se regeneró el 11-oct-2026 sobre el `version4` de `main` 4dbbf07 (medios con Gemini, respaldo OpenRouter, fechas de Ecuador, seguimientos): `mensaje_entrante` se cuelga tras `¿Mensaje nuevo?` leyendo `Leer webhook`. Plan exacto de TK-20 (sin ejecutar) en [docs/crm/integracion-version4.md](docs/crm/integracion-version4.md); arnés de pruebas `scripts/crm-arnes-copia.jq`.
+- **Integración Eli → CRM en n8n (TK-18, TK-19)**: sub-workflow `Eli → CRM` ([workflows/eli-crm.json](workflows/eli-crm.json), inactivo) y una COPIA inactiva de version4 con 3 ramas sin esperar ([workflows/pruebas/eli-version4-crm-copia.json](workflows/pruebas/eli-version4-crm-copia.json), generada con `scripts/crm-copia-version4.jq`). `version4` real sin cambios. La copia se regeneró el 11-oct-2026 sobre el `version4` de `main` 4dbbf07 (medios con Gemini, respaldo OpenRouter, fechas de Ecuador, seguimientos): `mensaje_entrante` se cuelga tras `¿Mensaje nuevo?` leyendo `Leer webhook`. Plan exacto de TK-20 (sin ejecutar) en [docs/crm/integracion-version4.md](docs/crm/integracion-version4.md); arnés de pruebas `scripts/crm-arnes-copia.jq`. **Cambios de agenda (12-oct-2026):** nueva rama «CRM: armar cambios de agenda» que lee los `intermediateSteps` del agente y manda `cita_movida` / `cita_cancelada` cuando Eli usa `mover_cita` / `cancelar_cita` (solo las llamadas que no fallaron); el filtro `jq` ahora es idempotente (vale sobre `main` o sobre el `version4` vivo) y la copia tiene 55 nodos.
+- **Documentación final del Eli Panel (TK-40)**, sin la parte de Google Calendar (queda como «Pendiente»):
+  [guía para la doctora](docs/crm/guia-doctora.md) (entrar, resumen, tablero, ficha, nuevo paciente y citas, sin
+  tecnicismos), [guía de operación](docs/crm/operacion.md) (arrancar en local, migraciones, `backup-crm.sh`, qué
+  hacer si el CRM cae y cómo recuperar los avisos pendientes de Redis), [cómo funciona Eli → CRM](docs/crm/eli-crm.md)
+  (con diagrama, sin texto de mensajes), `crm/README.md` reescrito, README de `docs/crm` con el estado del
+  proyecto y enlaces en el README y la GUIA.
+- **QA del Eli Panel, ronda 5** ([docs/crm/qa.md](docs/crm/qa.md)): TK-39 (seguridad y datos de salud),
+  TK-36 (panel HU-1 a HU-9) y TK-37 (Eli → CRM con la copia inactiva y el arnés, incluido el CRM caído)
+  pasan. Revisión del código del panel: un defecto menor (F-5, botón «Vincular» en citas no agendadas) y
+  recomendaciones antes de publicar (cabeceras de seguridad, `/salir` por POST, contraseñas del remoto).
+- **QA del Eli Panel, ronda 4** ([docs/crm/qa.md](docs/crm/qa.md)): TK-25, TK-26, TK-28, TK-30 y TK-34
+  pasan con Playwright (números iguales a SQL, búsqueda y tiempo real con curl a `eli-evento`, datos
+  clínicos solo con consentimiento, vista de semana y vincular citas). Hallazgo F-5: «Vincular» aparece en
+  citas no agendadas y falla. El login (F-1) no se reprodujo en 15 intentos, pero sigue sin arreglo.
+- **QA del Eli Panel, ronda 3** ([docs/crm/qa.md](docs/crm/qa.md)): TK-24, TK-27, TK-29, TK-32 y TK-33
+  pasan con Playwright contra Supabase local (asistencia con «volver en», kanban con motivo de Perdido,
+  ficha con auditoría, duplicado y dependiente, citas con aviso de horario y choque). Pendientes: login
+  intermitente (F-1) y pgTAP hasta integrar `feat/crm-datos` (F-2).
+- **QA del Eli Panel, ronda 2** ([docs/crm/qa.md](docs/crm/qa.md)): TK-13, TK-18, TK-19 y TK-23 pasan
+  (backup contra la base local con checksums, workflows inactivos y sin secretos, `version4` real sin
+  cambios, 43 pruebas del panel). Aviso: la copia de `version4` hay que regenerarla sobre el `version4`
+  de `main` antes de TK-20.
+- **El CRM no guarda ni muestra el contenido de los mensajes (TK-41)** — decisión del usuario del
+  11-oct-2026, por privacidad ([ADR 0012](docs/adr/0012-crm-sin-contenido-de-mensajes.md)): el contrato
+  Eli → CRM y la tabla `mensajes` quedan sin `texto` (sigue registrándose que hubo mensaje, para el
+  embudo); la HU-7 «conversación con Eli» y TK-31 quedan pospuestas. Integrado y verificado por QA
+  (ronda 3, [docs/crm/qa.md](docs/crm/qa.md)): columna borrada, `registrar_evento_eli` y `eli-evento`
+  rechazan `texto`, los nodos CRM de n8n no lo mandan y la ficha del panel no muestra conversación.
+- **Privacidad (TK-41): el CRM no guarda el contenido de los mensajes, por ahora.** Los eventos `mensaje_entrante` y `mensaje_saliente` ya no llevan `texto` (solo `tipo`, `telefono`, `nombre_whatsapp`, `message_id` o `execution_id` y `en`), y `Eli → CRM` descarta `texto` aunque alguien lo mande, tanto en el POST como en la lista Redis `v4:crm:errores`. La base no cambia: `texto` sigue siendo opcional y queda vacío.
 - **Modelo de respaldo gratis**: si Gemini falla (cuota agotada, caída), el agente responde con
   OpenRouter `nvidia/nemotron-3-super-120b-a12b:free` (50 peticiones/día sin crédito). Si fallan los dos,
   se envía el aviso con el número del consultorio. `google/gemma-4-31b-it:free` se descartó: su cupo
@@ -30,8 +106,6 @@ Ecuador.
   estado en Redis (`v4:seg:<tel>`) y detecta si se agendó.
 - Prompt: usar el nombre del paciente, no insistir ante «no gracias» y continuar si el paciente elige un
   turno de un seguimiento.
-
-### Agregado
 - Guía de la reunión de venta con EliDental ([docs/comercial/reunion-elidental.md](docs/comercial/reunion-elidental.md)).
 
 ### Cambiado

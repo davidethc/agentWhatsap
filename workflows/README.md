@@ -16,6 +16,14 @@ personales: las credenciales van solo por nombre, y el calendario y el número u
 | [`legacy/v2-fuentes/`](legacy/v2-fuentes/) | Histórico | Scripts que generaron la v2 |
 | [`legacy/version4-inicial.sdk.ts`](legacy/version4-inicial.sdk.ts) | Histórico | Fuente original de version4 con el Workflow SDK de n8n (OpenRouter + Redis Cloud). **La fuente de verdad es `eli-version4.json`** |
 
+## Conectar el CRM a `version4` (TK-19/TK-20)
+
+La copia de prueba se regenera **siempre sobre el `version4` de `main`** (hoy 4dbbf07) con
+`jq -f scripts/crm-copia-version4.jq /Users/d/agentWhatsap/workflows/eli-version4.json`. Se prueba con
+el arnés `scripts/crm-arnes-copia.jq` (nodos simulados, sin tocar Kapso ni Gemini). El plan para
+aplicarlo al `version4` real, con respaldo, reversa y verificación, está en
+[`docs/crm/integracion-version4.md`](../docs/crm/integracion-version4.md).
+
 ## Privacidad del CRM (TK-41)
 
 Por ahora el CRM **no guarda ni muestra el contenido de los mensajes**. Los eventos `mensaje_entrante`

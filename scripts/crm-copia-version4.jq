@@ -26,10 +26,14 @@ def llamar(id; nombre; p): {
 (pos("¿Mensaje nuevo?")) as $p1
 | (pos("Responder por WhatsApp")) as $p2
 | (pos("Crear evento")) as $p3
-| .id = "Zv4CopiaCrmTk19001"
-| .name = "version4 · COPIA CRM (prueba, inactiva)"
-| (.nodes[] | select(.name == "Webhook Kapso") | .parameters.path) = "copia-crm-tk19-no-usar"
-| (.nodes[] | select(.name == "Webhook Kapso") | .webhookId) = "c0b1a000-0000-4000-8000-000000000019"
+# Con CRM_REAL=1 (solo TK-20, sobre un export del version4 VIVO) no se renombra nada: mismo id, mismo
+# nombre y mismo webhook. Sin esa variable sale la copia de prueba (otro id, otro nombre, otro webhook).
+| if ($ENV.CRM_REAL // "") == "1" then .
+  else (.id = "Zv4CopiaCrmTk19001"
+    | .name = "version4 · COPIA CRM (prueba, inactiva)"
+    | (.nodes[] | select(.name == "Webhook Kapso") | .parameters.path) = "copia-crm-tk19-no-usar"
+    | (.nodes[] | select(.name == "Webhook Kapso") | .webhookId) = "c0b1a000-0000-4000-8000-000000000019")
+  end
 | .nodes += [
     codigo("c19a0001-0000-4000-8000-000000000001"; "CRM: armar mensaje_entrante";
       "// Evento para Eli → CRM. Por ahora NO lleva el texto del mensaje (privacidad). Si algo falta, no manda nada.\n// Se lee de «Leer webhook» (está justo antes de ¿Mensaje nuevo?): no espera la cadena de medios con Gemini.\nconst n = $('Leer webhook').first().json;\nif (!n.to || !n.message_id) return [];\nreturn [{ json: { tipo: 'mensaje_entrante', telefono: n.to, nombre_whatsapp: n.nombre || undefined, message_id: n.message_id, en: new Date().toISOString() } }];";

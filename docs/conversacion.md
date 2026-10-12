@@ -28,7 +28,7 @@ flowchart TB
   Q -- "¿a qué hora era mi cita? · cambiar · cancelar" --> C["MI CITA<br>Busca su cita, la mueve<br>o la cancela, ofreciendo reagendar"]
   Q -- "¿eres un bot?" --> B["HONESTIDAD<br>Es la asistente virtual de EliDental;<br>la doctora atiende en persona"]
   Q -- "groserías · spam · nada que ver" --> G["LÍMITE<br>Una respuesta breve y respetuosa;<br>si sigue, no insiste"]
-  Q -- "no se entiende · audio" --> X["ACLARAR<br>Pide que lo escriba<br>o lo explique con otras palabras"]
+  Q -- "no se entiende" --> X["ACLARAR<br>Pide que lo escriba<br>o lo explique con otras palabras"]
 
   S --> N(["Siguiente paso:<br>llevar a la cita"])
   I --> N
@@ -69,7 +69,8 @@ Son ejemplos del tono, no textos fijos: la IA los adapta a cada conversación.
 | «¿eres un bot?» | Soy Eli, la asistente virtual de EliDental 😊 Le ayudo con citas e información; la Dra. Viviana Sucunuta le atiende en persona en la consulta. ¿En qué le ayudo? |
 | «¿es normal que me sangre después de la extracción?» | Eso lo debe revisar la doctora en consulta; si quiere, le agendo una valoración. Si el sangrado es abundante o no para, acuda a emergencias. |
 | Grosería o insulto | Entiendo que pueda estar molesto. Estoy aquí para ayudarle con su cita cuando lo necesite. (Si insiste, no responde más al insulto). |
-| Audio | Disculpe, por aquí no puedo escuchar audios. ¿Me lo podría escribir? |
+| Nota de voz | Eli la entiende (Kapso la transcribe) y responde normal. Solo si no se pudo transcribir: «Disculpe, no pude escuchar su audio. ¿Me lo podría escribir?» |
+| Foto o radiografía | Gemini la describe en pocas frases; Eli entiende qué necesita (p. ej. comprobante o diente roto), no diagnostica y ofrece agendar: la doctora lo revisa en la consulta. |
 
 ## 2. Cómo busca horarios
 

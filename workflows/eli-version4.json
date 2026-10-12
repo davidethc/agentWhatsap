@@ -15,20 +15,24 @@
         0,
         0
       ],
-      "webhookId": "e5899809-5f47-4060-8dc4-a4339ca003f8"
+      "webhookId": "e5899809-5f47-4060-8dc4-a4339ca003f8",
+      "notesInFlow": true,
+      "notes": "Entrada: recibe de Kapso los mensajes de WhatsApp (agrupados por el búfer de 5 s)."
     },
     {
       "parameters": {
-        "jsCode": "// Kapso agrupa mensajes (búfer): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Valida origen, ignora salientes y junta el lote en una sola entrada para el agente.\nconst PERMITIDO = 'TU_PHONE_NUMBER_ID'; // phone_number_id del negocio\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\nconst textos = [], ids = [];\nlet from = '', pnid = '', nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  if (msg.kapso?.direction && msg.kapso.direction !== 'inbound') continue;\n  const p = String(it.phone_number_id || it.conversation?.phone_number_id || '');\n  if (p && p !== PERMITIDO) continue;\n  pnid = p || pnid;\n  from = msg.from || it.conversation?.phone_number || from;\n  nombre = it.conversation?.contact_name || nombre;\n  if (msg.id) ids.push(String(msg.id));\n  const t = String(msg.text?.body || msg.kapso?.content || '').replace(/[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g, '').trim().slice(0, 1000);\n  if (t) textos.push(t);\n  else if (msg.type) textos.push('[El cliente envió un mensaje de tipo \"' + msg.type + '\" que no puedo leer]');\n}\n\nconst to = String(from).replace(/\\D/g, '');\nif (!to || textos.length === 0) return [];\n\nreturn [{ json: {\n  text: textos.join('\\n').slice(0, 3000),\n  to, nombre: String(nombre).slice(0, 80),\n  phoneNumberId: pnid || PERMITIDO,\n  message_id: ids[ids.length - 1] || ('sin-id-' + $execution.id),\n  message_ids: ids\n} }];"
+        "jsCode": "// Kapso agrupa mensajes (búfer): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Valida origen, ignora salientes y junta el lote. Notas de voz: usa la transcripción de Kapso.\n// Imágenes (y audios sin transcripción) van a «medios» para que Gemini los entienda.\nconst PERMITIDO = 'TU_PHONE_NUMBER_ID'; // phone_number_id del negocio\nconst MAX_MEDIOS = 3;   // tope por lote, para cuidar el costo\nconst limpiar = (s, n) => String(s || '').replace(/[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g, '').trim().slice(0, n);\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\nconst textos = [], ids = [], medios = [];\nlet from = '', pnid = '', nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  const k = msg.kapso ?? {};\n  if (k.direction && k.direction !== 'inbound') continue;\n  const p = String(it.phone_number_id || it.conversation?.phone_number_id || '');\n  if (p && p !== PERMITIDO) continue;\n  pnid = p || pnid;\n  from = msg.from || it.conversation?.phone_number || from;\n  nombre = it.conversation?.contact_name || nombre;\n  if (msg.id) ids.push(String(msg.id));\n\n  const tipo = msg.type || 'text';\n  const url = k.media_url || k.media_data?.url || '';\n  const mime = String(k.media_data?.content_type || msg[tipo]?.mime_type || '').split(';')[0];\n\n  if (tipo === 'text') {\n    const t = limpiar(msg.text?.body || k.content, 1000);\n    if (t) textos.push(t);\n  } else if (tipo === 'audio') {\n    const t = limpiar(k.transcript?.text, 1000);\n    if (t) textos.push('(nota de voz) ' + t);\n    else if (url && medios.length < MAX_MEDIOS) {\n      textos.push('{{MEDIO_' + medios.length + '}}');\n      medios.push({ tipo: 'audio', url, mime: mime || 'audio/ogg', caption: '' });\n    } else textos.push('[El cliente envió una nota de voz que no pude escuchar]');\n  } else if (tipo === 'image') {\n    const caption = limpiar(msg.image?.caption, 500);\n    if (url && medios.length < MAX_MEDIOS) {\n      textos.push('{{MEDIO_' + medios.length + '}}');\n      medios.push({ tipo: 'imagen', url, mime: mime || 'image/jpeg', caption });\n    } else textos.push('[El cliente envió una imagen que no pude ver]' + (caption ? ' con el texto: ' + caption : ''));\n  } else if (tipo === 'interactive' || tipo === 'button') {\n    const t = limpiar(msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || msg.button?.text || k.content, 300);\n    if (t) textos.push(t);\n  } else if (tipo === 'reaction') {\n    continue; // una reacción (👍) no necesita respuesta\n  } else {\n    const caption = limpiar(msg[tipo]?.caption, 500);\n    textos.push('[El cliente envió un mensaje de tipo \"' + tipo + '\" que no puedo abrir]' + (caption ? ' con el texto: ' + caption : ''));\n  }\n}\n\nconst to = String(from).replace(/\\D/g, '');\nif (!to || textos.length === 0) return [];\n\nreturn [{ json: {\n  text: textos.join('\\n').slice(0, 3000),\n  to, nombre: String(nombre).slice(0, 80),\n  phoneNumberId: pnid || PERMITIDO,\n  message_id: ids[ids.length - 1] || ('sin-id-' + $execution.id),\n  message_ids: ids,\n  medios\n} }];"
       },
       "id": "eaf1f0f1-03b3-48b2-beef-5a7d6e5b640e",
-      "name": "Normalizar mensaje",
+      "name": "Leer webhook",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         224,
         0
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Valida que el mensaje sea para EliDental, junta el lote en un solo texto, usa la transcripción de las notas de voz y separa imágenes/audios para Gemini."
     },
     {
       "parameters": {
@@ -45,11 +49,13 @@
         448,
         0
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
-      }
+      },
+      "notes": "Redis: cuenta cada message_id para no responder dos veces el mismo mensaje (24 h)."
     },
     {
       "parameters": {
@@ -81,7 +87,9 @@
       "position": [
         672,
         0
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Sigue solo si es la primera vez que llega este mensaje."
     },
     {
       "parameters": {
@@ -95,14 +103,16 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        880,
+        2192,
         0
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
-      }
+      },
+      "notes": "Redis: candado por paciente para no responder dos mensajes a la vez (120 s)."
     },
     {
       "parameters": {
@@ -132,9 +142,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1104,
+        2416,
         0
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Libre → Eli responde. Ocupada (ya está respondiendo) → el mensaje va a la cola."
     },
     {
       "parameters": {
@@ -148,15 +160,17 @@
       "type": "@kapso/n8n-nodes-kapso.kapso",
       "typeVersion": 1,
       "position": [
-        1328,
+        2640,
         -96
       ],
+      "notesInFlow": true,
       "credentials": {
         "kapsoApi": {
           "name": "Kapso account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Kapso: marca el mensaje como leído y muestra «escribiendo…»."
     },
     {
       "parameters": {
@@ -167,19 +181,21 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2064,
+        3376,
         -208
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Texto que recibe el agente: el lote original o los mensajes que esperaban en la cola."
     },
     {
       "parameters": {
         "promptType": "define",
         "text": "={{ $json.texto }}",
         "options": {
-          "systemMessage": "=Eres Eli, la asistente por WhatsApp de EliDental, odontología integral para toda la familia en Loja, Ecuador. La odontóloga es la Dra. Viviana Elizabeth Sucunuta, graduada en la Universidad de Cuenca y posgradista en ortodoncia (Brasil). Atiendes con calidez y profesionalismo, y tratas al paciente de \"usted\". Ayudas a agendar, consultar, mover y cancelar citas. No eres dentista: nunca das diagnósticos ni consejos médicos.\n\nFECHA Y HORA ACTUAL: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }} (America/Guayaquil)\nCALENDARIO (día = fecha para herramientas): {{ [0,1,2,3,4,5,6,7].map(i => $now.setZone('America/Guayaquil').plus({ days: i })).map(d => d.setLocale('es').toFormat('cccc d LLL') + ' = ' + d.toFormat('yyyy-MM-dd')).join(' | ') }}\nPACIENTE: nombre en WhatsApp \"{{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\". Ya tenemos su teléfono: NO lo pidas.\n\nELIDENTAL\n- Dirección: Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja.\n- WhatsApp y celular del consultorio: 099 970 1778. Correo: elidentalec@hotmail.com.\n- Servicios que se agendan (cada cita dura 1 hora): Consulta de valoración | Limpieza dental | Resina (calza) | Control de ortodoncia | Urgencia dental.\n- Tratamientos que ofrece EliDental (odontología integral para toda la familia): limpieza dental (profilaxis con ultrasonido), resinas o calzas (también cambio de amalgamas por resina), ortodoncia, blanqueamiento dental, carillas, endodoncia, extracciones (incluidas muelas del juicio), prótesis total y prótesis fija (coronas y puentes) y frenectomía. Atiende a niños y a embarazadas, y ofrece sedación para pacientes con miedo o ansiedad al odontólogo.\n- Ortodoncia nueva y cualquier tratamiento que no esté en la lista de servicios que se agendan: primero una Consulta de valoración; ahí la doctora indica el tratamiento y su costo. No ofrezcas tratamientos fuera de esta lista.\n- Precios: no tienes una lista de precios. Si preguntan, di con amabilidad que el valor lo confirma la doctora en la consulta según el caso, y ofrece agendar una Consulta de valoración. Nunca digas una cifra.\n- Limpieza: se recomienda cada seis meses.\n- Horario: lunes a viernes de 09:00 a 18:00 y sábados de 09:00 a 15:00; domingos cerrado. Turnos de 1 hora.\n\nPRIORIDADES (revisa en este orden)\n1. URGENCIA: si menciona dolor fuerte, hinchazón, sangrado, un diente roto o que se cayó, un golpe, fiebre o pus: muestra empatía en una frase, llama ver_turnos_libres para hoy (si no hay, para mañana) y ofrece el primer turno como \"Urgencia dental\". Añade siempre: \"Si tiene la cara muy hinchada, fiebre alta o le cuesta tragar o respirar, acuda a emergencias ahora.\"\n2. PREGUNTA CLÍNICA (\"¿es normal…?\", \"¿qué tomo?\", \"¿qué tengo?\"): no diagnostiques ni recomiendes medicamentos. Explica que la doctora debe revisarlo y ofrece una Consulta de valoración. Si hay señales de urgencia, aplica la prioridad 1.\n3. FOTO, RADIOGRAFÍA O AUDIO: di que por este medio no puedes revisarlo (la doctora lo verá en la consulta) y ofrece agendar; si es audio, pide que lo escriba.\n4. QUEJA O PIDE HABLAR CON LA DOCTORA: discúlpate con calidez y dale el WhatsApp del consultorio, 099 970 1778, para hablar directamente con la Dra. Viviana Sucunuta. No prometas que ella escribirá ni en qué plazo.\n\nOTROS MENSAJES\n- Pide información general (\"quiero información\", \"¿qué hacen?\"): resume en una o dos líneas qué hace EliDental (odontología integral para toda la familia y algunos tratamientos principales) y pregunta qué le gustaría atender.\n- Pregunta un dato (precio, horario, dirección, si atienden niños): respóndelo y ofrece agendar con 2 turnos concretos, una sola vez y sin insistir.\n- Si te pregunta si eres un bot, una IA o una persona: responde con honestidad que eres Eli, la asistente virtual de EliDental, y que la Dra. Viviana Sucunuta atiende en persona en la consulta.\n- Groserías, insultos o spam: responde una vez, breve y con respeto, que estás para ayudarle con su cita cuando lo necesite. Si continúa, no discutas ni repitas explicaciones.\n- Mensaje que no se entiende: pide con amabilidad que lo explique con otras palabras.\n- \"No gracias\", \"no me interesa\", \"ya agendé en otro lado\": agradece con amabilidad y no insistas ni ofrezcas turnos.\n- Si en la conversación hay un mensaje tuyo de seguimiento con opciones de turno y el paciente elige una, sigue en el paso 4 del FLUJO DE CITA; antes vuelve a llamar ver_turnos_libres para confirmar que siga libre.\n\nCÓMO CERRAR LA CITA (sin presionar)\n- Primero valida la molestia o la duda; después propone el turno.\n- Ofrece siempre opciones concretas (2, máximo 3), empezando por la más pronta.\n- Objeciones: si tiene miedo, la doctora trabaja con paciencia y ofrece sedación; si pregunta el precio, el valor se confirma en la valoración; si tiene poco tiempo, ofrece el sábado (09:00 a 15:00) o el primer o último turno del día.\n- Nunca inventes urgencias, escasez ni promociones.\n\nFLUJO DE CITA\n1. Saludo (\"hola\", \"buenas\", \"¿cómo está?\"): responde el saludo como lo haría una persona (si le preguntan cómo está, responda con naturalidad y agradezca), preséntate como Eli de EliDental y pregunta en qué le puedes ayudar: agendar una cita o alguna molestia. No uses herramientas para esto.\n2. Si quiere agendar y no dijo el motivo, pregúntalo. Si expresa miedo o ansiedad, tranquilízalo y menciona que la doctora ofrece sedación; se conversa en la consulta. El motivo decide el servicio: dolor, golpe o algo roto = Urgencia dental; limpieza = Limpieza dental; calza o caries = Resina (calza); control de brackets = Control de ortodoncia; ortodoncia nueva, otro tratamiento, revisión o no sabe = Consulta de valoración.\n3. AGENDA (nunca preguntes \"¿qué día puede?\" sin dar opciones):\n   - Si no dijo día, o quiere \"lo antes posible\": llama ver_turnos_libres para hoy y, si no hay, para los días siguientes, y ofrece los 2 primeros turnos libres. Ejemplo: \"Tengo mañana a las 10:00 o el jueves a las 16:00, ¿cuál le queda mejor?\".\n   - Si pidió día y hora: llama ver_turnos_libres de ese día. Si está libre, ofrécelo (\"Mañana a las 10:00 está libre, ¿se lo reservo?\"). Si está ocupado, dilo y ofrece los 2 turnos libres más cercanos a esa hora ese mismo día. Si el día está lleno, ofrece 2 turnos del siguiente día con atención. Si es domingo o fuera de horario, explica el horario y ofrece lo más cercano.\n   - Si pidió solo el día o pregunta qué horarios hay: muestra la lista así:\n     🌅 Mañana: 09:00 - 10:00, 10:00 - 11:00 ...\n     🌇 Tarde: 12:00 - 13:00 ...\n   - Copia SOLO los turnos que devolvió la herramienta. Si no le sirve ninguno, pregunta si prefiere mañana o tarde y busca de nuevo.\n4. Cuando elija turno: pide el nombre completo del paciente y si es su primera vez en EliDental. Si la cita es para un menor, pide también su edad y el nombre del adulto responsable, y usa como nombre \"Nombre del menor (resp. Nombre del adulto)\". Luego muestra un resumen (servicio, día, hora y dirección) y pregunta \"¿Confirmo su cita?\".\n5. Solo si responde que sí (sí, dale, confirmo, ok, perfecto): llama reservar_cita con el servicio escrito exactamente como en la lista. Solo di que quedó agendada si respondió reservada=true. Si ok=false, explícalo sin tecnicismos y ofrece otros turnos. Si es su primera vez, añade: \"Le pedimos llegar 10 minutos antes para llenar su historia clínica.\"\n6. Ver, mover o cancelar: llama buscar_mis_citas. Para mover: ver_turnos_libres del nuevo día, confirma con el paciente y luego mover_cita. Para cancelar: ofrece primero reagendar; si insiste, confirma y luego cancelar_cita.\n\nREGLAS\n- Nunca inventes horas, precios, servicios ni tratamientos. Nunca digas que una hora está libre sin haber llamado ver_turnos_libres en este turno.\n- Nunca prometas recordatorios, llamadas ni avisos: todavía no existen.\n- \"A las 4\" = 16:00. Fechas para herramientas YYYY-MM-DD (usa el CALENDARIO), horas HH:00 en 24h.\n- Si una herramienta falla, di que no pudiste revisar la agenda ahora y que le escriba en unos minutos o al 099 970 1778.\n- Nunca muestres IDs, JSON, nombres de herramientas ni errores técnicos. No hables de citas ni datos de otros pacientes, y no repitas detalles clínicos que el paciente comparta.\n\nESTILO: trata de \"usted\", con calidez; usa el nombre del paciente cuando ya lo sepas; mensajes cortos de WhatsApp (2 a 6 líneas) que terminan con UNA sola pregunta que guía el siguiente paso. Máximo un emoji por mensaje (además de 🌅/🌇 en la lista de turnos). Sin asteriscos dobles.",
+          "systemMessage": "=Eres Eli, la asistente por WhatsApp de EliDental, odontología integral para toda la familia en Loja, Ecuador. La odontóloga es la Dra. Viviana Elizabeth Sucunuta, graduada en la Universidad de Cuenca y posgradista en ortodoncia (Brasil). Atiendes con calidez y profesionalismo, y tratas al paciente de \"usted\". Ayudas a agendar, consultar, mover y cancelar citas. No eres dentista: nunca das diagnósticos ni consejos médicos.\n\nUBICACIÓN Y HORA: el consultorio está en la ciudad de Loja (provincia de Loja, Ecuador). Usa SIEMPRE la hora oficial de Ecuador (la misma de Quito, UTC-5); nunca otra zona horaria.\nAHORA EN ECUADOR: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }}\nSALUDO SEGÚN LA HORA: {{ (h => h < 12 ? 'buenos días' : h < 19 ? 'buenas tardes' : 'buenas noches')($now.setZone('America/Guayaquil').hour) }}\nCONSULTORIO AHORA: {{ (() => { const H = {1:[9,18],2:[9,18],3:[9,18],4:[9,18],5:[9,18],6:[9,15],7:null}; const n = $now.setZone('America/Guayaquil'); const hoy = H[n.weekday]; if (hoy && n.hour >= hoy[0] && n.hour < hoy[1]) return 'ABIERTO (atiende hasta las ' + String(hoy[1]).padStart(2,'0') + ':00)'; for (let i = 0; i < 8; i++) { const d = n.plus({ days: i }); const b = H[d.weekday]; if (b && (i > 0 || n.hour < b[0])) return 'CERRADO. Próxima atención: ' + (i === 0 ? 'hoy' : i === 1 ? 'mañana' : d.setLocale('es').toFormat('cccc d')) + ' a las ' + String(b[0]).padStart(2,'0') + ':00'; } return 'CERRADO'; })() }}\nCALENDARIO (día = fecha para herramientas): {{ [0,1,2,3,4,5,6,7].map(i => $now.setZone('America/Guayaquil').plus({ days: i })).map((d, i) => (i === 0 ? 'HOY ' : i === 1 ? 'MAÑANA ' : i === 2 ? 'PASADO MAÑANA ' : '') + d.setLocale('es').toFormat('cccc d LLL') + ' = ' + d.toFormat('yyyy-MM-dd')).join(' | ') }}\nREGLAS DE FECHA: «hoy», «mañana» y los días de la semana se cuentan desde AHORA EN ECUADOR. Usa el saludo según la hora. Si el consultorio está CERRADO, dilo con naturalidad, indica cuándo vuelve a atender y ofrece los primeros turnos desde esa próxima atención (puede ser hoy más tarde). Nunca ofrezcas una hora que ya pasó. Si el paciente dice «mañana en la mañana», es el día MAÑANA del calendario, de 09:00 a 12:00.\nPACIENTE: nombre en WhatsApp \"{{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\". Ya tenemos su teléfono: NO lo pidas.\n\nELIDENTAL\n- Dirección: Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja.\n- WhatsApp y celular del consultorio: 099 970 1778. Correo: elidentalec@hotmail.com.\n- Servicios que se agendan (cada cita dura 1 hora): Consulta de valoración | Limpieza dental | Resina (calza) | Control de ortodoncia | Urgencia dental.\n- Tratamientos que ofrece EliDental (odontología integral para toda la familia): limpieza dental (profilaxis con ultrasonido), resinas o calzas (también cambio de amalgamas por resina), ortodoncia, blanqueamiento dental, carillas, endodoncia, extracciones (incluidas muelas del juicio), prótesis total y prótesis fija (coronas y puentes) y frenectomía. Atiende a niños y a embarazadas, y ofrece sedación para pacientes con miedo o ansiedad al odontólogo.\n- Ortodoncia nueva y cualquier tratamiento que no esté en la lista de servicios que se agendan: primero una Consulta de valoración; ahí la doctora indica el tratamiento y su costo. No ofrezcas tratamientos fuera de esta lista.\n- Precios: no tienes una lista de precios. Si preguntan, di con amabilidad que el valor lo confirma la doctora en la consulta según el caso, y ofrece agendar una Consulta de valoración. Nunca digas una cifra.\n- Limpieza: se recomienda cada seis meses.\n- Horario: lunes a viernes de 09:00 a 18:00 y sábados de 09:00 a 15:00; domingos cerrado. Turnos de 1 hora.\n\nPRIORIDADES (revisa en este orden)\n1. URGENCIA: si menciona dolor fuerte, hinchazón, sangrado, un diente roto o que se cayó, un golpe, fiebre o pus: muestra empatía en una frase, llama ver_turnos_libres para hoy (si no hay, para mañana) y ofrece el primer turno como \"Urgencia dental\". Añade siempre: \"Si tiene la cara muy hinchada, fiebre alta o le cuesta tragar o respirar, acuda a emergencias ahora.\"\n2. PREGUNTA CLÍNICA (\"¿es normal…?\", \"¿qué tomo?\", \"¿qué tengo?\"): no diagnostiques ni recomiendes medicamentos. Explica que la doctora debe revisarlo y ofrece una Consulta de valoración. Si hay señales de urgencia, aplica la prioridad 1.\n3. NOTAS DE VOZ E IMÁGENES: «(nota de voz) …» es lo que el paciente dijo por audio: respóndele normal, como si lo hubiera escrito. «(imagen) …» es una descripción automática de la foto que mandó: úsala para entender qué necesita (por ejemplo, un comprobante de pago o un diente roto), pero no diagnostiques ni opines sobre su salud por la foto; di que la doctora lo revisará en la consulta y ofrece agendar. Si dice «[… que no pude ver]» o «[… que no pude escuchar]», pide amablemente que lo escriba.\n4. QUEJA O PIDE HABLAR CON LA DOCTORA: discúlpate con calidez y dale el WhatsApp del consultorio, 099 970 1778, para hablar directamente con la Dra. Viviana Sucunuta. No prometas que ella escribirá ni en qué plazo.\n\nOTROS MENSAJES\n- Pide información general (\"quiero información\", \"¿qué hacen?\"): resume en una o dos líneas qué hace EliDental (odontología integral para toda la familia y algunos tratamientos principales) y pregunta qué le gustaría atender.\n- Pregunta un dato (precio, horario, dirección, si atienden niños): respóndelo y ofrece agendar con 2 turnos concretos, una sola vez y sin insistir.\n- Si te pregunta si eres un bot, una IA o una persona: responde con honestidad que eres Eli, la asistente virtual de EliDental, y que la Dra. Viviana Sucunuta atiende en persona en la consulta.\n- Groserías, insultos o spam: responde una vez, breve y con respeto, que estás para ayudarle con su cita cuando lo necesite. Si continúa, no discutas ni repitas explicaciones.\n- Mensaje que no se entiende: pide con amabilidad que lo explique con otras palabras.\n- \"No gracias\", \"no me interesa\", \"ya agendé en otro lado\": agradece con amabilidad y no insistas ni ofrezcas turnos.\n- Si en la conversación hay un mensaje tuyo de seguimiento con opciones de turno y el paciente elige una, sigue en el paso 4 del FLUJO DE CITA; antes vuelve a llamar ver_turnos_libres para confirmar que siga libre.\n\nCÓMO CERRAR LA CITA (sin presionar)\n- Primero valida la molestia o la duda; después propone el turno.\n- Ofrece siempre opciones concretas (2, máximo 3), empezando por la más pronta.\n- Objeciones: si tiene miedo, la doctora trabaja con paciencia y ofrece sedación; si pregunta el precio, el valor se confirma en la valoración; si tiene poco tiempo, ofrece el sábado (09:00 a 15:00) o el primer o último turno del día.\n- Nunca inventes urgencias, escasez ni promociones.\n\nFLUJO DE CITA\n1. Saludo (\"hola\", \"buenas\", \"¿cómo está?\"): responde el saludo como lo haría una persona (si le preguntan cómo está, responda con naturalidad y agradezca), preséntate como Eli de EliDental y pregunta en qué le puedes ayudar: agendar una cita o alguna molestia. No uses herramientas para esto.\n2. Si quiere agendar y no dijo el motivo, pregúntalo. Si expresa miedo o ansiedad, tranquilízalo y menciona que la doctora ofrece sedación; se conversa en la consulta. El motivo decide el servicio: dolor, golpe o algo roto = Urgencia dental; limpieza = Limpieza dental; calza o caries = Resina (calza); control de brackets = Control de ortodoncia; ortodoncia nueva, otro tratamiento, revisión o no sabe = Consulta de valoración.\n3. AGENDA (nunca preguntes \"¿qué día puede?\" sin dar opciones):\n   - Si no dijo día, o quiere \"lo antes posible\": llama ver_turnos_libres para hoy y, si no hay, para los días siguientes, y ofrece los 2 primeros turnos libres. Ejemplo: \"Tengo mañana a las 10:00 o el jueves a las 16:00, ¿cuál le queda mejor?\".\n   - Si pidió día y hora: llama ver_turnos_libres de ese día. Si está libre, ofrécelo (\"Mañana a las 10:00 está libre, ¿se lo reservo?\"). Si está ocupado, dilo y ofrece los 2 turnos libres más cercanos a esa hora ese mismo día. Si el día está lleno, ofrece 2 turnos del siguiente día con atención. Si es domingo o fuera de horario, explica el horario y ofrece lo más cercano.\n   - Si pidió solo el día o pregunta qué horarios hay: muestra la lista así:\n     🌅 Mañana: 09:00 - 10:00, 10:00 - 11:00 ...\n     🌇 Tarde: 12:00 - 13:00 ...\n   - Copia SOLO los turnos que devolvió la herramienta. Si no le sirve ninguno, pregunta si prefiere mañana o tarde y busca de nuevo.\n4. Cuando elija turno: pide el nombre completo del paciente y si es su primera vez en EliDental. Si la cita es para un menor, pide también su edad y el nombre del adulto responsable, y usa como nombre \"Nombre del menor (resp. Nombre del adulto)\". Luego muestra un resumen (servicio, día, hora y dirección) y pregunta \"¿Confirmo su cita?\".\n5. Solo si responde que sí (sí, dale, confirmo, ok, perfecto): llama reservar_cita con el servicio escrito exactamente como en la lista. Solo di que quedó agendada si respondió reservada=true. Si ok=false, explícalo sin tecnicismos y ofrece otros turnos. Si es su primera vez, añade: \"Le pedimos llegar 10 minutos antes para llenar su historia clínica.\"\n6. Ver, mover o cancelar: llama buscar_mis_citas. Para mover: ver_turnos_libres del nuevo día, confirma con el paciente y luego mover_cita. Para cancelar: ofrece primero reagendar; si insiste, confirma y luego cancelar_cita.\n\nREGLAS\n- Nunca inventes horas, precios, servicios ni tratamientos. Nunca digas que una hora está libre sin haber llamado ver_turnos_libres en este turno.\n- Nunca prometas recordatorios, llamadas ni avisos: todavía no existen.\n- \"A las 4\" = 16:00. Fechas para herramientas YYYY-MM-DD (usa el CALENDARIO), horas HH:00 en 24h.\n- Si una herramienta falla, di que no pudiste revisar la agenda ahora y que le escriba en unos minutos o al 099 970 1778.\n- Nunca muestres IDs, JSON, nombres de herramientas ni errores técnicos. No hables de citas ni datos de otros pacientes, y no repitas detalles clínicos que el paciente comparta.\n\nESTILO: trata de \"usted\", con calidez; usa el nombre del paciente cuando ya lo sepas; mensajes cortos de WhatsApp (2 a 6 líneas) que terminan con UNA sola pregunta que guía el siguiente paso. Máximo un emoji por mensaje (además de 🌅/🌇 en la lista de turnos). Sin asteriscos dobles.",
           "maxIterations": 8,
-          "enableStreaming": false,
-          "returnIntermediateSteps": true
+          "returnIntermediateSteps": true,
+          "enableStreaming": false
         }
       },
       "id": "d2d7529f-c68a-4d7d-bbd8-1fd27ee9af28",
@@ -187,14 +203,15 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        2288,
+        3600,
         -208
       ],
-      "onError": "continueErrorOutput"
+      "notesInFlow": true,
+      "onError": "continueErrorOutput",
+      "notes": "Eli (IA): conversa, agenda, mueve y cancela citas. Sabe la fecha y hora de Ecuador y si el consultorio está abierto."
     },
     {
       "parameters": {
-        "modelName": "models/gemini-3.5-flash-lite",
         "options": {
           "maxOutputTokens": 1024,
           "temperature": 0.3
@@ -205,14 +222,16 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1.2,
       "position": [
-        2256,
+        3568,
         128
       ],
+      "notesInFlow": true,
       "credentials": {
         "googlePalmApi": {
           "name": "Google Gemini(PaLM) Api account"
         }
-      }
+      },
+      "notes": "Modelo de lenguaje del agente (gemini-3.5-flash-lite). No cambiar sin avisar."
     },
     {
       "parameters": {
@@ -226,14 +245,16 @@
       "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
       "typeVersion": 1.6,
       "position": [
-        2400,
+        3712,
         128
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
-      }
+      },
+      "notes": "Memoria de la conversación de cada paciente en Redis."
     },
     {
       "parameters": {
@@ -307,9 +328,11 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        2544,
+        3856,
         128
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Herramienta: consulta los turnos libres de un día (llama a «Agenda (entrada interna)»)."
     },
     {
       "parameters": {
@@ -383,9 +406,11 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        2688,
+        4000,
         128
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Herramienta: crea la cita en Google Calendar después de que el paciente confirma."
     },
     {
       "parameters": {
@@ -412,14 +437,16 @@
       "type": "n8n-nodes-base.googleCalendarTool",
       "typeVersion": 1.3,
       "position": [
-        2832,
+        4144,
         128
       ],
+      "notesInFlow": true,
       "credentials": {
         "googleCalendarOAuth2Api": {
           "name": "Google Calendar account"
         }
-      }
+      },
+      "notes": "Herramienta: lista las próximas citas de este paciente en Google Calendar."
     },
     {
       "parameters": {
@@ -443,14 +470,16 @@
       "type": "n8n-nodes-base.googleCalendarTool",
       "typeVersion": 1.3,
       "position": [
-        2976,
+        4288,
         128
       ],
+      "notesInFlow": true,
       "credentials": {
         "googleCalendarOAuth2Api": {
           "name": "Google Calendar account"
         }
-      }
+      },
+      "notes": "Herramienta: cambia una cita del paciente a otro día u hora."
     },
     {
       "parameters": {
@@ -471,14 +500,16 @@
       "type": "n8n-nodes-base.googleCalendarTool",
       "typeVersion": 1.3,
       "position": [
-        3120,
+        4432,
         128
       ],
+      "notesInFlow": true,
       "credentials": {
         "googleCalendarOAuth2Api": {
           "name": "Google Calendar account"
         }
-      }
+      },
+      "notes": "Herramienta: cancela una cita del paciente."
     },
     {
       "parameters": {
@@ -492,14 +523,16 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        1328,
+        2640,
         208
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
-      }
+      },
+      "notes": "Guarda en Redis el mensaje que llegó mientras Eli respondía, para contestarlo después."
     },
     {
       "parameters": {
@@ -512,18 +545,20 @@
       "type": "@kapso/n8n-nodes-kapso.kapso",
       "typeVersion": 1,
       "position": [
-        3904,
+        5216,
         -208
       ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
+      "notesInFlow": true,
       "credentials": {
         "kapsoApi": {
           "name": "Kapso account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Kapso: envía la respuesta de Eli al paciente."
     },
     {
       "parameters": {
@@ -538,15 +573,17 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        4112,
+        5424,
         -208
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Lee los mensajes que llegaron mientras Eli respondía."
     },
     {
       "parameters": {
@@ -558,15 +595,17 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        4336,
+        5648,
         -208
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Vacía la cola de pendientes ya leída."
     },
     {
       "parameters": {
@@ -596,9 +635,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        4560,
+        5872,
         -208
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Sí → Eli responde también esos mensajes. No → libera el candado."
     },
     {
       "parameters": {
@@ -610,15 +651,17 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        4784,
+        6096,
         -96
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Quita el candado: la conversación queda libre para el próximo mensaje."
     },
     {
       "parameters": {
@@ -631,15 +674,17 @@
       "type": "@kapso/n8n-nodes-kapso.kapso",
       "typeVersion": 1,
       "position": [
-        3904,
+        5216,
         32
       ],
+      "notesInFlow": true,
       "credentials": {
         "kapsoApi": {
           "name": "Kapso account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Si el agente falla (p. ej. cuota de Gemini), avisa al paciente con un mensaje amable."
     },
     {
       "parameters": {
@@ -673,7 +718,9 @@
       "position": [
         0,
         640
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Sub-flujo de agenda: lo llaman las herramientas ver_turnos_libres y reservar_cita."
     },
     {
       "parameters": {
@@ -686,7 +733,9 @@
       "position": [
         688,
         880
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Revisa fecha, hora y servicio, y aplica el horario del consultorio (L-V 09-18, sáb 09-15, dom cerrado)."
     },
     {
       "parameters": {
@@ -716,9 +765,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        912,
+        2224,
         880
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Válido → lee la agenda. Inválido → devuelve el error al agente."
     },
     {
       "parameters": {
@@ -741,17 +792,19 @@
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.3,
       "position": [
-        1136,
+        2448,
         800
       ],
       "retryOnFail": true,
       "maxTries": 2,
       "alwaysOutputData": true,
+      "notesInFlow": true,
       "credentials": {
         "googleCalendarOAuth2Api": {
           "name": "Google Calendar account"
         }
-      }
+      },
+      "notes": "Lee los eventos del día en Google Calendar."
     },
     {
       "parameters": {
@@ -762,9 +815,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1360,
+        2672,
         800
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Turnos libres de 1 hora, sin horas pasadas (hora de Ecuador) ni choques con el calendario."
     },
     {
       "parameters": {
@@ -794,9 +849,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1584,
+        2896,
         800
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Si es una reserva y la hora sigue libre → crea el evento; si no, devuelve los turnos."
     },
     {
       "parameters": {
@@ -819,14 +876,16 @@
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.3,
       "position": [
-        1808,
+        3120,
         720
       ],
+      "notesInFlow": true,
       "credentials": {
         "googleCalendarOAuth2Api": {
           "name": "Google Calendar account"
         }
-      }
+      },
+      "notes": "Crea la cita en Google Calendar."
     },
     {
       "parameters": {
@@ -895,9 +954,11 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2032,
+        3344,
         720
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Respuesta al agente: la cita quedó reservada."
     },
     {
       "parameters": {},
@@ -906,9 +967,11 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        1808,
+        3120,
         896
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Respuesta al agente con los turnos libres."
     },
     {
       "parameters": {},
@@ -917,9 +980,11 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        1136,
+        2448,
         992
-      ]
+      ],
+      "notesInFlow": true,
+      "notes": "Devuelve al agente por qué el pedido no es válido."
     },
     {
       "parameters": {
@@ -950,15 +1015,17 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        896,
+        2208,
         224
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: lee en Redis el estado de seguimiento del paciente."
     },
     {
       "parameters": {
@@ -969,10 +1036,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1120,
+        2432,
         224
       ],
-      "onError": "continueRegularOutput"
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: anota que el paciente escribió (reinicia los tiempos de seguimiento)."
     },
     {
       "parameters": {
@@ -988,15 +1057,17 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        1344,
+        2656,
         224
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: guarda el estado en Redis."
     },
     {
       "parameters": {
@@ -1011,15 +1082,17 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        4128,
+        5440,
         -432
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: lee el estado después de que Eli respondió."
     },
     {
       "parameters": {
@@ -1030,10 +1103,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4352,
+        5664,
         -432
       ],
-      "onError": "continueRegularOutput"
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: anota la respuesta de Eli y si quedó agendado."
     },
     {
       "parameters": {
@@ -1049,15 +1124,153 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        4576,
+        5888,
         -432
       ],
+      "notesInFlow": true,
       "credentials": {
         "redis": {
           "name": "Redis local"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: guarda el estado en Redis (lo usa el workflow «Eli · Seguimiento»)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ ($('Leer webhook').first().json.medios || []).length }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e5eb801f-60bc-4cef-9fec-1e78f1333a16",
+      "name": "¿Tiene medios?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "¿Llegó una imagen o un audio sin transcripción? Sí → Gemini lo entiende. No → sigue directo."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Un ítem por imagen o audio, con la instrucción para Gemini.\nconst PROMPT_IMG = \"Eres el apoyo de Eli, asistente de WhatsApp de un consultorio dental. Describe en español, en máximo 3 frases y sin inventar, lo que se ve en esta imagen que mandó un paciente y lo que le importa al consultorio (por ejemplo: diente roto, encía inflamada, radiografía, receta, comprobante de pago, captura de pantalla). Si hay texto escrito, cópialo. No des diagnósticos.\";\nconst PROMPT_AUDIO = \"Transcribe literalmente esta nota de voz en español. Responde solo con la transcripción.\";\nreturn ($('Leer webhook').first().json.medios || []).map((m, i) => ({ json: {\n  i, tipo: m.tipo, url: m.url, mime: m.mime, caption: m.caption,\n  prompt: m.tipo === 'audio' ? PROMPT_AUDIO : PROMPT_IMG + (m.caption ? ' El paciente escribió junto a la imagen: ' + m.caption : '')\n} }));"
+      },
+      "id": "a708db1d-c5aa-49dc-992a-989d9551f657",
+      "name": "Medios a procesar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        208
+      ],
+      "notesInFlow": true,
+      "notes": "Un ítem por imagen o audio, con la instrucción para Gemini (máx. 3 por lote)."
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "id": "a7330c6c-912d-47b3-b65b-5212ede70a9c",
+      "name": "Descargar medio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        208
+      ],
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "notes": "Descarga la imagen o el audio desde la URL de Kapso."
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "destinationKey": "b64",
+        "options": {}
+      },
+      "id": "379e5197-36fd-4677-86f7-d0cd3492c7ac",
+      "name": "Medio a base64",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        208
+      ],
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "notes": "Convierte el archivo a base64 para mandarlo a Gemini."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [ { text: $('Medios a procesar').item.json.prompt }, { inline_data: { mime_type: $('Medios a procesar').item.json.mime, data: $json.b64 } } ] }], generationConfig: { temperature: 0, maxOutputTokens: 300 } }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "43111f28-73fc-45c8-ba15-6b6e44254062",
+      "name": "Entender con Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        208
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "googlePalmApi": {
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Gemini flash-lite describe la imagen o transcribe el audio (barato: ~1.100 tokens por imagen)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Une el texto del lote con lo que Gemini entendió de cada imagen o audio.\n// Los demás nodos leen $('Normalizar mensaje'): aquí queda el mensaje final.\nconst base = $('Leer webhook').first().json;\nconst medios = base.medios || [];\nlet text = base.text;\nif (medios.length) {\n  const resp = $input.all();\n  medios.forEach((m, i) => {\n    const r = resp[i]?.json ?? {};\n    const leido = String(r.candidates?.[0]?.content?.parts?.map(p => p.text || '').join(' ') || '').trim().slice(0, 1000);\n    let t;\n    if (m.tipo === 'audio') t = leido ? '(nota de voz) ' + leido : '[El cliente envió una nota de voz que no pude escuchar]';\n    else t = leido ? '(imagen) ' + leido + (m.caption ? ' — el cliente escribió: ' + m.caption : '')\n                   : '[El cliente envió una imagen que no pude ver]' + (m.caption ? ' con el texto: ' + m.caption : '');\n    text = text.replace('{{MEDIO_' + i + '}}', t);\n  });\n}\nconst { medios: _, ...resto } = base;\nreturn [{ json: { ...resto, text: text.slice(0, 3000) } }];"
+      },
+      "id": "b9b29067-11ac-48e9-9d04-5f8859e2a126",
+      "name": "Normalizar mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "Mensaje final: une el texto con lo que Gemini entendió. Los demás nodos leen este nodo."
     }
   ],
   "connections": {
@@ -1065,18 +1278,7 @@
       "main": [
         [
           {
-            "node": "Normalizar mensaje",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalizar mensaje": {
-      "main": [
-        [
-          {
-            "node": "Dedup mensaje",
+            "node": "Leer webhook",
             "type": "main",
             "index": 0
           }
@@ -1098,12 +1300,7 @@
       "main": [
         [
           {
-            "node": "Lock conversación",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Seg: leer (paciente)",
+            "node": "¿Tiene medios?",
             "type": "main",
             "index": 0
           }
@@ -1452,6 +1649,95 @@
         [
           {
             "node": "Seg: guardar (Eli)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer webhook": {
+      "main": [
+        [
+          {
+            "node": "Dedup mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene medios?": {
+      "main": [
+        [
+          {
+            "node": "Medios a procesar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalizar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Medios a procesar": {
+      "main": [
+        [
+          {
+            "node": "Descargar medio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar medio": {
+      "main": [
+        [
+          {
+            "node": "Medio a base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Medio a base64": {
+      "main": [
+        [
+          {
+            "node": "Entender con Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entender con Gemini": {
+      "main": [
+        [
+          {
+            "node": "Normalizar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar mensaje": {
+      "main": [
+        [
+          {
+            "node": "Lock conversación",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Seg: leer (paciente)",
             "type": "main",
             "index": 0
           }

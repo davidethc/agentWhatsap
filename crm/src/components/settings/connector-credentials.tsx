@@ -160,14 +160,14 @@ export function ConnectorCredentials({
         <CardDescription>{help.title}.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <ul className="list-disc space-y-1 pl-5 text-xs text-text-2">
+        <ul className="list-disc space-y-1 rounded-lg border bg-subtle p-3.5 pl-8 text-xs leading-relaxed text-text-2">
           {help.items.map((item, i) => (
             <li key={i}>{item}</li>
           ))}
         </ul>
 
         {connection?.status === "error" && (
-          <p className="rounded-sm border border-danger-soft bg-danger-tint px-3 py-2 text-sm text-danger-text">
+          <p className="rounded-lg border border-danger-soft bg-danger-tint px-3 py-2 text-sm text-danger-text">
             {meta.label} rechazó las últimas credenciales. Las citas se siguen
             agendando, pero sin enlace hasta que vuelvas a conectar.
           </p>
@@ -195,7 +195,7 @@ export function ConnectorCredentials({
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 border-t pt-4">
           <Button variant="outline" onClick={() => submit("test")} disabled={busy}>
             Probar
           </Button>

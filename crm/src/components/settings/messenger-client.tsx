@@ -133,7 +133,7 @@ export function MessengerClient() {
     }
   }
 
-  if (!loaded) return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  if (!loaded) return <p className="kicker">Cargando…</p>;
 
   const help = HELP[source];
   const canSave =
@@ -143,13 +143,15 @@ export function MessengerClient() {
   return (
     <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       {connection?.status === "reconnect_required" && (
-        <div className="flex items-start gap-2 rounded-lg border border-danger-soft bg-danger-tint p-4 text-sm">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+        <div className="flex items-start gap-2 rounded-lg border border-danger-soft bg-danger-tint p-4 text-sm shadow-sm">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-popover ring-1 ring-danger-soft">
+            <AlertTriangle className="h-4 w-4 text-danger-text" />
+          </span>
           <div>
             <p className="font-medium text-danger-text">
               El token expiró o fue revocado.
             </p>
-            <p className="text-danger-text opacity-80">
+            <p className="text-text-2">
               Los envíos por Messenger están pausados. Pega uno nuevo abajo para
               reconectar.
             </p>
@@ -158,14 +160,16 @@ export function MessengerClient() {
       )}
 
       {connection?.status === "connected" && (
-        <div className="flex items-center gap-3 rounded-lg border border-success-soft bg-success-tint p-4">
-          <CheckCircle2 className="h-5 w-5 text-success" />
+        <div className="flex items-center gap-3 rounded-lg border border-success-soft bg-success-tint p-4 shadow-sm">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-popover ring-1 ring-success-soft">
+            <CheckCircle2 className="h-[18px] w-[18px] text-success-text" />
+          </span>
           <div className="flex-1 text-sm">
             <p className="font-medium text-success-text">
               Conectado por {connection.source === "zernio" ? "Zernio" : "Meta"}
               {connection.pageName ? `: ${connection.pageName}` : ""}
             </p>
-            <p className="text-success-text opacity-80">
+            <p className="font-mono text-xs text-text-2">
               {connection.source === "zernio"
                 ? `Cuenta ${connection.accountRef}`
                 : `Página ${connection.pageId}`}{" "}
@@ -210,7 +214,7 @@ export function MessengerClient() {
             </div>
           </div>
 
-          <ul className="list-disc space-y-1 pl-5 text-xs text-text-2">
+          <ul className="list-disc space-y-1 rounded-lg border bg-subtle py-3 pl-8 pr-3 text-xs text-text-2">
             {help.items.map((item, i) => (
               <li key={i}>{item}</li>
             ))}
@@ -301,7 +305,7 @@ export function MessengerClient() {
             <div className="space-y-1.5">
               <Label>URL de callback</Label>
               <div className="flex gap-2">
-                <Input readOnly value={webhook.messengerUrl} className="font-mono text-xs" />
+                <Input readOnly value={webhook.messengerUrl} className="bg-subtle font-mono text-xs text-text-2" />
                 <Button
                   variant="outline"
                   size="icon"
@@ -316,7 +320,7 @@ export function MessengerClient() {
               <div className="space-y-1.5">
                 <Label>Token de verificación</Label>
                 <div className="flex gap-2">
-                  <Input readOnly value={webhook.verifyToken} className="font-mono text-xs" />
+                  <Input readOnly value={webhook.verifyToken} className="bg-subtle font-mono text-xs text-text-2" />
                   <Button
                     variant="outline"
                     size="icon"
@@ -328,7 +332,7 @@ export function MessengerClient() {
                 </div>
               </div>
             )}
-            <p className="flex items-start gap-2 text-xs text-text-2">
+            <p className="flex items-start gap-2 rounded-lg border bg-subtle p-3 text-xs text-text-2">
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {source === "zernio"
                 ? "Con secreto configurado, cada entrega se verifica con su firma HMAC; sin él, la protección es el segmento secreto de la URL."

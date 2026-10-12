@@ -254,23 +254,23 @@ export function AiClient() {
         </CardHeader>
         <CardContent className="space-y-4">
           {vista === null ? (
-            <p className="text-sm text-muted-foreground">Cargando…</p>
+            <p className="text-sm text-text-3">Cargando…</p>
           ) : cred ? (
             <EstadoGuardado cred={cred} vista={vista} />
           ) : vista.respaldoEntorno ? (
-            <div className="rounded-lg bg-subtle p-3 text-sm">
+            <div className="rounded-lg border bg-subtle p-3.5 text-sm">
               <p>
                 Hoy el agente usa las variables del entorno de la instancia:{" "}
                 <code className="font-mono">{vista.respaldoEntorno.modelo || "sin modelo"}</code>{" "}
                 con la llave{" "}
                 <code className="font-mono">••••{vista.respaldoEntorno.tokenLast4}</code>.
               </p>
-              <p className="mt-1 text-muted-foreground">
+              <p className="mt-1 text-text-3">
                 Lo que guardes aquí manda sobre ellas, sin reiniciar nada.
               </p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-3">
               Todavía no hay proveedor de IA: tu agente no puede contestar y los
               mensajes llegan a la bandeja para que los atienda una persona.
             </p>
@@ -278,7 +278,7 @@ export function AiClient() {
 
           <AyudaLlave provider={provider} />
 
-          <form onSubmit={guardar} className="space-y-3">
+          <form onSubmit={guardar} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="ai-provider">Proveedor</Label>
               <select
@@ -288,7 +288,7 @@ export function AiClient() {
                   setProvider(e.target.value as AiProviderId);
                   setModelos(null);
                 }}
-                className="h-9 w-full rounded-md border border-input bg-card px-2 text-sm"
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-[border-color,box-shadow] focus-visible:border-brand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-soft"
               >
                 {AI_PROVIDERS.map((id) => (
                   <option key={id} value={id}>
@@ -296,7 +296,7 @@ export function AiClient() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-3">
                 {preset.baseUrl
                   ? `Habla con ${preset.baseUrl}. Una sola llave da acceso a los modelos de todos los laboratorios.`
                   : "Cualquier API con la forma de la de OpenAI: OpenAI, Groq, Together, un servidor propio…"}
@@ -313,7 +313,7 @@ export function AiClient() {
                   placeholder="https://api.openai.com"
                   autoComplete="off"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-3">
                   Con o sin <code className="font-mono">/v1</code> al final: se
                   completa solo.
                 </p>
@@ -349,7 +349,7 @@ export function AiClient() {
                   ))}
                 </datalist>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-3">
                 El mismo modelo conversa con tus clientes y juzga en el
                 Laboratorio.
               </p>
@@ -369,7 +369,7 @@ export function AiClient() {
                   cred ? `•••• ${cred.tokenLast4} (déjalo vacío para conservarla)` : preset.tokenPlaceholder
                 }
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-3">
                 Se guarda cifrada en tu servidor. No la compartas por chat.
               </p>
             </div>
@@ -382,14 +382,14 @@ export function AiClient() {
                     ? "text-sm text-danger-text"
                     : mensaje.kind === "ok"
                       ? "text-sm text-success-text"
-                      : "text-sm text-muted-foreground"
+                      : "text-sm text-text-3"
                 }
               >
                 {mensaje.text}
               </p>
             )}
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 border-t pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -424,7 +424,7 @@ export function AiClient() {
 
 function EstadoGuardado({ cred, vista }: { cred: Credencial; vista: Vista }) {
   return (
-    <div className="rounded-lg bg-subtle p-3 text-sm" data-ai-estado={cred.estado}>
+    <div className="rounded-lg border bg-subtle p-3.5 text-sm" data-ai-estado={cred.estado}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span>
           Llave conectada: <code className="font-mono">••••{cred.tokenLast4}</code>
@@ -438,13 +438,13 @@ function EstadoGuardado({ cred, vista }: { cred: Credencial; vista: Vista }) {
         </Badge>
       </div>
       {cred.proveedor === "openai_compatible" && (
-        <p className="mt-1 text-xs text-muted-foreground">{cred.baseUrl}</p>
+        <p className="mt-1 text-xs text-text-3">{cred.baseUrl}</p>
       )}
       {vista.mensaje && (
-        <p className="mt-2 text-muted-foreground">{vista.mensaje}</p>
+        <p className="mt-2 text-text-3">{vista.mensaje}</p>
       )}
       {cred.motivo && (
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-text-3">
           El proveedor dijo: {cred.motivo}
         </p>
       )}
@@ -455,27 +455,27 @@ function EstadoGuardado({ cred, vista }: { cred: Credencial; vista: Vista }) {
 /** Lo que hay que saber ANTES de pegar nada. Plegado: no estorba al que ya lo sabe. */
 function AyudaLlave({ provider }: { provider: AiProviderId }) {
   return (
-    <details className="rounded-lg bg-subtle p-3 text-sm">
-      <summary className="cursor-pointer font-medium">¿Cómo consigo mi llave?</summary>
+    <details className="group rounded-lg border bg-subtle p-3.5 text-sm">
+      <summary className="-m-1 cursor-pointer rounded-md p-1 font-semibold tracking-tight text-text-2 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-subtle">¿Cómo consigo mi llave?</summary>
       {provider === "openrouter" ? (
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-muted-foreground">
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-text-3">
           <li>
             Crea una cuenta del negocio en{" "}
-            <a className="underline" href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">
+            <a className="text-brand-ink underline underline-offset-2 hover:text-brand-text" href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">
               openrouter.ai
             </a>
             .
           </li>
           <li>
             En{" "}
-            <a className="underline" href="https://openrouter.ai/settings/credits" target="_blank" rel="noopener noreferrer">
+            <a className="text-brand-ink underline underline-offset-2 hover:text-brand-text" href="https://openrouter.ai/settings/credits" target="_blank" rel="noopener noreferrer">
               Credits
             </a>
             , carga saldo. El consumo se cobra en esa cuenta.
           </li>
           <li>
             Abre{" "}
-            <a className="underline" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer">
+            <a className="text-brand-ink underline underline-offset-2 hover:text-brand-text" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer">
               Keys
             </a>{" "}
             → Create key y copia la llave.
@@ -483,13 +483,13 @@ function AyudaLlave({ provider }: { provider: AiProviderId }) {
           <li>Pégala aquí, pulsa «Probar conexión» y luego «Guardar».</li>
         </ol>
       ) : (
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-muted-foreground">
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-text-3">
           <li>En el panel de tu proveedor, crea una API key con permiso para chat completions.</li>
           <li>Copia su base URL (la raíz de la API, p. ej. <code className="font-mono">https://api.openai.com</code>).</li>
           <li>Pega aquí la base URL, el modelo y la llave; «Probar conexión» confirma que todo encaja.</li>
         </ol>
       )}
-      <p className="mt-3 text-muted-foreground">
+      <p className="mt-3 text-text-3">
         Si prefieres dejarlo en el entorno de la instancia (
         <code className="font-mono">OPENROUTER_API_TOKEN</code> y{" "}
         <code className="font-mono">OPENROUTER_MODEL</code>), sigue funcionando

@@ -84,7 +84,7 @@ export function FaviconCard({ branding }: { branding: Branding }) {
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 rounded-lg border bg-subtle p-3.5">
           {/* Sin next/image a propósito: es un archivo servido por una ruta
               propia, de 64 px y ya optimizado. Pasarlo por el optimizador
               sería trabajo de servidor para no ahorrar nada. */}
@@ -94,10 +94,10 @@ export function FaviconCard({ branding }: { branding: Branding }) {
             alt="Vista previa del icono de la pestaña"
             width={48}
             height={48}
-            className="h-12 w-12 rounded-lg border bg-card object-contain"
+            className="h-12 w-12 shrink-0 rounded-lg border bg-popover object-contain shadow-sm"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm">
+            <p className="text-sm font-semibold tracking-tight">
               {actual ? "Logo propio" : "Generado con tu marca"}
             </p>
             <p className="mt-0.5 text-xs text-text-3">

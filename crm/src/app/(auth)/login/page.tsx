@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -37,11 +36,12 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle>Iniciar sesión</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="card-surface shadow-md">
+      <div className="flex flex-col gap-1.5 border-b px-6 pb-4 pt-5">
+        <p className="kicker">Acceso</p>
+        <h2 className="text-[17px] font-bold leading-tight tracking-tight">Iniciar sesión</h2>
+      </div>
+      <div className="px-6 pb-6 pt-5">
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="email">Correo</Label>
@@ -65,18 +65,25 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p
+              role="alert"
+              className="rounded-lg border border-danger-soft bg-danger-tint px-3 py-2 text-[13px] text-danger-text"
+            >
+              {error}
+            </p>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Entrando…" : "Entrar"}
           </Button>
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-[13px] text-text-3">
             ¿Primera vez aquí?{" "}
-            <Link href="/register" className="text-primary hover:underline">
+            <Link href="/register" className="rounded-sm font-medium text-brand-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-popover">
               Crear la cuenta inicial
             </Link>
           </p>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

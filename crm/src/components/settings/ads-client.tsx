@@ -150,9 +150,9 @@ export function AdsClient() {
         </CardHeader>
         <CardContent className="space-y-4">
           {capi ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="w-fit rounded-full border border-success-soft bg-success-tint px-3 py-1 text-sm text-success-text">
               Conectado al dataset{" "}
-              <span className="font-medium text-foreground">
+              <span className="font-mono font-semibold">
                 {capi.datasetId}
               </span>{" "}
               · token ····{capi.tokenLast4}
@@ -194,7 +194,7 @@ export function AdsClient() {
               id="capi-stage"
               value={qualifiedStageId}
               onChange={(e) => setQualifiedStageId(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-card px-2 text-sm"
+              className="h-9 w-full rounded-md border border-input bg-popover px-2 text-sm"
             >
               <option value="">No reportar leads calificados</option>
               {stages
@@ -245,28 +245,28 @@ export function AdsClient() {
             Actualizar
           </Button>
           {activity === null ? (
-            <p className="text-sm text-muted-foreground">Cargando…</p>
+            <p className="kicker">Cargando…</p>
           ) : activity.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Todavía no hay conversiones. Aparecerán cuando un lead que llegó
               por un anuncio avance de etapa.
             </p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg border">
               <table className="w-full text-sm">
-                <thead className="kicker text-left">
+                <thead className="kicker bg-subtle text-left">
                   <tr>
-                    <th className="py-2 pr-3 font-medium">Evento</th>
+                    <th className="py-2 pl-3 pr-3 font-medium">Evento</th>
                     <th className="py-2 pr-3 font-medium">Paciente</th>
                     <th className="py-2 pr-3 font-medium">Estado</th>
                     <th className="py-2 pr-3 font-medium">Cuándo</th>
-                    <th className="py-2 font-medium">Detalle</th>
+                    <th className="py-2 pr-3 font-medium">Detalle</th>
                   </tr>
                 </thead>
                 <tbody>
                   {activity.map((row) => (
-                    <tr key={row.id} className="border-t align-top">
-                      <td className="py-2 pr-3">
+                    <tr key={row.id} className="border-t align-top transition-colors hover:bg-row-hover">
+                      <td className="py-2 pl-3 pr-3">
                         {EVENT_LABEL[row.eventName] ?? row.eventName}
                         {row.adHeadline ? (
                           <span className="block text-xs text-muted-foreground">
@@ -283,7 +283,7 @@ export function AdsClient() {
                       <td className="py-2 pr-3 whitespace-nowrap text-muted-foreground">
                         {new Date(row.at).toLocaleString()}
                       </td>
-                      <td className="py-2 text-xs text-muted-foreground">
+                      <td className="py-2 pr-3 font-mono text-xs text-text-3">
                         {row.error ?? row.fbTraceId ?? "—"}
                       </td>
                     </tr>

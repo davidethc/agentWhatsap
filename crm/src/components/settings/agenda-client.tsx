@@ -167,12 +167,18 @@ export function AgendaClient() {
             zona; un día sin franjas está cerrado.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="board-col overflow-visible bg-transparent p-5 pt-5">
           {DAYS.map((day) => {
             const intervals = settings.weeklyHours[day.key] ?? [];
             const open = intervals.length > 0;
             return (
-              <div key={day.key} className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-3">
+              <div
+                key={day.key}
+                className={cn(
+                  "flex flex-col gap-1.5 rounded-lg border p-2.5 transition-colors sm:flex-row sm:items-start sm:gap-3",
+                  open ? "border-border bg-popover shadow-sm" : "border-transparent bg-subtle"
+                )}
+              >
                 <button
                   type="button"
                   onClick={() => toggleDay(day.key)}
@@ -187,7 +193,11 @@ export function AgendaClient() {
                   {day.label}
                 </button>
                 <div className="flex-1 space-y-1.5">
-                  {!open && <span className="text-sm text-text-3">Cerrado</span>}
+                  {!open && (
+                    <span className="mt-1 inline-block rounded-full bg-chip px-2.5 py-0.5 text-xs font-medium text-text-3">
+                      Cerrado
+                    </span>
+                  )}
                   {intervals.map((iv, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Input
@@ -237,8 +247,8 @@ export function AgendaClient() {
         <CardHeader>
           <CardTitle>Cómo se generan los huecos</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
+        <CardContent className="grid gap-2.5 sm:grid-cols-2">
+          <div className="space-y-1.5 rounded-lg bg-subtle p-3.5">
             <Label htmlFor="slot">Duración de la cita (min)</Label>
             <Input
               id="slot"
@@ -249,7 +259,7 @@ export function AgendaClient() {
               onChange={(e) => patch({ slotMinutes: Number(e.target.value) })}
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 rounded-lg bg-subtle p-3.5">
             <Label htmlFor="buffer">Respiro entre citas (min)</Label>
             <Input
               id="buffer"
@@ -260,7 +270,7 @@ export function AgendaClient() {
               onChange={(e) => patch({ bufferMinutes: Number(e.target.value) })}
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 rounded-lg bg-subtle p-3.5">
             <Label htmlFor="notice">Aviso mínimo (horas)</Label>
             <Input
               id="notice"
@@ -271,7 +281,7 @@ export function AgendaClient() {
               onChange={(e) => patch({ minNoticeHours: Number(e.target.value) })}
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 rounded-lg bg-subtle p-3.5">
             <Label htmlFor="ahead">Agenda abierta (días)</Label>
             <Input
               id="ahead"
@@ -282,7 +292,7 @@ export function AgendaClient() {
               onChange={(e) => patch({ maxDaysAhead: Number(e.target.value) })}
             />
           </div>
-          <div className="col-span-2 space-y-1.5">
+          <div className="space-y-1.5 rounded-lg bg-subtle p-3.5 sm:col-span-2">
             <Label htmlFor="tz">Zona horaria</Label>
             <Input
               id="tz"
@@ -316,8 +326,8 @@ export function AgendaClient() {
                   "block w-full rounded-lg border px-3 py-2.5 text-left transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                   active
-                    ? "border-brand bg-brand-tint"
-                    : "border-border hover:bg-accent"
+                    ? "border-brand bg-brand-tint shadow-sm"
+                    : "border-border bg-background hover:border-border-strong hover:bg-accent"
                 )}
               >
                 <span
@@ -328,7 +338,7 @@ export function AgendaClient() {
                 >
                   {meta.label}
                   {!meta.external && (
-                    <span className="ml-2 text-[11px] font-normal text-text-3">
+                    <span className="ml-2 rounded-full bg-success-tint px-2 py-px text-[11px] font-medium text-success-text">
                       sin dependencias
                     </span>
                   )}
@@ -362,12 +372,18 @@ export function AgendaClient() {
         </SettingsCard>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="card-surface flex flex-wrap items-center gap-3 p-3">
         <Button onClick={save} disabled={saving}>
           {saving ? "Guardando…" : "Guardar"}
         </Button>
-        {saved && <span className="text-sm text-brand-text">Guardado</span>}
-        {error && <span className="text-sm text-destructive">{error}</span>}
+        {saved && (
+          <span className="rounded-full bg-brand-tint px-2.5 py-0.5 text-sm font-medium text-brand-text">
+            Guardado
+          </span>
+        )}
+        {error && (
+          <span className="rounded-full bg-danger-tint px-2.5 py-0.5 text-sm text-danger-text">{error}</span>
+        )}
       </div>
 
       {/* Las credenciales se guardan por su cuenta, no con el botón de arriba:
@@ -392,9 +408,14 @@ export function AgendaClient() {
             </p>
           )}
           {slots && slots.length > 0 && (
-            <ul className="space-y-1 text-sm">
+            <ul className="flex flex-wrap gap-2 text-sm">
               {slots.map((s, i) => (
-                <li key={i}>{s.label}</li>
+                <li
+                  key={i}
+                  className="rounded-full border bg-background px-3 py-1 tabular-nums text-text-2 shadow-sm"
+                >
+                  {s.label}
+                </li>
               ))}
             </ul>
           )}

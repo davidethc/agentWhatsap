@@ -117,8 +117,9 @@ export function BrandingClient({
             reflejan en toda la interfaz y en la pantalla de inicio de sesión.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="space-y-1.5">
+        <CardContent className="space-y-2.5">
+          <div className="grid gap-2.5 sm:grid-cols-2">
+          <div className="space-y-1.5 rounded-lg bg-subtle p-3.5">
             <Label htmlFor="brand-name">Nombre</Label>
             <Input
               id="brand-name"
@@ -126,17 +127,17 @@ export function BrandingClient({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="EliDental"
-              className="max-w-xs"
+              className="bg-background"
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 rounded-lg bg-subtle p-3.5">
             <Label htmlFor="brand-currency">Moneda del negocio</Label>
             <select
               id="brand-currency"
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
-              className="h-9 max-w-xs rounded-md border border-input bg-card px-2 text-sm"
+              className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
             >
               {CURRENCY_GROUPS.map((g) => (
                 <optgroup key={g.id} label={g.label}>
@@ -153,8 +154,9 @@ export function BrandingClient({
               moneda se muestran, pero quedan fuera del total de su columna.
             </p>
           </div>
+          </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 rounded-lg bg-subtle p-3.5">
             <Label>Color de acento</Label>
             <div className="flex flex-wrap items-center gap-2">
               {Object.entries(ACCENT_PRESETS).map(([hex, preset]) => (
@@ -167,12 +169,12 @@ export function BrandingClient({
                     "flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
                     accent.toLowerCase() === hex
-                      ? "border-text-2 bg-secondary"
-                      : "border-border-strong hover:bg-accent"
+                      ? "border-text-2 bg-popover shadow-sm"
+                      : "border-border bg-background hover:border-border-strong hover:bg-accent"
                   )}
                 >
                   <span
-                    className="h-4 w-4 rounded-full"
+                    className="h-4 w-4 rounded-full ring-2 ring-popover"
                     style={{ background: resolveAccentSet(hex, mode).accent }}
                   />
                   {preset.label}
@@ -181,7 +183,10 @@ export function BrandingClient({
               <label
                 className={cn(
                   "flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors",
-                  !isPreset ? "border-text-2 bg-secondary" : "border-border-strong hover:bg-accent"
+                  "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-popover",
+                  !isPreset
+                    ? "border-text-2 bg-popover shadow-sm"
+                    : "border-border bg-background hover:border-border-strong hover:bg-accent"
                 )}
               >
                 <input
@@ -205,7 +210,7 @@ export function BrandingClient({
               verdad; a la derecha la página en el tema activo, con su botón. */}
           <div
             aria-label="Vista previa de la marca"
-            className="flex flex-col overflow-hidden rounded-md border border-border-strong sm:flex-row"
+            className="flex flex-col overflow-hidden rounded-lg border border-border-strong shadow-sm sm:flex-row"
           >
             <div
               className="nav-dark shrink-0 bg-subtle p-3 text-foreground sm:w-60"
@@ -232,7 +237,9 @@ export function BrandingClient({
             </div>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p className="rounded-lg bg-danger-tint px-3 py-2 text-sm text-danger-text">{error}</p>
+          )}
           {saved && <p className="text-sm" style={{ color: previewSet.text }}>Marca guardada ✓</p>}
           <Button disabled={saving || !name.trim()} onClick={() => void save()}>
             {saving ? "Guardando…" : "Guardar marca"}

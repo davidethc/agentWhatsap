@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signUp } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -42,15 +41,16 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle>Crear cuenta</CardTitle>
-        <CardDescription>
+    <div className="card-surface shadow-md">
+      <div className="flex flex-col gap-1.5 border-b px-6 pb-4 pt-5">
+        <p className="kicker">Primera vez</p>
+        <h2 className="text-[17px] font-bold leading-tight tracking-tight">Crear cuenta</h2>
+        <p className="text-[13px] leading-relaxed text-text-3">
           El primer registro crea la organización de esta instancia y queda
           como propietario.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div className="px-6 pb-6 pt-5">
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="name">Tu nombre</Label>
@@ -84,18 +84,25 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p
+              role="alert"
+              className="rounded-lg border border-danger-soft bg-danger-tint px-3 py-2 text-[13px] text-danger-text"
+            >
+              {error}
+            </p>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creando…" : "Crear cuenta"}
           </Button>
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-[13px] text-text-3">
             ¿Ya tienes cuenta?{" "}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href="/login" className="rounded-sm font-medium text-brand-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-popover">
               Inicia sesión
             </Link>
           </p>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

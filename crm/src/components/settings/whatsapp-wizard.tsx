@@ -67,19 +67,21 @@ export function WhatsappWizard() {
   }, [refetch]);
 
   if (!loaded) {
-    return <p className="text-sm text-muted-foreground">Cargando…</p>;
+    return <p className="kicker">Cargando…</p>;
   }
 
   return (
     <div className="max-w-3xl space-y-2.5 sm:space-y-4">
       {connection?.status === "reconnect_required" && (
-        <div className="flex flex-wrap items-start gap-2 rounded-lg border border-danger-soft bg-danger-tint p-4 text-sm">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+        <div className="flex flex-wrap items-start gap-2 rounded-lg border border-danger-soft bg-danger-tint p-4 text-sm shadow-sm">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-popover ring-1 ring-danger-soft">
+            <AlertTriangle className="h-4 w-4 text-danger-text" />
+          </span>
           <div className="min-w-[12rem] flex-1">
             <p className="font-medium text-danger-text">
               El token de WhatsApp expiró o fue revocado.
             </p>
-            <p className="text-danger-text opacity-80">
+            <p className="text-text-2">
               Los envíos están pausados. Pega un token nuevo abajo y prueba la
               conexión para reconectar.
             </p>
@@ -94,13 +96,15 @@ export function WhatsappWizard() {
       )}
 
       {connection && connection.status === "connected" && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-success-soft bg-success-tint p-4">
-          <CheckCircle2 className="h-5 w-5 text-success" />
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-success-soft bg-success-tint p-4 shadow-sm">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-popover ring-1 ring-success-soft">
+            <CheckCircle2 className="h-[18px] w-[18px] text-success-text" />
+          </span>
           <div className="min-w-[12rem] flex-1 text-sm">
             <p className="font-medium text-success-text">
               Número conectado: {connection.displayPhoneNumber ?? connection.phoneNumberId}
             </p>
-            <p className="text-success-text opacity-80">
+            <p className="font-mono text-xs text-text-2">
               {connection.verifiedName ? `${connection.verifiedName} · ` : ""}
               token …{connection.tokenLast4}
             </p>
@@ -301,11 +305,11 @@ function ConnectForm({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 rounded-lg bg-subtle p-4 text-sm">
-          <p className="font-medium">¿De dónde sale el token?</p>
+        <div className="grid gap-3 rounded-lg border bg-subtle p-4 text-sm">
+          <p className="kicker">¿De dónde sale el token?</p>
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-lg bg-popover p-3 shadow-sm">
-              <p className="mb-1 font-medium text-primary">Modo directo</p>
+            <div className="card-surface p-3.5">
+              <p className="mb-1.5 font-semibold text-brand-text">Modo directo</p>
               <p className="text-muted-foreground">
                 El negocio tiene su propia app en{" "}
                 <span className="text-foreground">developers.facebook.com</span>:
@@ -314,8 +318,8 @@ function ConnectForm({
                 configurar también el App Secret para la firma del webhook.
               </p>
             </div>
-            <div className="rounded-lg bg-popover p-3 shadow-sm">
-              <p className="mb-1 font-medium text-primary">Modo agencia (Tech Provider)</p>
+            <div className="card-surface p-3.5">
+              <p className="mb-1.5 font-semibold text-brand-text">Modo agencia (Tech Provider)</p>
               <p className="text-muted-foreground">
                 Tu agencia hace el Embedded Signup en SU plataforma y su
                 backend obtiene el token del cliente; te lo entrega para
@@ -411,7 +415,7 @@ function RegistrationNotice({
 }) {
   if (registration.ok && "skipped" in registration) {
     return (
-      <p className="flex items-start gap-2 text-sm text-muted-foreground">
+      <p className="flex items-start gap-2 rounded-lg border bg-subtle p-3 text-sm text-text-2">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
           Tu cuenta de WhatsApp ya enruta sus webhooks a{" "}
@@ -424,7 +428,7 @@ function RegistrationNotice({
   }
   if (registration.ok && !registration.appWithoutWebhook) {
     return (
-      <p className="flex items-start gap-2 text-sm text-success">
+      <p className="flex items-start gap-2 rounded-lg border border-success-soft bg-success-tint p-3 text-sm text-success-text">
         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
         Webhook registrado en Meta: los mensajes de este número llegan aquí.
         No hace falta pegar nada en el panel de tu app.
@@ -532,7 +536,7 @@ function WebhookCard({
         <div className="space-y-1.5">
           <Label>URL del webhook (callback URL)</Label>
           <div className="flex items-center gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-md border bg-background px-3 py-2 text-xs">
+            <code className="min-w-0 flex-1 truncate rounded-md border bg-subtle px-3 py-2 font-mono text-xs text-text-2">
               {webhook.url}
             </code>
             <Button
@@ -544,7 +548,7 @@ function WebhookCard({
               <Copy className="h-4 w-4" />
             </Button>
             {copied === "url" && (
-              <span className="text-xs text-primary">Copiada ✓</span>
+              <span className="rounded-full bg-brand-tint px-2 py-0.5 text-xs font-medium text-brand-text">Copiada ✓</span>
             )}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -555,7 +559,7 @@ function WebhookCard({
         <div className="space-y-1.5">
           <Label>Verify token</Label>
           <div className="flex items-center gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-md border bg-background px-3 py-2 text-xs">
+            <code className="min-w-0 flex-1 truncate rounded-md border bg-subtle px-3 py-2 font-mono text-xs text-text-2">
               {webhook.verifyToken}
             </code>
             <Button
@@ -567,12 +571,12 @@ function WebhookCard({
               <Copy className="h-4 w-4" />
             </Button>
             {copied === "vt" && (
-              <span className="text-xs text-primary">Copiado ✓</span>
+              <span className="rounded-full bg-brand-tint px-2 py-0.5 text-xs font-medium text-brand-text">Copiado ✓</span>
             )}
           </div>
         </div>
         {webhook.signatureLayer ? (
-          <p className="flex items-center gap-2 text-xs text-success">
+          <p className="flex w-fit items-center gap-2 rounded-full bg-success-tint px-2.5 py-1 text-xs font-medium text-success-text">
             <ShieldCheck className="h-4 w-4" /> Verificación de firma activa
             (META_APP_SECRET configurado): cada evento se valida con
             x-hub-signature-256.

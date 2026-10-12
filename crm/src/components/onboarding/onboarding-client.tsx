@@ -53,77 +53,121 @@ export function OnboardingClient({
     setBusy(false);
   }
 
+  // Foco visible de los enlaces de texto: el mismo anillo del tablero.
+  const foco =
+    "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto bg-subtle">
       <div className="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
-        <header>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Guía de inicio
-          </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+        <header className="board-head mb-0 flex-col">
+          <p className="kicker">Guía de inicio</p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">
             Deja listo tu CRM en {total} pasos
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="max-w-xl text-[14px] text-text-2">
             Hazlos en orden: cada botón te lleva a la pantalla que toca. Al
             volver aquí verás tu avance.
           </p>
         </header>
 
-        <div aria-label="Avance">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">
-              {done} de {total} listos
+        <div aria-label="Avance" className="card-surface px-4 py-3.5 sm:px-5">
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-baseline gap-2">
+              <span className="kicker">Avance</span>
+              <span className="text-sm font-semibold">
+                {done} de {total} listos
+              </span>
             </span>
-            {guide.complete && <span className="text-success-text">¡Completo!</span>}
+            {guide.complete && (
+              <span className="rounded-full bg-success-tint px-2.5 py-0.5 text-[12px] font-semibold text-success-text">
+                ¡Completo!
+              </span>
+            )}
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-chip">
             <div
-              className="h-full rounded-full bg-primary transition-all"
+              className="h-full rounded-full bg-brand transition-all"
               style={{ width: `${(done / total) * 100}%` }}
             />
           </div>
         </div>
 
-        <ol className="space-y-3">
+        {/* El riel de la izquierda une los pasos: se lee de arriba abajo, en
+            verde lo hecho y el paso que toca resaltado con el acento. */}
+        <ol>
           {guide.steps.map((step, i) => {
             const isCurrent = step.key === current;
+            const last = i === total - 1;
             return (
-              <li
-                key={step.key}
-                className={cn(
-                  "flex gap-4 rounded-xl border bg-card p-4 sm:p-5",
-                  isCurrent && "border-primary ring-[3px] ring-brand-soft"
-                )}
-              >
-                <span
-                  aria-hidden
+              <li key={step.key} className="relative flex gap-3 pb-3 last:pb-0 sm:gap-4">
+                <div className="flex shrink-0 flex-col items-center pt-4 sm:pt-5">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold",
+                      // Verde de estado con su propio texto: legible en los dos
+                      // temas sin un blanco cableado.
+                      step.done
+                        ? "bg-success-tint text-success-text"
+                        : isCurrent
+                          ? "bg-brand text-brand-fg ring-4 ring-brand-soft"
+                          : "border border-border-strong bg-popover text-text-3"
+                    )}
+                  >
+                    {step.done ? <Check className="h-4 w-4" strokeWidth={2.5} /> : i + 1}
+                  </span>
+                  {!last && (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "absolute -bottom-4 left-4 top-12 w-px sm:-bottom-5 sm:top-[52px]",
+                        step.done ? "bg-success" : "bg-border-strong"
+                      )}
+                    />
+                  )}
+                </div>
+                <div
                   className={cn(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-                    // Verde de estado con su propio texto: legible en los dos
-                    // temas sin un blanco cableado.
-                    step.done
-                      ? "bg-success-tint text-success-text"
-                      : isCurrent
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
+                    "card-surface min-w-0 flex-1 p-4 sm:p-5",
+                    isCurrent && "border-ring shadow-md ring-1 ring-ring",
+                    step.done && "shadow-none"
                   )}
                 >
-                  {step.done ? <Check className="h-4 w-4" strokeWidth={2.5} /> : i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h2 className="font-semibold">
-                    {step.title}
-                    <span className="sr-only">{step.done ? " (listo)" : " (pendiente)"}</span>
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{step.description}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <h2
+                      className={cn(
+                        "font-semibold tracking-tight",
+                        step.done && "text-text-2"
+                      )}
+                    >
+                      {step.title}
+                      <span className="sr-only">{step.done ? " (listo)" : " (pendiente)"}</span>
+                    </h2>
+                    {isCurrent && (
+                      <span aria-hidden className="kicker shrink-0 text-brand-ink">
+                        Ahora
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-text-3">{step.description}</p>
                   {!step.done && step.hint && (
-                    <p className="mt-1 text-sm text-warning-text">{step.hint}</p>
+                    <p className="mt-2 flex items-start gap-1.5 text-[12.5px] text-text-3">
+                      <span
+                        aria-hidden
+                        className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-warning"
+                      />
+                      {step.hint}
+                    </p>
                   )}
                   <div className="mt-3">
                     {step.done ? (
                       <Link
                         href={step.href}
-                        className="text-sm text-muted-foreground underline underline-offset-2"
+                        className={cn(
+                          "text-sm text-text-3 underline underline-offset-2 hover:text-foreground",
+                          foco
+                        )}
                       >
                         Listo · revisar
                       </Link>
@@ -148,18 +192,19 @@ export function OnboardingClient({
 
         <section
           className={cn(
-            "rounded-xl border p-5",
-            guide.complete && !guide.enabled ? "border-primary bg-brand-tint" : "bg-card"
+            "card-surface p-5",
+            guide.complete && !guide.enabled && "border-ring bg-brand-tint ring-1 ring-ring"
           )}
         >
           {guide.enabled ? (
             <>
-              <h2 className="font-semibold">
+              <p className="kicker text-success-text">Agente encendido</p>
+              <h2 className="mt-1 font-semibold tracking-tight">
                 {agentReady && agentName
                   ? `${agentName} ya está contestando`
                   : "Tu agente ya está contestando"}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-text-3">
                 El agente está encendido y atiende a tus clientes por WhatsApp.
                 Puedes apagarlo cuando quieras desde Agente.
               </p>
@@ -169,8 +214,8 @@ export function OnboardingClient({
             </>
           ) : guide.complete ? (
             <>
-              <h2 className="font-semibold">¡Todo listo! Enciende a {agente}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h2 className="font-semibold tracking-tight">¡Todo listo! Enciende a {agente}</h2>
+              <p className="mt-1 text-sm text-text-2">
                 Desde ese momento contestará a tus clientes por WhatsApp. Puedes
                 apagarlo cuando quieras desde Agente.
               </p>
@@ -186,11 +231,11 @@ export function OnboardingClient({
             </>
           ) : (
             <>
-              <h2 className="flex items-center gap-2 font-semibold">
-                <Power className="h-4 w-4 text-muted-foreground" />
+              <h2 className="flex items-center gap-2 font-semibold tracking-tight">
+                <Power className="h-4 w-4 text-text-3" />
                 Al final: encender a {agente}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-text-3">
                 Tu agente empieza apagado: mientras no lo enciendas no le
                 contesta a nadie y los mensajes que lleguen los atiendes tú desde
                 la Bandeja. Cuando completes los {total} pasos, aquí aparece el

@@ -53,6 +53,8 @@ const api = context.request;
 const call = (path, init = {}) =>
   api.fetch(`${BASE}${path}`, {
     ...init,
+    // En dev la primera visita de una ruta compila en caliente y 30s no bastan.
+    timeout: 90_000,
     // Better Auth valida Origin (CSRF) en los endpoints de auth.
     headers: { origin: BASE, ...(init.headers ?? {}) },
   });
@@ -81,7 +83,18 @@ await call("/api/settings/whatsapp", {
 });
 await call("/api/settings/branding", {
   method: "PUT",
-  data: { name: "Vocero", accent: "#0d5bff", currency: "MXN" },
+  data: { name: "EliDental", accent: "#0e7490", currency: "USD" },
+});
+// El Laboratorio se dibuja vacío sin proveedor de IA activo: se configura
+// contra el ai-mock local (quickstart) para que la corrida demo se vea.
+await call("/api/settings/ai", {
+  method: "PUT",
+  data: {
+    provider: "openai_compatible",
+    baseUrl: "http://localhost:3000/api/dev/ai-mock/v1",
+    model: "mock-gpt-4o-mini",
+    token: "token-demo",
+  },
 });
 
 const page = await context.newPage();
@@ -92,7 +105,9 @@ const page = await context.newPage();
  * la red jamás queda ociosa.
  */
 async function shoot(path, file, ready) {
-  await page.goto(`${BASE}${path}`, { waitUntil: "load" });
+  // El autocompiled de Next en dev tarda en la primera visita de cada ruta:
+  // 30s no alcanzan con muchas pestañas compilándose a la vez.
+  await page.goto(`${BASE}${path}`, { waitUntil: "load", timeout: 90_000 });
   // El indicador de desarrollo de Next no es parte del producto.
   await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
   await ready();
@@ -103,32 +118,34 @@ async function shoot(path, file, ready) {
 }
 
 await shoot("/inbox", "bandeja.png", async () => {
-  await page.getByRole("button", { name: /María Fernanda/ }).first().click();
-  await page.getByText("¿Tienen taladros inalámbricos?").waitFor();
-  await page.getByText("Etapa del pipeline").waitFor();
+  const fernanda = page.getByText("María Fernanda López").first();
+  await fernanda.waitFor({ timeout: 60_000 });
+  await fernanda.click();
+  await page.getByText("¿Tienen precio de esa limpieza?").waitFor({ timeout: 60_000 });
+  await page.getByText("Etapa del pipeline").waitFor({ timeout: 60_000 });
 });
 
 await shoot("/pipeline", "pipeline.png", async () => {
-  await page.getByText("Interesado").first().waitFor();
-  await page.getByText("María Fernanda López").first().waitFor();
+  await page.getByText("Interesado").first().waitFor({ timeout: 90_000 });
+  await page.getByText("María Fernanda López").first().waitFor({ timeout: 90_000 });
 });
 
 await shoot("/lab", "laboratorio.png", async () => {
-  await page.getByText(/Score 83/).first().waitFor();
+  await page.getByText(/Score/).first().waitFor({ timeout: 90_000 });
   // El reporte de la corrida llega en un segundo fetch: se espera a que el
   // hueco "elige una corrida" desaparezca, no un tiempo fijo.
   await page
     .getByText("Elige una corrida del historial")
-    .waitFor({ state: "hidden", timeout: 20_000 });
+    .waitFor({ state: "hidden", timeout: 30_000 });
 });
 
 await shoot("/settings/branding", "marca.png", async () => {
-  await page.getByText("Marca del CRM").waitFor();
-  await page.getByText("Logo del negocio").waitFor();
+  await page.getByText("Marca del CRM").waitFor({ timeout: 90_000 });
+  await page.getByText("Logo del negocio").waitFor({ timeout: 90_000 });
 });
 
 await shoot("/settings/whatsapp", "wizard-whatsapp.png", async () => {
-  await page.getByText(/Número conectado/).waitFor();
+  await page.getByText(/Número conectado/).waitFor({ timeout: 90_000 });
 });
 
 await browser.close();

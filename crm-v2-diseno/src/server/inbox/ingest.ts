@@ -345,8 +345,42 @@ async function ingestManualEcho(
   organizationId: string,
   echo: WebhookMessage
 ): Promise<void> {
+  await ingestOutboundMessage({
+    organizationId,
+    to: echo.to!,
+    waMessageId: echo.id,
+    type: echo.type,
+    text: echo.text?.body ?? null,
+    timestamp: echo.timestamp,
+    status: "sent",
+    origin: "manual",
+    media: mediaInputFrom(echo),
+    pauseAi: true,
+  });
+}
+
+/**
+ * Registra un mensaje SALIENTE del negocio, venga de donde venga (echo manual
+ * de Meta, saliente de Kapso…). Idempotente por `wa_message_id`; actualiza solo
+ * `lastMessageAt` (un saliente nunca abre la ventana de 24 h). Con
+ * `pauseAi`, además pausa la IA como respuesta manual del dueño (idempotente y
+ * atómico: solo si aún no hay handoff).
+ */
+export async function ingestOutboundMessage(input: {
+  organizationId: string;
+  to: string;
+  waMessageId: string;
+  type: string;
+  text: string | null;
+  timestamp: string;
+  status: "sent" | "delivered" | "read" | "failed";
+  origin: "ai" | "operator" | "manual" | "template";
+  media?: MediaInput | null;
+  pauseAi?: boolean;
+}): Promise<void> {
   const db = getDb();
-  const identity = normalizeMx(echo.to!);
+  const { organizationId } = input;
+  const identity = normalizeMx(input.to);
 
   const { contact } = await getOrCreateContactByIdentity(organizationId, {
     identity,
@@ -356,7 +390,7 @@ async function ingestManualEcho(
   });
   const conversation = await getOrCreateConversation(organizationId, contact.id);
 
-  const waTimestamp = toDate(echo.timestamp);
+  const waTimestamp = toDate(input.timestamp);
 
   // Idempotencia dura: los mensajes ya registrados (o echoes repetidos) no
   // duplican efectos — mismo wa_message_id → sin inserción ni handoff extra.
@@ -366,12 +400,12 @@ async function ingestManualEcho(
       id: newId("message"),
       organizationId,
       conversationId: conversation.id,
-      waMessageId: echo.id,
+      waMessageId: input.waMessageId,
       direction: "out",
-      type: echo.type,
-      text: echo.text?.body ?? null,
-      status: "sent",
-      origin: "manual",
+      type: input.type,
+      text: input.text,
+      status: input.status,
+      origin: input.origin,
       waTimestamp,
     })
     .onConflictDoNothing({ target: [schema.message.waMessageId] })
@@ -379,9 +413,8 @@ async function ingestManualEcho(
   const message = inserted[0];
   if (!message) return; // duplicado
 
-  const mediaInput = mediaInputFrom(echo);
-  const asset = mediaInput
-    ? await attachMediaAsset(organizationId, message.id, mediaInput)
+  const asset = input.media
+    ? await attachMediaAsset(organizationId, message.id, input.media)
     : null;
 
   // Solo lastMessageAt: un mensaje del negocio NUNCA abre la ventana de 24 h.
@@ -390,26 +423,28 @@ async function ingestManualEcho(
     .set({ lastMessageAt: waTimestamp, updatedAt: new Date() })
     .where(eq(schema.conversation.id, conversation.id));
 
-  // Pausa automática de la IA, idempotente y atómica (solo si no hay handoff).
-  const paused = await db
-    .update(schema.conversation)
-    .set({
-      aiEnabled: false,
-      handoffAt: new Date(),
-      handoffReason: "manual_reply",
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(schema.conversation.id, conversation.id),
-        sql`${schema.conversation.handoffAt} is null`
+  if (input.pauseAi) {
+    // Pausa automática de la IA, idempotente y atómica (solo si no hay handoff).
+    const paused = await db
+      .update(schema.conversation)
+      .set({
+        aiEnabled: false,
+        handoffAt: new Date(),
+        handoffReason: "manual_reply",
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.conversation.id, conversation.id),
+          sql`${schema.conversation.handoffAt} is null`
+        )
       )
-    )
-    .returning();
-  if (paused[0]) {
-    console.log(
-      `[webhook] respuesta manual del dueño en ${conversation.id} — IA pausada (manual_reply)`
-    );
+      .returning();
+    if (paused[0]) {
+      console.log(
+        `[webhook] respuesta manual del dueño en ${conversation.id} — IA pausada (manual_reply)`
+      );
+    }
   }
 
   publish(organizationId, {

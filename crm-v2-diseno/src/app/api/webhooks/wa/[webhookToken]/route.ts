@@ -5,6 +5,11 @@ import {
   isValidWebhookToken,
   type WebhookPayload,
 } from "@/server/inbox/webhook";
+import {
+  isKapsoPayload,
+  isValidKapsoSignature,
+  processKapsoPayload,
+} from "@/server/inbox/kapso";
 import { processEchoesValue, processMessagesValue } from "@/server/inbox/ingest";
 import { processTemplateStatusValue } from "@/server/whatsapp/template-events";
 
@@ -13,6 +18,10 @@ import { processTemplateStatusValue } from "@/server/whatsapp/template-events";
  * Capa 1: el segmento [webhookToken] debe coincidir (si no → 404 sin efectos).
  * Capa 2: firma x-hub-signature-256 solo si META_APP_SECRET está configurado.
  * El POST siempre responde 200 tras validar; el procesamiento va en after().
+ *
+ * Además del payload de Meta, esta misma URL acepta los webhooks v2 de Kapso
+ * (proveedor BSP): se reconocen por su cabecera X-Webhook-Event y su firma se
+ * valida con KAPSO_WEBHOOK_SECRET (opcional). Se traducen a la ingesta común.
  */
 export const dynamic = "force-dynamic";
 
@@ -44,18 +53,44 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const rawBody = await req.text();
+
+  let parsed: unknown = null;
+  try {
+    parsed = JSON.parse(rawBody);
+  } catch {
+    parsed = null;
+  }
+
+  // Kapso primero: trae su propia firma, que no coincide con la de Meta.
+  if (parsed !== null && isKapsoPayload(req.headers, parsed)) {
+    const ok = isValidKapsoSignature(
+      rawBody,
+      req.headers.get("x-webhook-signature"),
+      env.KAPSO_WEBHOOK_SECRET
+    );
+    if (!ok) return new Response(null, { status: 401 });
+
+    const eventHeader = req.headers.get("x-webhook-event");
+    after(async () => {
+      try {
+        await processKapsoPayload(parsed, eventHeader);
+      } catch (err) {
+        console.error("[kapso] error procesando payload:", err);
+      }
+    });
+    return Response.json({ received: true });
+  }
+
   const signature = req.headers.get("x-hub-signature-256");
   if (!isValidSignature(rawBody, signature, env.META_APP_SECRET)) {
     return new Response(null, { status: 401 });
   }
 
-  let payload: WebhookPayload;
-  try {
-    payload = JSON.parse(rawBody) as WebhookPayload;
-  } catch {
+  if (parsed === null) {
     // body ilegible: 200 igualmente (Meta reintenta y termina desactivando)
     return Response.json({ received: true });
   }
+  const payload = parsed as WebhookPayload;
 
   after(async () => {
     try {

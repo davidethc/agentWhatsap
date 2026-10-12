@@ -25,6 +25,10 @@ export const envSchema = z.object({
     }),
   META_WEBHOOK_VERIFY_TOKEN: z.string().min(8),
   META_APP_SECRET: z.string().optional(),
+  // Firma de los webhooks de Kapso (header X-Webhook-Signature, HMAC-SHA256
+  // hex del body crudo). Opcional: sin ella la capa queda desactivada, igual
+  // que META_APP_SECRET.
+  KAPSO_WEBHOOK_SECRET: z.string().optional(),
   META_GRAPH_API_VERSION: z.string().default("v25.0"),
   META_GRAPH_BASE_URL: z.string().url().default("https://graph.facebook.com"),
   OPENROUTER_API_TOKEN: z.string().optional(),

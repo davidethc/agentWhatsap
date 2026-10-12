@@ -6,6 +6,11 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli Panel: contraseñas más fuertes (QA S-3).** `supabase/config.toml`: mínimo 12 caracteres con
+  minúsculas, mayúsculas y dígitos; el registro público sigue cerrado. La contraseña de la doctora de
+  prueba del seed pasa a `EliPanel-local-2026`, porque la anterior no cumplía. En la nube lo aplica el
+  orquestador con `supabase config push`, revisando antes la diferencia
+  ([tk-12-proyecto-remoto.md](docs/crm/tk-12-proyecto-remoto.md) §3).
 - **Eli Panel: revisión de seguridad y datos de salud (apoyo a TK-39 de QA).** `db lint` sin
   hallazgos en `public`/`private`; RLS en las 11 tablas; `anon` sin privilegios; `security definer`
   con `search_path` fijo; seed solo con datos inventados. Hallazgo corregido en la migración

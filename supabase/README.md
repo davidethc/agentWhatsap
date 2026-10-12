@@ -17,13 +17,19 @@ supabase functions serve --env-file supabase/functions/.env   # Edge Functions (
   por «HealthCheckTimeout», usar `--ignore-health-check` y esperar a que todo quede `healthy`.
 - Sin registro público: `[auth] enable_signup = false`. **`[auth.email] enable_signup` debe quedar en
   `true`**: en `false` apaga el login por correo («Email logins are disabled»).
-- Solo local. El proyecto remoto `eli-crm` se crea en TK-12, con aprobación del usuario.
+- Contraseñas (QA S-3): mínimo **12** con minúsculas, mayúsculas y dígitos
+  (`minimum_password_length = 12`, `password_requirements = "lower_upper_letters_digits"`). Supabase
+  lo exige al crear una cuenta o cambiar la contraseña, no al iniciar sesión. Cambiar `config.toml`
+  pide `supabase stop` y `supabase start` en local. En la nube lo aplica el **orquestador con
+  `supabase config push`**: sube toda la sección `[auth]`, así que hay que revisar la diferencia antes
+  de confirmar (ver [tk-12-proyecto-remoto.md](../docs/crm/tk-12-proyecto-remoto.md) §3).
+- Proyecto remoto: `eli-crm` (TK-12). La configuración de la nube la aplica el orquestador.
 
 ## Acceso de prueba (SOLO LOCAL)
 
 | Correo | Contraseña | Rol |
 |---|---|---|
-| `doctora@ejemplo.test` | `eli-panel-local` | doctora (fila en `personal`) |
+| `doctora@ejemplo.test` | `EliPanel-local-2026` | doctora (fila en `personal`) |
 
 La crea `seed.sql`. Nunca se usa en el proyecto remoto: allí las cuentas las crea el admin y se
 agregan a `personal`.

@@ -12,6 +12,6 @@
 
 ALTER TABLE "ad_attribution" ADD COLUMN IF NOT EXISTS "image_asset_id" text;--> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "ad_attribution" ADD CONSTRAINT "ad_attribution_image_asset_id_media_asset_id_fk" FOREIGN KEY ("image_asset_id") REFERENCES "public"."media_asset"("id") ON DELETE set null ON UPDATE no action;
+	ALTER TABLE "ad_attribution" ADD CONSTRAINT "ad_attribution_image_asset_id_media_asset_id_fk" FOREIGN KEY ("image_asset_id") REFERENCES "vocero"."media_asset"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "ad_attribution_org_source_idx" ON "ad_attribution" USING btree ("organization_id","source_id");

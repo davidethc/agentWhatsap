@@ -85,39 +85,39 @@ CREATE TABLE IF NOT EXISTS "google_credentials" (
 --> statement-breakpoint
 
 DO $$ BEGIN
-	ALTER TABLE "calendar_settings" ADD CONSTRAINT "calendar_settings_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "calendar_settings" ADD CONSTRAINT "calendar_settings_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 
 DO $$ BEGIN
-	ALTER TABLE "booking" ADD CONSTRAINT "booking_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "booking" ADD CONSTRAINT "booking_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 
 DO $$ BEGIN
-	ALTER TABLE "booking" ADD CONSTRAINT "booking_contact_id_contact_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contact"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "booking" ADD CONSTRAINT "booking_contact_id_contact_id_fk" FOREIGN KEY ("contact_id") REFERENCES "vocero"."contact"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 
 DO $$ BEGIN
-	ALTER TABLE "booking" ADD CONSTRAINT "booking_conversation_id_conversation_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversation"("id") ON DELETE set null ON UPDATE no action;
+	ALTER TABLE "booking" ADD CONSTRAINT "booking_conversation_id_conversation_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "vocero"."conversation"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 
 DO $$ BEGIN
-	ALTER TABLE "booking" ADD CONSTRAINT "booking_lead_id_lead_id_fk" FOREIGN KEY ("lead_id") REFERENCES "public"."lead"("id") ON DELETE set null ON UPDATE no action;
+	ALTER TABLE "booking" ADD CONSTRAINT "booking_lead_id_lead_id_fk" FOREIGN KEY ("lead_id") REFERENCES "vocero"."lead"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 
 DO $$ BEGIN
-	ALTER TABLE "offered_slot" ADD CONSTRAINT "offered_slot_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "offered_slot" ADD CONSTRAINT "offered_slot_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 
 DO $$ BEGIN
-	ALTER TABLE "offered_slot" ADD CONSTRAINT "offered_slot_conversation_id_conversation_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversation"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "offered_slot" ADD CONSTRAINT "offered_slot_conversation_id_conversation_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "vocero"."conversation"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 
 DO $$ BEGIN
-	ALTER TABLE "zoom_credentials" ADD CONSTRAINT "zoom_credentials_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "zoom_credentials" ADD CONSTRAINT "zoom_credentials_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 
 DO $$ BEGIN
-	ALTER TABLE "google_credentials" ADD CONSTRAINT "google_credentials_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+	ALTER TABLE "google_credentials" ADD CONSTRAINT "google_credentials_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "vocero"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 
 CREATE UNIQUE INDEX IF NOT EXISTS "calendar_settings_org_uq" ON "calendar_settings" USING btree ("organization_id");--> statement-breakpoint

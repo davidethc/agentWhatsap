@@ -11,6 +11,11 @@ import { z } from "zod";
 export const envSchema = z.object({
   APP_BASE_URL: z.string().url(),
   DATABASE_URL: z.string().min(1),
+  // Esquema Postgres donde viven las tablas de Vocero. Por defecto `public`
+  // (instalación autocontenida); en el Supabase compartido de Eli Panel se usa
+  // `vocero` para no chocar con las tablas del panel. Se aplica como
+  // `search_path` de sesión en la conexión (src/lib/db/index.ts).
+  DATABASE_SCHEMA: z.string().default("public"),
   BETTER_AUTH_SECRET: z.string().min(16),
   ENCRYPTION_KEY: z
     .string()

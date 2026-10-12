@@ -31,6 +31,10 @@ Ecuador.
   `.gitignore` cubre las copias. Paso a paso de TK-12 para aprobar:
   [docs/crm/tk-12-proyecto-remoto.md](docs/crm/tk-12-proyecto-remoto.md).
 - **Integración Eli → CRM en n8n (TK-18, TK-19)**: sub-workflow `Eli → CRM` ([workflows/eli-crm.json](workflows/eli-crm.json), inactivo) y una COPIA inactiva de version4 con 3 ramas sin esperar ([workflows/pruebas/eli-version4-crm-copia.json](workflows/pruebas/eli-version4-crm-copia.json), generada con `scripts/crm-copia-version4.jq`). `version4` real sin cambios.
+- **QA del Eli Panel, ronda 4** ([docs/crm/qa.md](docs/crm/qa.md)): TK-25, TK-26, TK-28, TK-30 y TK-34
+  pasan con Playwright (números iguales a SQL, búsqueda y tiempo real con curl a `eli-evento`, datos
+  clínicos solo con consentimiento, vista de semana y vincular citas). Hallazgo F-5: «Vincular» aparece en
+  citas no agendadas y falla. El login (F-1) no se reprodujo en 15 intentos, pero sigue sin arreglo.
 - **QA del Eli Panel, ronda 3** ([docs/crm/qa.md](docs/crm/qa.md)): TK-24, TK-27, TK-29, TK-32 y TK-33
   pasan con Playwright contra Supabase local (asistencia con «volver en», kanban con motivo de Perdido,
   ficha con auditoría, duplicado y dependiente, citas con aviso de horario y choque). Pendientes: login

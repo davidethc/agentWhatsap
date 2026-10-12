@@ -23,6 +23,10 @@ def origen($n):
   else "Responder por WhatsApp" end;
 def destinos($lista): { main: [[ $lista[] | { node: ., type: "main", index: 0 } ]] };
 
+# Las pruebas usan una credencial PROPIA (EliCrmSecretLocal01, con el secreto de prueba local) para no
+# depender ni pisar «Eli CRM secreto», que puede estar apuntando al CRM real.
+def cred_local: .credentials = { httpHeaderAuth: { id: "EliCrmSecretLocal01", name: "Eli CRM secreto (prueba local)" } };
+
 ($sub[0]) as $s
 | ($pf[0] // []) as $pasos
 | ([.nodes[] | select(.name | startswith("CRM: armar")) | select($modo == "ok" or (.name | endswith($tipo)))]) as $armadores
@@ -53,11 +57,11 @@ def destinos($lista): { main: [[ $lista[] | { node: ., type: "main", index: 0 } 
       + $armadores
       + (if $modo == "ok"
          then [$armadores[] | . as $a | ($http | .parameters.url = $url | .id = ("h2" + $a.id[2:]) | .name = ("POST " + ($a.name | ltrimstr("CRM: armar ")))
-              | .position = [$a.position[0] + 300, $a.position[1]] | .onError = "continueRegularOutput")]
+              | .position = [$a.position[0] + 300, $a.position[1]] | .onError = "continueRegularOutput" | cred_local)]
          else [{ parameters: {}, id: "h1000001-0000-4000-8000-000000000007", name: "Entrada interna",
                  type: "n8n-nodes-base.noOp", typeVersion: 1, position: [1500, 0] }]
               + [$s.nodes[] | select(.name != "Entrada interna")
-                 | if .name == "Enviar a eli-evento" then .parameters.url = $url else . end]
+                 | if .name == "Enviar a eli-evento" then (.parameters.url = $url | cred_local) else . end]
          end)
     ),
     connections: (

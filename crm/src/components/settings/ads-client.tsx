@@ -262,7 +262,7 @@ export function AdsClient() {
                 <thead className="kicker text-left">
                   <tr>
                     <th className="py-2 pr-3 font-medium">Evento</th>
-                    <th className="py-2 pr-3 font-medium">Contacto</th>
+                    <th className="py-2 pr-3 font-medium">Paciente</th>
                     <th className="py-2 pr-3 font-medium">Estado</th>
                     <th className="py-2 pr-3 font-medium">Cuándo</th>
                     <th className="py-2 font-medium">Detalle</th>

@@ -109,7 +109,7 @@ describe("sandbox del Laboratorio en el pipeline del agente", () => {
         {
           id: "msg_1",
           direction: "in",
-          text: "¿tienen taladros?",
+          text: "¿Hacen limpiezas?",
           createdAt: new Date(),
         },
       ], // historial

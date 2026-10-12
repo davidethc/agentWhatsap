@@ -15,7 +15,7 @@ export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
   if (steps.every((s) => s.reached === 0)) {
     return (
       <p className="py-4 text-sm text-text-3">
-        Ningún prospecto de este periodo tiene movimientos registrados todavía.
+        Ningún paciente de este periodo tiene movimientos registrados todavía.
       </p>
     );
   }
@@ -33,7 +33,7 @@ export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
             <div
               className="mt-1 h-2 w-full overflow-hidden rounded-[4px] bg-subtle"
               role="img"
-              aria-label={`${step.reached} prospectos llegaron a ${step.name}`}
+              aria-label={`${step.reached} pacientes llegaron a ${step.name}`}
             >
               {step.reached > 0 && (
                 <div
@@ -49,7 +49,7 @@ export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
             {siguiente && step.advanceRate && step.reached > 0 && (
               <p className="mt-1 text-[11px] text-text-3">
                 pasan a {siguiente.name}:{" "}
-                <Rate rate={step.advanceRate} unit="prospectos" className="text-[11px]" />
+                <Rate rate={step.advanceRate} unit="pacientes" className="text-[11px]" />
               </p>
             )}
           </li>

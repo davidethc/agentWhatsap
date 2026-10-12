@@ -44,7 +44,7 @@ const STATUS_BADGE: Record<
 > = {
   draft: { label: "Borrador", variant: "secondary", hint: "Guardada, todavía sin enviar a Meta." },
   pending: { label: "En revisión", variant: "warning", hint: "Meta la está revisando. Suele tardar de unos minutos a 24 horas." },
-  approved: { label: "Aprobada", variant: "success", hint: "Lista para usar desde la Bandeja o desde Contactos." },
+  approved: { label: "Aprobada", variant: "success", hint: "Lista para usar desde la Bandeja o desde Pacientes." },
   rejected: { label: "Rechazada", variant: "destructive", hint: "Corrígela y créala de nuevo con otro nombre." },
 };
 
@@ -274,7 +274,7 @@ function HowItWorks({ defaultOpen }: { defaultOpen: boolean }) {
     {
       icon: Send,
       title: "Úsala",
-      text: "En la Bandeja, cuando la ventana de 24 h está cerrada, elígela, llena las variables y envía. Para escribirle primero a alguien, usa «Escribir primero» en Contactos.",
+      text: "En la Bandeja, cuando la ventana de 24 h está cerrada, elígela, llena las variables y envía. Para escribirle primero a alguien, usa «Escribir primero» en Pacientes.",
     },
   ];
 
@@ -331,7 +331,7 @@ function HowItWorks({ defaultOpen }: { defaultOpen: boolean }) {
               <Inbox className="h-3.5 w-3.5" /> Ir a la Bandeja
             </Link>
             <Link className="inline-flex items-center gap-1 underline" href="/contacts">
-              <Send className="h-3.5 w-3.5" /> Ir a Contactos
+              <Send className="h-3.5 w-3.5" /> Ir a Pacientes
             </Link>
           </p>
         </div>

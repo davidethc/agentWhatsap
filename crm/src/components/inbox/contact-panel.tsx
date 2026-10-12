@@ -301,7 +301,7 @@ export function ContactPanel({
                 />
                 <p className="text-[11px] leading-relaxed text-warning-text">
                   {aiConfigured
-                    ? "El agente de Vocero no responde por su cuenta. Configura lo básico y enciéndelo (o conecta tu propio bot por la API)."
+                    ? "El agente del CRM no responde por su cuenta. Configura lo básico y enciéndelo (o conecta tu propio bot por la API)."
                     : "Falta el proveedor de IA (o está pausado) para que el agente responda, o conecta tu propio bot por la API."}
                   <Link
                     href={aiConfigured ? "/agent" : "/settings/ai"}
@@ -376,7 +376,7 @@ export function ContactPanel({
           <p className="kicker mb-2">Notas</p>
           <Textarea
             rows={5}
-            placeholder="Notas internas sobre este contacto…"
+            placeholder="Notas internas sobre este paciente…"
             value={notes}
             disabled={!notesLoaded}
             onChange={(e) => setNotes(e.target.value)}

@@ -83,7 +83,7 @@ export function NewContactDialog({
       return;
     }
     if (!res.ok) {
-      setError(data?.error?.message ?? "No se pudo guardar el contacto");
+      setError(data?.error?.message ?? "No se pudo guardar el paciente");
       return;
     }
     onCreated();
@@ -100,13 +100,13 @@ export function NewContactDialog({
     >
       <div
         role="dialog"
-        aria-label="Nuevo contacto"
+        aria-label="Nuevo paciente"
         className="w-full max-w-md rounded-lg border bg-popover p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-1 font-semibold">Nuevo contacto</h3>
+        <h3 className="mb-1 font-semibold">Nuevo paciente</h3>
         <p className="mb-4 text-xs text-text-3">
-          Para prospectos que no llegaron por WhatsApp: referidos, gente que te
+          Para pacientes que no llegaron por WhatsApp: referidos, gente que te
           escribió por otra red, conocidos.
         </p>
 
@@ -119,7 +119,7 @@ export function NewContactDialog({
               id="nc-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ferretería La Central"
+              placeholder="Nombre del paciente"
             />
           </div>
 
@@ -212,7 +212,7 @@ export function NewContactDialog({
         {stages.length === 0 && (
           <p className="mt-3 text-xs text-warning-text">
             Tu embudo no tiene etapas abiertas. Crea una en el Pipeline antes de
-            capturar contactos.
+            capturar pacientes.
           </p>
         )}
 
@@ -224,7 +224,7 @@ export function NewContactDialog({
             disabled={!listo || saving || stages.length === 0}
             onClick={() => void guardar()}
           >
-            {saving ? "Guardando…" : "Crear contacto"}
+            {saving ? "Guardando…" : "Crear paciente"}
           </Button>
         </div>
       </div>

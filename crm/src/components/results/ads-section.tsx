@@ -89,13 +89,13 @@ export function AdsSection({
 
           <div className="space-y-1 text-[11px] text-text-3">
             <p>
-              «Ventas» son los prospectos del periodo que hoy están en Ganado; «Cierre» es
-              ventas entre prospectos, atenuado con menos de 10 (muestra chica).
+              «Ventas» son los pacientes del periodo que hoy están en Ganado; «Cierre» es
+              ventas entre pacientes, atenuado con menos de 10 (muestra chica).
             </p>
             <p>
-              El origen es el que capturaste en el contacto; si no hay, se deduce «Anuncio»
+              El origen es el que capturaste en el paciente; si no hay, se deduce «Anuncio»
               cuando Meta dijo de qué anuncio llegó. Aquí solo se cuenta: el costo por
-              prospecto y el retorno necesitarían el gasto de cada anuncio.
+              paciente y el retorno necesitarían el gasto de cada anuncio.
             </p>
           </div>
         </div>
@@ -116,7 +116,7 @@ function Filas({ primera, filas }: { primera: string; filas: Fila[] }) {
             {f.titulo}
             <dl className="mt-2 grid grid-cols-4 gap-2 text-center">
               <Dato etiqueta="conversaciones" valor={f.conteos.conversations} />
-              <Dato etiqueta="prospectos" valor={f.conteos.leads} />
+              <Dato etiqueta="pacientes" valor={f.conteos.leads} />
               <Dato etiqueta="ventas" valor={f.conteos.won} />
               <div className="min-w-0">
                 <dt className="sr-only">Cierre</dt>
@@ -140,7 +140,7 @@ function Filas({ primera, filas }: { primera: string; filas: Fila[] }) {
                 {primera}
               </th>
               <Num>Conversaciones</Num>
-              <Num>Prospectos</Num>
+              <Num>Pacientes</Num>
               <Num>Ventas</Num>
               <Num>Cierre</Num>
             </tr>
@@ -215,7 +215,7 @@ function TasaCorta({ rate, conDenominador = true }: { rate: RateDto; conDenomina
   return (
     <span
       className={cn(!rate.reliable && "text-text-3")}
-      title={`${rate.value}% de ${rate.sample} prospectos${rate.reliable ? "" : " · muestra chica"}`}
+      title={`${rate.value}% de ${rate.sample} pacientes${rate.reliable ? "" : " · muestra chica"}`}
     >
       {rate.value}%
       {conDenominador && <span className="ml-1 text-[11px] text-text-3">de {rate.sample}</span>}

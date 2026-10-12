@@ -21,15 +21,16 @@ import {
 
 export type WeeklyHours = Partial<Record<WeekdayKey, Interval[]>>;
 
-export const DEFAULT_TIMEZONE = "America/Mexico_City";
+export const DEFAULT_TIMEZONE = "America/Guayaquil";
 
-/** L-V 09:00-18:00 — se ajusta en Ajustes → Agenda. */
+/** L-V 09:00-18:00 y sábado 09:00-15:00 (EliDental) — se ajusta en Ajustes → Agenda. */
 export const DEFAULT_WEEKLY_HOURS: WeeklyHours = {
   mon: [{ start: "09:00", end: "18:00" }],
   tue: [{ start: "09:00", end: "18:00" }],
   wed: [{ start: "09:00", end: "18:00" }],
   thu: [{ start: "09:00", end: "18:00" }],
   fri: [{ start: "09:00", end: "18:00" }],
+  sat: [{ start: "09:00", end: "15:00" }],
 };
 
 export type CalendarSettings = {

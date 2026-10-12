@@ -2,12 +2,13 @@ import { count, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
 
-/** Etapas sembradas del pipeline (US2). */
+/** Etapas sembradas del pipeline dental (US2). */
 const SEED_STAGES: { name: string; kind: "open" | "won" | "lost" }[] = [
   { name: "Nuevo", kind: "open" },
-  { name: "En conversación", kind: "open" },
   { name: "Interesado", kind: "open" },
-  { name: "Cliente", kind: "won" },
+  { name: "Agendó", kind: "open" },
+  { name: "Asistió", kind: "won" },
+  { name: "Seguimiento", kind: "open" },
   { name: "Perdido", kind: "lost" },
 ];
 

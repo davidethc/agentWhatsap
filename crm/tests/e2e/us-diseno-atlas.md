@@ -15,10 +15,10 @@
 
 ## White-label (ejecutado ✅)
 
-7. PUT nombre "El Martillo" + acento Verde apagado →
+7. PUT nombre "EliDental Loja" + acento Verde apagado →
    ✅ brand de la nav, `<title>` y variable CSS `--accent: #3f6b66` aplicados
    (SSR, `router.refresh()`); el login PÚBLICO muestra la marca; restaurar a
-   defaults funciona.
+   defaults funciona (vuelve a "EliDental" con el turquesa `--accent: #0e7490`).
 8. Solo el owner puede cambiar la marca (PUT con rol member → 403).
 9. Unit tests: presets exactos, derivación de color personalizado con ajuste
    de contraste, normalización (vacío→default, hex inválido→default). ✅

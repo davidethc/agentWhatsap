@@ -20,7 +20,7 @@ export function statusLabel(b: Booking): string {
 /** Lo que se lee en la rejilla: el contacto o, en un bloqueo, su nota. */
 export function bookingTitle(b: Booking): string {
   if (b.kind === "block") return b.notes?.trim() || "Bloqueo";
-  return b.contact?.name.trim() || "Sin contacto";
+  return b.contact?.name.trim() || "Sin paciente";
 }
 
 /**

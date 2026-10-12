@@ -31,13 +31,13 @@ export function SalesSection({
       error={error}
       hasData={!!data}
       empty={!!data?.empty}
-      emptyText="No hay prospectos ni cierres en este periodo. Prueba con un rango más amplio."
+      emptyText="No hay pacientes ni cierres en este periodo. Prueba con un rango más amplio."
     >
       {data && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-6">
             <StatCard
-              label="Prospectos nuevos"
+              label="Pacientes nuevos"
               value={String(data.kpis.newLeads.current)}
               compare={data.kpis.newLeads}
             />
@@ -75,8 +75,8 @@ export function SalesSection({
 
           <div className="grid gap-6 lg:grid-cols-2">
             <TimeBars
-              title="Prospectos nuevos"
-              unit="prospectos"
+              title="Pacientes nuevos"
+              unit="pacientes"
               points={data.series.map((s) => ({ bucket: s.bucket, value: s.newLeads }))}
               format={(v) => String(v)}
             />

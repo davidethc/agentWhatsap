@@ -88,7 +88,7 @@ describe("renderInitEnv sobre el .env.example real", () => {
     expect(vars.APP_BASE_URL).toBe("https://crm.ejemplo.com");
   });
 
-  it("conserva los comentarios y las opcionales comentadas: el .env sigue siendo la guía inline", () => {
+  it("conserva los comentarios y las opcionales comentadas, y deja AGENDA encendida", () => {
     const r = renderInitEnv(EJEMPLO);
     const antes = EJEMPLO.split(/\r?\n/);
     const despues = r.content.split(/\r?\n/);
@@ -97,7 +97,8 @@ describe("renderInitEnv sobre el .env.example real", () => {
       if (!/^[A-Z][A-Z0-9_]*=/.test(linea)) expect(despues[i]).toBe(linea);
     });
     expect(r.content).toContain("# OPENROUTER_API_TOKEN=");
-    expect(r.content).toContain("# AGENDA=on");
+    // La agenda es parte del producto en esta instalación: sale encendida.
+    expect(activas(r.content)).toContain("AGENDA=on");
   });
 
   it("reporta qué generó y qué fijó, por nombre y sin los valores", () => {

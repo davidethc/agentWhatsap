@@ -63,20 +63,22 @@ describe("white-label: acento", () => {
     expect(lum).toBeLessThan(0xd0);
   });
 
-  it("hex inválido cae al default (el azul Vocero)", () => {
-    expect(resolveAccentSet("rojo")).toEqual(ACCENT_PRESETS["#0d5bff"]!.set);
+  it("hex inválido cae al default (el turquesa EliDental)", () => {
+    expect(resolveAccentSet("rojo")).toEqual(ACCENT_PRESETS["#0e7490"]!.set);
   });
 
-  it("el azul Vocero es el default y trae los valores exactos de la landing", () => {
-    expect(DEFAULT_BRANDING.accent).toBe("#0d5bff");
+  it("el turquesa EliDental es el default y trae los valores exactos de la marca", () => {
+    expect(DEFAULT_BRANDING.accent).toBe("#0e7490");
     expect(resolveAccentSet(DEFAULT_BRANDING.accent)).toEqual({
-      accent: "#0d5bff",
-      hover: "#0a4de6",
-      soft: "#d3e2ff",
-      tint: "#ebf1ff",
-      text: "#0038d8",
+      accent: "#0e7490",
+      hover: "#0c6179",
+      soft: "#d4e6eb",
+      tint: "#f0f7f8",
+      text: "#0a5368",
       fg: "#ffffff",
     });
+    // En claro, el blanco se lee sobre el turquesa.
+    expect(contrast("#ffffff", "#0e7490")).toBeGreaterThanOrEqual(4.5);
   });
 });
 
@@ -95,8 +97,14 @@ describe("white-label: acento en tema oscuro", () => {
     }
   });
 
-  it("el azul Vocero conserva la tinta blanca en oscuro", () => {
-    expect(resolveAccentSet(DEFAULT_BRANDING.accent, "dark").fg).toBe("#ffffff");
+  it("el turquesa EliDental, aclarado en oscuro, lleva tinta oscura legible", () => {
+    // Aclarado para despegarse del fondo, el blanco ya no pasa AA sobre él
+    // (3.75:1): la receta cambia a la tinta oscura.
+    const s = resolveAccentSet(DEFAULT_BRANDING.accent, "dark");
+    expect(s.accent).toBe("#3c8ea5");
+    expect(s.fg).toBe("#0f1419");
+    expect(contrast(s.fg, s.accent)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(s.accent, DARK_BG)).toBeGreaterThanOrEqual(3);
   });
 
   it("los presets NO se aplican tal cual: están calculados para fondo blanco", () => {
@@ -109,7 +117,7 @@ describe("white-label: acento en tema oscuro", () => {
 
   it("hex inválido en oscuro también cae al acento por defecto", () => {
     expect(resolveAccentSet("rojo", "dark")).toEqual(
-      resolveAccentSet("#0d5bff", "dark")
+      resolveAccentSet("#0e7490", "dark")
     );
   });
 
@@ -146,17 +154,20 @@ describe("white-label: barra lateral bicolor (.nav-dark)", () => {
     expect(nav).not.toContain(resolveAccentSet("#3f5972", "light").accent);
   });
 
-  it("con el azul Vocero, la barra se ve como siempre", () => {
-    // La receta de la barra es la de antes: el ítem activo del tema claro no
-    // cambia aunque el tema oscuro de la página sí.
-    expect(resolveNavAccentSet(DEFAULT_BRANDING.accent)).toEqual({
-      accent: "#256bff",
-      hover: "#4883ff",
-      soft: "#122c63",
-      tint: "#0e1e41",
-      text: "#6295ff",
-      fg: "#ffffff",
+  it("con el turquesa EliDental, la barra trae su set exacto y legible", () => {
+    // Fija la receta de la barra para el acento por defecto: si alguien la
+    // retoca, el ítem activo de la barra cambia de color sin avisar.
+    const nav = resolveNavAccentSet(DEFAULT_BRANDING.accent);
+    expect(nav).toEqual({
+      accent: "#3c8ea5",
+      hover: "#5ba0b3",
+      soft: "#19364a",
+      tint: "#112236",
+      text: "#72aebe",
+      fg: "#0f1419",
     });
+    expect(contrast(nav.accent, NAV_BG)).toBeGreaterThanOrEqual(3.5);
+    expect(contrast(nav.fg, nav.accent)).toBeGreaterThanOrEqual(4.5);
   });
 
   it("sus neutros son SUYOS: no copian al tema oscuro de la página", () => {
@@ -209,14 +220,14 @@ describe("tema oscuro: las superficies se distinguen", () => {
 });
 
 describe("white-label: normalización", () => {
-  it("nombre vacío o nulo → default 'Vocero'; se recorta a 30", () => {
-    expect(normalizeBranding(null).name).toBe("Vocero");
-    expect(normalizeBranding({ name: "   " }).name).toBe("Vocero");
+  it("nombre vacío o nulo → default 'EliDental'; se recorta a 30", () => {
+    expect(normalizeBranding(null).name).toBe("EliDental");
+    expect(normalizeBranding({ name: "   " }).name).toBe("EliDental");
     expect(normalizeBranding({ name: "x".repeat(50) }).name).toHaveLength(30);
   });
 
   it("acento inválido → default", () => {
-    expect(normalizeBranding({ accent: "azul" }).accent).toBe("#0d5bff");
+    expect(normalizeBranding({ accent: "azul" }).accent).toBe("#0e7490");
     expect(normalizeBranding({ accent: "#3F6B66" }).accent).toBe("#3f6b66");
   });
 });

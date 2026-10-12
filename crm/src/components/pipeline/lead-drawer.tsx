@@ -158,7 +158,7 @@ export function LeadDrawer({
               </Link>
             ) : (
               <p className="mt-3 text-xs text-text-3">
-                Todavía no hay conversación con este contacto.
+                Todavía no hay conversación con este paciente.
               </p>
             )}
 

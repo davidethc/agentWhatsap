@@ -232,12 +232,12 @@ describe("checkWhatsApp", () => {
     wabaId: "waba1",
     phoneNumberId: "pn1",
     displayPhoneNumber: "+52 1 55 0000 0000",
-    verifiedName: "Ferretería",
+    verifiedName: "EliDental",
     status: "connected",
     token,
   });
   const guardada = (token: string) => ({
-    organization: "Ferretería El Martillo",
+    organization: "EliDental — Consultorio odontológico",
     phoneNumberId: "pn1",
     displayPhoneNumber: "+52 1 55 0000 0000",
     credentials: credenciales(token),
@@ -253,7 +253,7 @@ describe("checkWhatsApp", () => {
     const token = "EAAG-token-super-secreto-abcd";
     const [r] = await checkWhatsApp({
       load: async () => [guardada(token)],
-      test: async () => ({ ok: true, displayPhoneNumber: "+52 55 0000 0000", verifiedName: "Ferretería" }),
+      test: async () => ({ ok: true, displayPhoneNumber: "+52 55 0000 0000", verifiedName: "EliDental" }),
     });
     expect(r?.status).toBe("ok");
     expect(r?.detail).toContain("…abcd");

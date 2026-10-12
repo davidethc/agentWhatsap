@@ -47,12 +47,12 @@
     --bubble-out-border: var(--accent-soft);
     --bubble-out-text: var(--text);
 
-    /* Acento (default: azul Vocero; el white-label lo sobreescribe) */
-    --accent: #0d5bff;
-    --accent-hover: #0a4de6;
-    --accent-soft: #d3e2ff;
-    --accent-tint: #ebf1ff;
-    --accent-text: #0038d8;
+    /* Acento (default: turquesa EliDental; el white-label lo sobreescribe) */
+    --accent: #0e7490;
+    --accent-hover: #0c6179;
+    --accent-soft: #d4e6eb;
+    --accent-tint: #f0f7f8;
+    --accent-text: #0a5368;
     --accent-fg: #ffffff;
     /* El acento como TINTA (una hora, un enlace) y como anillo de foco. En
        claro son el acento mismo; en oscuro, sus variantes aclaradas: el
@@ -140,14 +140,16 @@
     --bubble-in: #173d2c;
     --bubble-in-border: #2a5e45;
 
-    /* Acento: respaldo con el azul Vocero calculado para este fondo; el
+    /* Acento: respaldo con el turquesa EliDental calculado para este fondo; el
        white-label lo recalcula (ver resolveAccentSet en lib/branding). */
-    --accent: #256bff;
-    --accent-hover: #4883ff;
-    --accent-soft: #1f3f82;
-    --accent-tint: #1e3567;
-    --accent-text: #6f9eff;
-    --accent-fg: #ffffff;
+    --accent: #3c8ea5;
+    --accent-hover: #5ba0b3;
+    --accent-soft: #274c62;
+    --accent-tint: #233d53;
+    --accent-text: #7eb5c4;
+    /* Sobre el turquesa oscuro (#3c8ea5) el blanco no llega a AA (3.75:1);
+       la receta elige tinta casi negra (#0f1419), que pasa 4.94:1. */
+    --accent-fg: #0f1419;
     --accent-ink: var(--accent-text);
     --ring: var(--accent-hover);
     --accent-veil: rgba(0, 0, 0, 0.22);

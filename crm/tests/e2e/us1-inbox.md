@@ -12,7 +12,7 @@
 ## Camino feliz
 
 3. **Entrante en tiempo real (SC-001)**: `POST /api/dev/wa-mock/inbound`
-   `{ phoneNumberId, from: "5215522223333", name: "Cliente E2E", text: "Hola, ¿tienen taladros?" }`.
+   `{ phoneNumberId, from: "5215522223333", name: "Paciente E2E", text: "Hola, ¿hacen limpiezas?" }`.
    ✅ La conversación aparece en la lista en ≤2 s SIN recargar, con nombre y preview.
 4. **Abrir el hilo**: clic en la conversación.
    ✅ El mensaje entrante se ve en burbuja; el contador de no-leídos se limpia.

@@ -201,12 +201,21 @@ describe("railway.toml: solo build, healthcheck y reinicio; el resto, con la CLI
 });
 
 describe("la documentación lleva a los manifests", () => {
-  it("el README tiene la sección y enlaza los tres; INSTALL-IA.md apunta a ella", () => {
+  it("el README explica el despliegue recomendado (Coolify o docker compose)", () => {
+    // El README de EliDental es corto: solo cubre la ruta del consultorio.
     const readme = leer("README.md");
-    expect(readme).toMatch(/^### Otras plataformas/m);
+    const despliegue = readme.split(/^## /m).find((s) => s.startsWith("Despliegue"));
+    expect(despliegue, "README → «## Despliegue»").toBeDefined();
+    expect(despliegue).toMatch(/Coolify/);
+    expect(despliegue).toMatch(/docker compose/);
+    expect(despliegue).toMatch(/https/);
+  });
+
+  it("INSTALL-IA.md nombra los tres manifests, que existen en la raíz", () => {
+    const install = leer("INSTALL-IA.md");
     for (const archivo of ["render.yaml", "fly.toml", "railway.toml"]) {
-      expect(readme).toContain(`](${archivo})`);
+      expect(install).toContain(`\`${archivo}\``);
+      expect(leer(archivo).length).toBeGreaterThan(0);
     }
-    expect(leer("INSTALL-IA.md")).toMatch(/Otras plataformas/);
   });
 });

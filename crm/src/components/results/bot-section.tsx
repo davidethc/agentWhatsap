@@ -101,23 +101,23 @@ export function BotSection({
             </div>
 
             <div>
-              <Subhead>Ficha del prospecto</Subhead>
+              <Subhead>Ficha del paciente</Subhead>
               {data.fichaCoverage === null ? (
                 // `null` NO es 0 %: es que el agente de esta instancia no escribe
                 // ficha. Enseñar 0 % sería acusarlo de no hacer algo que nunca se
                 // le pidió.
                 <p className="text-sm text-text-3">
-                  Nadie está llenando la ficha de los prospectos. La escribe un cerebro
+                  Nadie está llenando la ficha de los pacientes. La escribe un cerebro
                   externo (<code className="font-mono text-xs">PUT /api/bot/ficha</code>) o
                   tu equipo desde el panel de la conversación.
                 </p>
               ) : (
                 <>
                   <p className="text-sm">
-                    <Rate rate={data.fichaCoverage} unit="contactos nuevos" />
+                    <Rate rate={data.fichaCoverage} unit="pacientes nuevos" />
                   </p>
                   <p className="mt-1 text-xs text-text-3">
-                    De los contactos que llegaron en este periodo, a cuántos les sacó datos.
+                    De los pacientes que llegaron en este periodo, a cuántos les sacó datos.
                   </p>
                 </>
               )}

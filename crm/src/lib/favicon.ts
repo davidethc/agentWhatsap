@@ -90,10 +90,10 @@ export function sniffFaviconMime(bytes: Uint8Array): FaviconMime | null {
   return null;
 }
 
-/** Inicial que se dibuja. Vacío o raro cae a la V de Vocero. */
+/** Inicial que se dibuja. Vacío o raro cae a la E de EliDental. */
 export function faviconInitial(name: string): string {
   const c = name.trim().charAt(0).toUpperCase();
-  return c || "V";
+  return c || "E";
 }
 
 /**

@@ -99,6 +99,8 @@ describe("catálogo de monedas", () => {
   });
 
   it("la predeterminada existe y ningún grupo del selector queda vacío", () => {
+    // EliDental cobra en dólares (Ecuador).
+    expect(DEFAULT_CURRENCY).toBe("USD");
     expect(isCurrency(DEFAULT_CURRENCY)).toBe(true);
     for (const g of CURRENCY_GROUPS) {
       expect(CURRENCY_OPTIONS.some((c) => c.group === g.id), g.id).toBe(true);

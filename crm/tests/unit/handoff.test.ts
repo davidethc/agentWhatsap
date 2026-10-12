@@ -18,7 +18,7 @@ describe("patrón de respaldo de handoff (FR-022 / SC-006)", () => {
   it.each([
     "somos 4 personas", // el caso canónico que NO debe disparar
     "somos cuatro personas y queremos reservar",
-    "¿tienen taladros?",
+    "¿Hacen limpiezas?",
     "la persona que me atendió ayer fue amable",
     "mi humano favorito es mi hijo",
     "el asesor fiscal ya me cobró", // sin verbo de contacto ni "un asesor"

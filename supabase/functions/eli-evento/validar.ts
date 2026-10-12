@@ -1,6 +1,11 @@
 // Validación del contrato Eli → CRM (docs/crm/plan.md §5). Sin dependencias: se puede probar aparte.
 
-export type TipoEvento = "mensaje_entrante" | "mensaje_saliente" | "cita_reservada";
+export type TipoEvento =
+  | "mensaje_entrante"
+  | "mensaje_saliente"
+  | "cita_reservada"
+  | "cita_movida"
+  | "cita_cancelada";
 
 const CAMPOS: Record<TipoEvento, { obligatorios: string[]; opcionales: string[]; fechas: string[] }> = {
   mensaje_entrante: {
@@ -18,7 +23,19 @@ const CAMPOS: Record<TipoEvento, { obligatorios: string[]; opcionales: string[];
     opcionales: ["fin", "servicio", "nombre"],
     fechas: ["inicio", "fin"],
   },
+  cita_movida: {
+    obligatorios: ["telefono", "gcal_event_id", "inicio"],
+    opcionales: ["fin"],
+    fechas: ["inicio", "fin"],
+  },
+  cita_cancelada: {
+    obligatorios: ["telefono", "gcal_event_id"],
+    opcionales: [],
+    fechas: [],
+  },
 };
+
+export const TIPOS = Object.keys(CAMPOS) as TipoEvento[];
 
 export type Resultado =
   | { ok: true; evento: Record<string, string> & { tipo: TipoEvento } }
@@ -35,8 +52,8 @@ export function validarEvento(cuerpo: unknown): Resultado {
     return { ok: false, error: "texto ya no se acepta: el CRM no guarda el contenido de los mensajes" };
   }
   const tipo = c.tipo;
-  if (typeof tipo !== "string" || !(tipo in CAMPOS)) {
-    return { ok: false, error: "tipo debe ser mensaje_entrante, mensaje_saliente o cita_reservada" };
+  if (typeof tipo !== "string" || !Object.hasOwn(CAMPOS, tipo)) {
+    return { ok: false, error: `tipo debe ser ${TIPOS.slice(0, -1).join(", ")} o ${TIPOS.at(-1)}` };
   }
   const reglas = CAMPOS[tipo as TipoEvento];
   const evento: Record<string, string> = { tipo };

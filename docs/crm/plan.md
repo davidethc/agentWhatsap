@@ -125,7 +125,9 @@ Supabase). La función valida el JSON y llama a `registrar_evento_eli`. Responde
 |---|---|---|---|
 | `mensaje_entrante` | `telefono`, `nombre_whatsapp`, `message_id`, `en` (**sin `texto`**) | Crea la conversación y el titular en **Nuevo** si es la primera vez; registra que hubo mensaje (sin su contenido); suma un turno; con 2 turnos o más, Nuevo → **Conversando**; Perdido → **Conversando** (reactivación) | `id_externo = message_id` (el mismo del dedup de n8n) |
 | `mensaje_saliente` | `telefono`, `execution_id`, `en` (**sin `texto`**) | Registra que Eli respondió (sin su contenido) | `id_externo = 'out:' + execution_id` |
-| `cita_reservada` | `telefono`, `gcal_event_id`, `inicio`, `fin`, `servicio`, `nombre` | Crea o actualiza la cita (origen eli) ligada al titular; paciente → **Agendó** | `unique(gcal_event_id)` |
+| `cita_reservada` | `telefono`, `gcal_event_id`, `inicio`, `fin`, `servicio`, `nombre` | Crea o actualiza la cita (origen eli) ligada al titular; paciente → **Agendó**. `nombre` reemplaza el nombre automático (WhatsApp o «Sin nombre»), nunca uno editado en el panel | `unique(gcal_event_id)` |
+| `cita_movida` | `telefono`, `gcal_event_id`, `inicio`, `fin` (opcional: si falta, conserva la duración) | Cambia la hora de la cita con ese `gcal_event_id` (`sync = ok`). Si el CRM no la conoce, la crea como `cita_reservada`. Una cita ya atendida, no asistida o cancelada no se mueve | Misma hora → `duplicado: true` |
+| `cita_cancelada` | `telefono`, `gcal_event_id` | La cita pasa a **cancelada** (`sync = ok`; no cambia la etapa, igual que en el panel). Si el CRM no la conoce, no hace nada y responde ok | Ya cancelada → `duplicado: true` |
 
 **En n8n:** un workflow nuevo, `Eli → CRM` (`workflows/eli-crm.json`): entrada interna → HTTP Request
 (timeout 5 s, 2 reintentos) → si falla, guarda el error en `v4:crm:errores` (Redis, lista recortada a
@@ -133,8 +135,10 @@ Supabase). La función valida el JSON y llama a `registrar_evento_eli`. Responde
 de «¿Mensaje nuevo?» (sí), después de «Responder por WhatsApp» y después de «Crear evento». Eli **no
 espera** y no depende del resultado.
 
-**Mover y cancelar de Eli:** `mover_cita` y `cancelar_cita` escriben directo en Google Calendar; el
-panel se entera por la sincronización (≤ 2 min). Así no se tocan esas herramientas.
+**Mover y cancelar de Eli (12-oct-2026, pedido del usuario: CRM sincronizado con Eli):** `mover_cita`
+y `cancelar_cita` escriben en Google Calendar y además mandan `cita_movida` o `cita_cancelada`, así el
+panel se entera al instante. La sincronización con Calendar (≤ 2 min) queda como red de seguridad.
+Los cambios quedan en la auditoría con actor `eli`.
 
 **Si el CRM falla, Eli sigue:** la llamada no se espera, tiene timeout, reintenta y registra el error.
 Se prueba en QA (TK-37).

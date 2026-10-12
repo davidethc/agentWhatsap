@@ -6,6 +6,16 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Eli → CRM sincronizado: eventos `cita_movida` y `cita_cancelada` (pedido del usuario).** En la
+  misma migración `20261012000100`: mover cambia la hora de la cita (o la crea si el CRM no la
+  conocía) y cancelar la pasa a cancelada (o no hace nada si no existe). Las dos son idempotentes, quedan
+  en la auditoría con actor `eli` y no llevan contenido de mensajes. `eli-evento/validar.ts` acepta los
+  dos tipos y tiene pruebas (`validar.test.ts`, 11). Además, `fin` anterior a `inicio` ahora responde
+  400 en vez de 500. pgTAP `12_cita_movida_cancelada` (24). Contrato en `docs/crm/plan.md` §5.
+- **Eli Panel: nombre completo desde la cita (pedido del usuario).** Migración
+  `20261012000100_nombre_completo_desde_cita.sql`: cuando Eli agenda (`cita_reservada` con `nombre`),
+  el titular pasa del nombre de WhatsApp (o «Sin nombre») al nombre completo, auditado con actor
+  `eli`. Un nombre editado a mano en el panel no se pisa. Prueba pgTAP `11_nombre_desde_cita`.
 - **Eli Panel: contraseñas más fuertes (QA S-3).** `supabase/config.toml`: mínimo 12 caracteres con
   minúsculas, mayúsculas y dígitos; el registro público sigue cerrado. La contraseña de la doctora de
   prueba del seed pasa a `EliPanel-local-2026`, porque la anterior no cumplía. En la nube lo aplica el

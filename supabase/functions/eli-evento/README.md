@@ -25,6 +25,8 @@ ISO 8601 con zona (`2026-10-13T10:00:00-05:00`).
 | `mensaje_entrante` | `telefono`, `message_id` | `nombre_whatsapp`, `en` (por defecto ahora) | Crea la conversación y el titular en **Nuevo** si es la primera vez; registra el mensaje (dirección y hora); suma un turno; 2.º turno: Nuevo → **Conversando**; Perdido → **Conversando** | `message_id` (el del dedup de n8n) |
 | `mensaje_saliente` | `telefono`, `execution_id` (cadena o número) | `en` | Registra la respuesta de Eli (dirección y hora); no cuenta turnos | `out:<execution_id>` |
 | `cita_reservada` | `telefono`, `gcal_event_id`, `inicio` | `fin` (por defecto +1 h), `servicio`, `nombre` | Crea o actualiza la cita (origen `eli`, `sync = ok`) ligada al titular; paciente → **Agendó**. `nombre` (el nombre completo que dio el paciente): crea al titular con él, o reemplaza el nombre automático (el de WhatsApp o «Sin nombre»); nunca pisa uno editado en el panel. El cambio queda auditado con actor `eli` | `gcal_event_id` |
+| `cita_movida` | `telefono`, `gcal_event_id`, `inicio` | `fin` (si falta, conserva la duración) | Cambia la hora de la cita (`sync = ok`). Si el CRM no la conoce, la crea como `cita_reservada`. Una cita atendida, no asistida o cancelada no se mueve | Misma hora → `duplicado: true` |
+| `cita_cancelada` | `telefono`, `gcal_event_id` | — | La cita pasa a **cancelada** (`sync = ok`), sin cambiar la etapa. Si el CRM no la conoce, no hace nada y responde 200 | Ya cancelada → `duplicado: true` |
 
 Todo lo que cambia queda con **actor = eli** en `cambios_etapa` y `auditoria`.
 
@@ -51,6 +53,13 @@ Ejemplo:
 | 500 | `{"ok":false,"error":"…"}` | Fallo interno; queda una fila en `errores_integracion` (origen `eli`) con el tipo y los ids, **sin teléfono** |
 
 ## Probar en local
+
+Validación del contrato (sin base, datos inventados):
+
+```bash
+node --test supabase/functions/eli-evento/validar.test.ts   # Node 22.18+ (o: deno test …)
+```
+
 
 ```bash
 cp supabase/functions/.env.example supabase/functions/.env   # y poner un secreto largo

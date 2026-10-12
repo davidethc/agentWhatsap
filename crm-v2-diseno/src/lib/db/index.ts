@@ -47,8 +47,13 @@ const globalForDb = globalThis as unknown as {
 
 function createClient() {
   const env = getEnv();
+  // En Vercel cada instancia serverless abre su propio pool; con el pooler de
+  // Supabase en modo sesión (tope de 15 clientes) 10 por instancia agotan el
+  // cupo y Better Auth falla («max clients reached») → la sesión parece caída.
+  const serverless = Boolean(process.env.VERCEL);
   return postgres(env.DATABASE_URL, {
-    max: 10,
+    max: serverless ? 1 : 10,
+    ...(serverless ? { idle_timeout: 5, max_lifetime: 60 } : {}),
     ...PG_CONNECTION_OPTIONS,
   });
 }

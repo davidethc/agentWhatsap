@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# crm/ · Eli Panel
 
-## Getting Started
+Panel de la doctora de EliDental (Next.js 16, TypeScript estricto, Tailwind 4 y shadcn/ui) sobre Supabase.
+Resumen del día, tablero de pacientes por etapa, ficha, nuevo paciente y citas.
 
-First, run the development server:
+- Cómo se usa: [docs/crm/guia-doctora.md](../docs/crm/guia-doctora.md)
+- Cómo levantarlo y operarlo: [docs/crm/operacion.md](../docs/crm/operacion.md)
+- Diseño y decisiones: [docs/crm/plan.md](../docs/crm/plan.md)
+
+## Arrancar
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+supabase start                  # base local (desde la raíz del repo)
+cp .env.example .env.local      # URL y clave PÚBLICA de `supabase status`
+pnpm install
+pnpm dev                        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Cuenta de prueba (solo local): `doctora@ejemplo.test` / `eli-panel-local`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Comandos
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando | Para qué |
+|---|---|
+| `pnpm lint` | Revisar el código |
+| `pnpm typecheck` | Revisar los tipos |
+| `pnpm test` | Pruebas (Vitest) |
+| `pnpm build` / `pnpm start` | Versión de producción |
 
-## Learn More
+Sin `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` el panel falla a propósito al construirse.
+`ELI_DATOS=falso` en `.env.local` usa datos inventados en memoria, sin Supabase.
 
-To learn more about Next.js, take a look at the following resources:
+## Reglas del código
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- El panel **lee** las tablas y **escribe** llamando a las funciones de la base (ahí viven las reglas del
+  embudo); solo los datos básicos, el consentimiento y los datos clínicos van directo, con permiso por columna.
+- Solo la URL y la clave pública llegan al navegador. **Nunca** una `service_role` ni un secreto.
+- Los colores están en un solo archivo: `styles/tokens.css`.
+- No se muestra ni se guarda el contenido de los mensajes ([ADR 0012](../docs/adr/0012-crm-sin-contenido-de-mensajes.md)).

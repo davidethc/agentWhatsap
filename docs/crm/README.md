@@ -13,9 +13,23 @@ Esta carpeta es su espejo: cada documento se copia aquí cuando el usuario lo ap
 | [plan.md](plan.md) | Aprobado (10-oct-2026): arquitectura, datos, contrato Eli → CRM, Calendar, pantallas |
 | [tasks.md](tasks.md) | Aprobadas (10-oct-2026): TK-1 a TK-40 en Ready |
 | `integracion.md` | La escribe el orquestador durante la construcción |
+| [guia-doctora.md](guia-doctora.md) | **Guía para la doctora** (TK-40): entrar, resumen, tablero, ficha, nuevo paciente y citas |
+| [operacion.md](operacion.md) | **Guía de operación** (TK-40): arrancar en local, migraciones, copias, qué hacer si el CRM cae |
+| [eli-crm.md](eli-crm.md) | **Cómo funciona Eli → CRM** (TK-40): avisos sin esperar, reglas, errores; sin texto de mensajes |
 | [qa.md](qa.md) | Informe de QA por tarea (ronda 1: TK-1 a TK-11, TK-14, TK-21 y TK-22; ronda 2: TK-13, TK-18, TK-19 y TK-23; ronda 3: TK-24, TK-27, TK-29, TK-32, TK-33 y TK-41; ronda 4: TK-25, TK-26, TK-28, TK-30 y TK-34; ronda 5: TK-36, TK-37 y TK-39) |
 | [backup-crm.md](backup-crm.md) | Copia semanal de la base con `scripts/backup-crm.sh` y cómo restaurar (TK-13) |
 | [tk-12-proyecto-remoto.md](tk-12-proyecto-remoto.md) | Paso a paso para crear `eli-crm` en la nube (✋ espera aprobación) |
+
+## Estado
+
+| Parte | Estado |
+|---|---|
+| Base de datos, seguridad y reglas del embudo | ✅ hecho y probado ([qa.md](qa.md): TK-39, 261 pruebas pgTAP) |
+| Panel de la doctora (resumen, tablero, ficha, nuevo paciente, citas) | ✅ hecho y probado (TK-36) |
+| Eli → CRM sin texto de mensajes | ✅ probado con la copia inactiva de `version4` (TK-37) |
+| Conversación con Eli en la ficha | ⏸ pospuesta por privacidad ([ADR 0012](../adr/0012-crm-sin-contenido-de-mensajes.md)) |
+| Conectar el `version4` real, proyecto en la nube y publicar el panel | ⏳ esperan aprobación (TK-12, TK-20, TK-35) |
+| **Pendiente: Google Calendar** | ⏳ última parte (TK-14 a TK-17, TK-38): [google-calendar.md](google-calendar.md) |
 
 ## Agentes (`.claude/agents/`)
 

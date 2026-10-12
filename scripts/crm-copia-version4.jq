@@ -4,7 +4,9 @@
 # seguimientos automáticos («Seg: …»):
 #   jq -f scripts/crm-copia-version4.jq /Users/d/agentWhatsap/workflows/eli-version4.json \
 #      > workflows/pruebas/eli-version4-crm-copia.json
-# Última generación: version4 de main d54e52b (10-oct-2026, seguimientos automáticos).
+# Última generación: version4 de main 4dbbf07 (11-oct-2026: seguimientos, notas de voz e imágenes con
+# Gemini —«Leer webhook» + cadena de medios + «Normalizar mensaje» al final—, fechas de Ecuador y
+# modelo de respaldo OpenRouter).
 def pos(n): (.nodes[] | select(.name == n) | .position);
 
 def codigo(id; nombre; js; p): {
@@ -30,7 +32,7 @@ def llamar(id; nombre; p): {
 | (.nodes[] | select(.name == "Webhook Kapso") | .webhookId) = "c0b1a000-0000-4000-8000-000000000019"
 | .nodes += [
     codigo("c19a0001-0000-4000-8000-000000000001"; "CRM: armar mensaje_entrante";
-      "// Evento para Eli → CRM. Por ahora NO lleva el texto del mensaje (privacidad). Si algo falta, no manda nada.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to || !n.message_id) return [];\nreturn [{ json: { tipo: 'mensaje_entrante', telefono: n.to, nombre_whatsapp: n.nombre || undefined, message_id: n.message_id, en: new Date().toISOString() } }];";
+      "// Evento para Eli → CRM. Por ahora NO lleva el texto del mensaje (privacidad). Si algo falta, no manda nada.\n// Se lee de «Leer webhook» (está justo antes de ¿Mensaje nuevo?): no espera la cadena de medios con Gemini.\nconst n = $('Leer webhook').first().json;\nif (!n.to || !n.message_id) return [];\nreturn [{ json: { tipo: 'mensaje_entrante', telefono: n.to, nombre_whatsapp: n.nombre || undefined, message_id: n.message_id, en: new Date().toISOString() } }];";
       [$p1[0] + 240, $p1[1] - 220]),
     llamar("c19a0001-0000-4000-8000-000000000002"; "CRM: enviar mensaje_entrante (sin esperar)"; [$p1[0] + 480, $p1[1] - 220]),
     codigo("c19a0001-0000-4000-8000-000000000003"; "CRM: armar mensaje_saliente";
@@ -42,6 +44,14 @@ def llamar(id; nombre; p): {
       [$p3[0] + 240, $p3[1] - 220]),
     llamar("c19a0001-0000-4000-8000-000000000006"; "CRM: enviar cita_reservada (sin esperar)"; [$p3[0] + 480, $p3[1] - 220])
   ]
+| (.nodes[] | select(.name | startswith("CRM: armar"))) += {
+    notes: "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
+    notesInFlow: true
+  }
+| (.nodes[] | select(.name | startswith("CRM: enviar"))) += {
+    notes: "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
+    notesInFlow: true
+  }
 # La rama del CRM va PRIMERO y «Cita reservada» queda de última, para que la respuesta de la herramienta al agente siga siendo la de siempre.
 | .connections["¿Mensaje nuevo?"].main[0] = [{ node: "CRM: armar mensaje_entrante", type: "main", index: 0 }] + .connections["¿Mensaje nuevo?"].main[0]
 | .connections["Responder por WhatsApp"].main[0] = [{ node: "CRM: armar mensaje_saliente", type: "main", index: 0 }] + .connections["Responder por WhatsApp"].main[0]

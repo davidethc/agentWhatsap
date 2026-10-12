@@ -5,7 +5,7 @@
 -- sin escribir; para volver a tener todas las etapas, otro `supabase db reset`.
 --
 -- Acceso local (SOLO LOCAL, nunca en el proyecto remoto):
---   correo: doctora@ejemplo.test · contraseña: eli-panel-local
+--   correo: doctora@ejemplo.test · contraseña: EliPanel-local-2026
 
 -- ───────────────────────── Doctora de prueba ─────────────────────────
 insert into auth.users (
@@ -15,7 +15,7 @@ insert into auth.users (
 ) values (
   '00000000-0000-0000-0000-000000000000', 'd0c70000-0000-4000-8000-000000000001',
   'authenticated', 'authenticated', 'doctora@ejemplo.test',
-  extensions.crypt('eli-panel-local', extensions.gen_salt('bf')), now(),
+  extensions.crypt('EliPanel-local-2026', extensions.gen_salt('bf')), now(),
   '{"provider":"email","providers":["email"]}', '{"nombre":"Doctora Prueba"}', now(), now(),
   '', '', '', ''
 ) on conflict (id) do nothing;

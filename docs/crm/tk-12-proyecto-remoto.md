@@ -89,7 +89,32 @@ sin errores (`get_advisors` del MCP de Supabase o Dashboard → Advisors).
 - Dashboard → **Authentication → Sign In / Providers** → apagar **Allow new users to sign up**.
   Dejar **Email** encendido (si se apaga, nadie puede entrar).
 - **URL Configuration → Site URL**: por ahora `http://localhost:3000`; en TK-35 se cambia a la de Netlify.
-- No uso `supabase config push` para esto porque subiría también la configuración local (URLs de localhost).
+- **Contraseñas (QA S-3, ronda 5):** mínimo **12** caracteres con **minúsculas, mayúsculas y
+  dígitos** (`minimum_password_length = 12` y `password_requirements = "lower_upper_letters_digits"`
+  en `supabase/config.toml`). Supabase lo exige al crear una cuenta o cambiar la contraseña, no al
+  iniciar sesión. Por eso las cuentas creadas antes del cambio entran igual, pero conviene que la
+  contraseña real de la doctora y la del admin ya cumplan la regla.
+- **Quién lo aplica:** el orquestador, con `supabase config push`. Primero hay que revisar la
+  diferencia que muestra la CLI antes de confirmar:
+
+  ```bash
+  supabase config push --project-ref uvtlctqupeermbgsepxn   # muestra la diferencia y pide confirmación
+  ```
+
+  `config push` sube **toda** la sección `[auth]` de `config.toml`, no solo las contraseñas. Hay que
+  revisar en la diferencia:
+  - `site_url = "http://127.0.0.1:3000"` y `additional_redirect_urls`: son de localhost. Hoy la nube
+    también usa localhost (hasta TK-35), así que no rompe nada, pero en TK-35 hay que poner la URL de
+    Netlify y no volver a pisarla con un `config push`.
+  - `enable_signup = false` en `[auth]` y `enable_signup = true` en `[auth.email]`: es lo que queremos
+    (sin registro público, con login por correo).
+  - `enable_confirmations = false` y `secure_password_change = false` en `[auth.email]`, y los límites
+    de `[auth.rate_limit]`: son valores locales. Si el orquestador no quiere subirlos, la alternativa
+    sin `config push` es Dashboard → **Authentication → Sign In / Providers → Email** → «Minimum
+    password length» = 12 y «Password requirements» = «Lowercase, uppercase letters and digits».
+- Comprobación después: crear una cuenta de prueba en Dashboard → Users con una contraseña corta debe
+  dar «Password should be at least 12 characters». Esa cuenta se borra después y no se usan correos
+  reales.
 
 ## 4. Cuentas de la doctora y del admin (tú)
 

@@ -7,6 +7,24 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar — camino a 2.0.0
 
+### Webhook de WhatsApp: acepta Kapso v2 además de Meta
+
+- La misma URL (`POST /api/webhooks/wa/<token>`) ahora reconoce los webhooks v2
+  del proveedor **Kapso** (cabecera `X-Webhook-Event`, o cuerpo con `batch`,
+  `message.kapso` o `phone_number_id`). Traduce `whatsapp.message.received` a
+  entrante, `whatsapp.message.sent` a saliente del negocio y
+  `delivered`/`read`/`failed` a estado, y reutiliza la ingesta común
+  (idempotencia por `wa_message_id`, enrutado por `phone_number_id` conectado).
+  Acepta un evento suelto o un `batch` (`data[]`). Nuevo módulo
+  `src/server/inbox/kapso.ts` (detección, traducción y firma puros) con pruebas
+  en `tests/unit/kapso-webhook.test.ts`.
+- **Nueva variable `KAPSO_WEBHOOK_SECRET`** (opcional): con ella, cada `POST` de
+  Kapso se valida por `X-Webhook-Signature` (HMAC-SHA256 hex del body crudo);
+  sin ella, la capa queda desactivada, igual que `META_APP_SECRET`.
+- Los salientes del negocio ahora se pueden registrar desde Kapso: se guardan
+  como saliente (origen `ai`; `manual` si Kapso marca `business_app`, que
+  además pausa la IA). Los adjuntos de Kapso aún no se copian al volumen.
+
 ### Esquema Postgres configurable (`DATABASE_SCHEMA`) y despliegue compartido
 
 - **Nuevo `DATABASE_SCHEMA`** (por defecto `public`): el CRM puede vivir en un

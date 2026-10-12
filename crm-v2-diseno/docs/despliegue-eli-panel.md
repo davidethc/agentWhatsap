@@ -134,18 +134,27 @@ select enabled from agent_profile;                                              
 
 - **Contacto, lead y conversación los crea la ingesta**, no hay endpoint de alta.
   La única puerta pública es el webhook:
-  `POST /api/webhooks/wa/<META_WEBHOOK_VERIFY_TOKEN>` con el formato de la
-  WhatsApp Cloud API (campo `entry[].changes[].value.metadata.phone_number_id` +
-  `messages[]`). Es idempotente (dedup por `wa_message_id`).
-  **Requisito**: ese `phone_number_id` debe existir como número conectado en
-  **Ajustes → WhatsApp**; si no, el evento se descarta («phone_number_id
-  desconocido»). El `GET` de verificación de Meta responde el `hub.challenge`
-  si `hub.verify_token` es igual a `META_WEBHOOK_VERIFY_TOKEN`; la firma HMAC
-  del `POST` (`x-hub-signature-256`) **solo se exige si hay `META_APP_SECRET`**
-  (sin él, capa desactivada).
-- **Salientes**: al CRM solo llegan los mensajes del cliente (`messages`). Lo que
-  Eli envía por Kapso **no** se registra, salvo que el proveedor entregue
-  `smb_message_echoes` (mensajes escritos a mano desde el teléfono, coexistencia).
+  `POST /api/webhooks/wa/<META_WEBHOOK_VERIFY_TOKEN>`. Acepta **dos formatos**:
+  - **Meta** (WhatsApp Cloud API): `entry[].changes[].value.metadata.phone_number_id`
+    + `messages[]`. El `GET` de verificación responde el `hub.challenge` si
+    `hub.verify_token` = `META_WEBHOOK_VERIFY_TOKEN`; la firma HMAC del `POST`
+    (`x-hub-signature-256`) **solo se exige si hay `META_APP_SECRET`**.
+  - **Kapso v2** (el proveedor de Eli): se reconoce por la cabecera
+    `X-Webhook-Event` (o por el cuerpo: `batch: true`, `message.kapso`,
+    `phone_number_id`). Traduce `whatsapp.message.received` a entrante,
+    `whatsapp.message.sent` a saliente y `delivered`/`read`/`failed` a estado.
+    Acepta un evento suelto o un `batch` (`data[]`). Firma
+    `X-Webhook-Signature` (HMAC-SHA256 hex del body crudo) **solo si hay
+    `KAPSO_WEBHOOK_SECRET`**.
+  En ambos: idempotente (dedup por `wa_message_id`) y **requisito**: ese
+  `phone_number_id` debe existir como número conectado en **Ajustes → WhatsApp**;
+  si no, el evento se descarta («phone_number_id desconocido»).
+- **Salientes**: los mensajes del cliente entran por `received`. Lo que el
+  negocio envía lo registra `whatsapp.message.sent` de Kapso (o `smb_message_echoes`
+  de Meta, mensajes a mano desde el teléfono): se guardan como saliente, origen
+  `ai` (API) o `manual` (app del teléfono, que además pausa la IA), sin abrir la
+  ventana de 24 h. Los adjuntos de Kapso aún no se copian al volumen (llegan por
+  `media_url` remota): el mensaje entra con su pie/transcripción como texto.
 - **Contexto / conversación pasa por `conversationId`** (o `identity`):
   `GET /api/bot/context?identity=<teléfono normalizado|bsuid:…|ig:…|fb:…>` o
   `?conversationId=<cv_…>`. La respuesta trae contacto, etapa, ficha, handoff,

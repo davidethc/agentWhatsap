@@ -20,7 +20,8 @@ export async function requerirPersonal(): Promise<Personal> {
     .eq("user_id", userId)
     .maybeSingle()
 
-  // Una Server Component no puede borrar cookies: /salir cierra la sesión y vuelve al login.
-  if (!fila) redirect("/salir?error=sin-acceso")
+  // Una Server Component no puede borrar cookies y /salir solo cierra sesión por POST:
+  // /sin-acceso explica el caso y ofrece el botón (formulario POST).
+  if (!fila) redirect("/sin-acceso")
   return { userId, nombre: fila.nombre, rol: fila.rol }
 }

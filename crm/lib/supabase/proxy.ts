@@ -3,11 +3,11 @@ import { NextResponse, type NextRequest } from "next/server"
 
 import { supabaseEnv } from "./env"
 
-const RUTAS_PUBLICAS = ["/login"]
+const RUTAS_PUBLICAS = ["/login", "/sin-acceso"]
 
 /**
  * Refresca la sesión y aplica la regla de acceso:
- * sin sesión → /login; con sesión en /login → /.
+ * sin sesión → /login; con sesión en /login → /. (/sin-acceso es pública para ambos.)
  * Usa getClaims() (valida la firma del token), no getSession().
  */
 export async function actualizarSesion(request: NextRequest) {
@@ -38,7 +38,8 @@ export async function actualizarSesion(request: NextRequest) {
     destino.search = ""
     return NextResponse.redirect(destino)
   }
-  if (haySesion && esPublica) {
+  // Con sesión, /login lleva al inicio; /sin-acceso sí es para quien tiene sesión pero no permiso.
+  if (haySesion && (pathname === "/login" || pathname.startsWith("/login/"))) {
     const destino = request.nextUrl.clone()
     destino.pathname = "/"
     destino.search = ""

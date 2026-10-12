@@ -6,6 +6,9 @@ Ecuador.
 ## [Sin publicar]
 
 ### Agregado
+- **Prueba: Eli lee su «ficha» desde el CRM** (solo para el número del dueño): tono, saludo,
+  instrucciones, escalado y preguntas frecuentes vía `GET /api/bot/profile` de eli-panel; las reglas fijas
+  del prompt mandan. Si el CRM falla, prompt de siempre. Respaldo: `backups/20261012-153145`.
 - **Eli → CRM (Eli Panel)**: `version4` avisa al CRM sin esperar (sub-workflow `Eli → CRM`, Supabase en
   la nube): mensaje entrante (crea el paciente en Nuevo), mensaje saliente, cita reservada (cita + Agendó y
   nombre completo), cita movida y cita cancelada (leídas de los pasos del agente). Sin texto de mensajes.

@@ -36,6 +36,17 @@ export class MetaApiError extends Error {
   }
 }
 
+/**
+ * Cabecera de autenticación para la Graph API. Kapso (proxy de la Cloud API,
+ * META_GRAPH_BASE_URL=https://api.kapso.ai/meta/whatsapp) autentica con
+ * `X-API-Key`; Meta directo usa `Authorization: Bearer`.
+ */
+export function graphAuthHeaders(token: string): Record<string, string> {
+  return /(^|\.)kapso\.ai(\/|$)/.test(new URL(getEnv().META_GRAPH_BASE_URL).hostname + "/")
+    ? { "X-API-Key": token }
+    : { Authorization: `Bearer ${token}` };
+}
+
 export async function graphRequest<T>(
   path: string,
   opts: {
@@ -51,7 +62,7 @@ export async function graphRequest<T>(
     res = await fetch(url, {
       method: opts.method ?? "GET",
       headers: {
-        Authorization: `Bearer ${opts.token}`,
+        ...graphAuthHeaders(opts.token),
         ...(opts.body !== undefined
           ? { "Content-Type": "application/json" }
           : {}),

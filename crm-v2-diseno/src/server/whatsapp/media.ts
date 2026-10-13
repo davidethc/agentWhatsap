@@ -3,7 +3,7 @@ import path from "node:path";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { getEnv } from "@/lib/env";
-import { graphRequest, MetaApiError } from "@/lib/meta/client";
+import { graphAuthHeaders, graphRequest, MetaApiError } from "@/lib/meta/client";
 import {
   getCredentialsByOrg,
   type Credentials,
@@ -177,7 +177,7 @@ export async function downloadGraphMedia(
   let res: Response;
   try {
     res = await fetch(meta.url, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: graphAuthHeaders(token),
     });
   } catch {
     throw new MediaFetchError("No se pudo descargar el adjunto");
@@ -280,7 +280,7 @@ export async function uploadGraphMedia(
   try {
     res = await fetch(url, {
       method: "POST",
-      headers: { Authorization: `Bearer ${credentials.token}` },
+      headers: graphAuthHeaders(credentials.token),
       body: form,
     });
   } catch (cause) {

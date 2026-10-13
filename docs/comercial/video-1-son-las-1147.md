@@ -1,6 +1,6 @@
 # Video 1 · «Son las 11:47 pm» — prompt de producción (anuncio Meta)
 
-Pega todo el bloque «PROMPT» en Claude Code (en una carpeta vacía, por ejemplo `~/videos/eli-1147`).
+Pega todo el bloque «PROMPT» en Claude Code u opencode (en una carpeta vacía, por ejemplo `~/videos/eli-1147`).
 Usa las skills de HyperFrames ya instaladas (`hyperframes` → `general-video`, `hyperframes-creative`,
 `hyperframes-animation`). Resultado: un MP4 vertical listo para subir a Meta hoy.
 
@@ -14,12 +14,21 @@ vende «Eli», una asistente de IA que atiende el WhatsApp de consultorios denta
 segundos y agenda citas sola en Google Calendar. Público: dueños y doctoras de consultorios dentales en
 Ecuador y Latinoamérica. Idioma: español neutro con trato de «usted» en los mensajes del paciente y de Eli.
 
-### Especificaciones técnicas
-- Formato 9:16, 1080×1920 px, 30 fps, duración 22 s (±1 s). Exporta MP4 H.264, audio AAC 48 kHz.
-- Zonas seguras de Reels: no pongas texto importante en el 14 % superior ni en el 22 % inferior
-  (ahí van la interfaz de Instagram y el texto del anuncio). Margen lateral mínimo de 64 px.
+### Especificaciones técnicas (3 formatos desde UNA sola composición)
+- Construye el video con variables de layout para renderizar 3 salidas sin rehacer el diseño:
+  1. **Vertical 9:16 — TikTok / Reels / Shorts / Historias**: 1080×1920.
+  2. **Horizontal 16:9 — YouTube / Facebook in-stream / presentaciones**: 1920×1080.
+  3. **Feed 4:5 — Instagram / Facebook feed**: 1080×1350.
+- 30 fps, duración 22 s (±1 s). MP4 H.264 (perfil High, 12–16 Mbps), audio AAC 48 kHz estéreo.
+- **Zonas seguras verticales (TikTok es la más estricta, úsala para el 9:16):** nada importante en el
+  10 % superior, en el 20 % inferior ni en el 15 % derecho (columna de íconos de TikTok/Reels).
+  Margen izquierdo mínimo 64 px.
+- **Layout 16:9:** el celular a la izquierda (≈45 % del ancho, centrado en vertical) y los textos grandes a la
+  derecha, alineados a la izquierda; la escena de la agenda entra a la derecha del celular. Margen 96 px.
+- **Layout 4:5:** igual que el vertical pero el celular al 62 % del alto y textos arriba/abajo más compactos.
 - Debe entenderse SIN sonido: todo mensaje clave va en texto en pantalla.
-- Exporta también una versión 4:5 (1080×1350) recortando el mismo diseño, para el feed.
+- TikTok premia lo nativo: en el 9:16 los primeros 0.5 s ya deben mostrar movimiento (la notificación),
+  nada de pantalla quieta.
 
 ### Estilo visual
 - Fondo: azul noche muy oscuro (#0B1220) con un leve degradado; sensación de «madrugada».
@@ -92,12 +101,12 @@ No hacen falta subtítulos aparte: los textos grandes ya son los mensajes. Asegu
 - Sin cifras ni testimonios inventados. Sin promesas médicas.
 
 ### Entregables
-1. `eli-1147_9x16.mp4` (22 s) y `eli-1147_4x5.mp4`.
-2. Tres variantes del gancho (solo cambian los primeros 2 s y el texto inicial):
+1. `eli-1147_9x16.mp4` (TikTok/Reels), `eli-1147_16x9.mp4` (horizontal) y `eli-1147_4x5.mp4` (feed).
+2. Tres variantes del gancho, en 9:16 (solo cambian los primeros 2 s y el texto inicial):
    - A: «Son las 11:47 pm…» (principal)
    - B: «¿Quién contesta el WhatsApp de tu consultorio a medianoche?»
    - C: «Este paciente iba a irse con otro dentista…»
-3. Un fotograma PNG de portada (el segundo 12, con el check verde).
+3. Portadas PNG (segundo 12, con el check verde) en 9:16 y 16:9.
 Antes de exportar, renderiza un borrador y revisa: tiempos, que ningún texto choque con las zonas
 seguras y que se lea sin sonido.
 

@@ -54,7 +54,10 @@ await saveCredentials({
   organizationId,
   wabaId,
   phoneNumberId,
-  token: "", // sin credencial de envío: el CRM no envía, solo registra
+  // Sin WA_TOKEN el CRM no envía (solo registra). Con la API key de Kapso y
+  // META_GRAPH_BASE_URL=https://api.kapso.ai/meta/whatsapp, las personas del
+  // consultorio responden desde la Bandeja (el agente incluido sigue apagado).
+  token: process.env.WA_TOKEN?.trim() || "",
 });
 
 // Agente incluido apagado: Eli (n8n) es quien responde.

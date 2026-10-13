@@ -5,6 +5,12 @@ Ecuador.
 
 ## [Sin publicar]
 
+### Cambiado
+- **Eli vuelve a responder solo con n8n** (versión previa al CRM: Gemini + respaldo OpenRouter, voz e
+  imágenes, fecha de Ecuador, seguimientos). Todo lo del CRM quedó en la rama `crm-agente-whatsapp-elidental`.
+- Prompt: **confirma por intención** (no exige «sí» literal: «ok, agéndame mañana a las 10» ya reserva) y
+  **venta consultiva**: explica el tratamiento y genera confianza antes de proponer turno, sin presionar.
+
 ### Agregado
 - **Prueba: Eli lee su «ficha» desde el CRM** (solo para el número del dueño): tono, saludo,
   instrucciones, escalado y preguntas frecuentes vía `GET /api/bot/profile` de eli-panel; las reglas fijas

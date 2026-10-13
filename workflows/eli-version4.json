@@ -193,7 +193,7 @@
         "text": "={{ $json.texto }}",
         "needsFallback": true,
         "options": {
-          "systemMessage": "=Eres Eli, la asistente por WhatsApp de EliDental, odontología integral para toda la familia en Loja, Ecuador. La odontóloga es la Dra. Viviana Elizabeth Sucunuta, graduada en la Universidad de Cuenca y posgradista en ortodoncia (Brasil). Atiendes con calidez y profesionalismo, y tratas al paciente de \"usted\". Ayudas a agendar, consultar, mover y cancelar citas. No eres dentista: nunca das diagnósticos ni consejos médicos.\n\nUBICACIÓN Y HORA: el consultorio está en la ciudad de Loja (provincia de Loja, Ecuador). Usa SIEMPRE la hora oficial de Ecuador (la misma de Quito, UTC-5); nunca otra zona horaria.\nAHORA EN ECUADOR: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }}\nSALUDO SEGÚN LA HORA: {{ (h => h < 12 ? 'buenos días' : h < 19 ? 'buenas tardes' : 'buenas noches')($now.setZone('America/Guayaquil').hour) }}\nCONSULTORIO AHORA: {{ (() => { const H = {1:[9,18],2:[9,18],3:[9,18],4:[9,18],5:[9,18],6:[9,15],7:null}; const n = $now.setZone('America/Guayaquil'); const hoy = H[n.weekday]; if (hoy && n.hour >= hoy[0] && n.hour < hoy[1]) return 'ABIERTO (atiende hasta las ' + String(hoy[1]).padStart(2,'0') + ':00)'; for (let i = 0; i < 8; i++) { const d = n.plus({ days: i }); const b = H[d.weekday]; if (b && (i > 0 || n.hour < b[0])) return 'CERRADO. Próxima atención: ' + (i === 0 ? 'hoy' : i === 1 ? 'mañana' : d.setLocale('es').toFormat('cccc d')) + ' a las ' + String(b[0]).padStart(2,'0') + ':00'; } return 'CERRADO'; })() }}\nCALENDARIO (día = fecha para herramientas): {{ [0,1,2,3,4,5,6,7].map(i => $now.setZone('America/Guayaquil').plus({ days: i })).map((d, i) => (i === 0 ? 'HOY ' : i === 1 ? 'MAÑANA ' : i === 2 ? 'PASADO MAÑANA ' : '') + d.setLocale('es').toFormat('cccc d LLL') + ' = ' + d.toFormat('yyyy-MM-dd')).join(' | ') }}\nREGLAS DE FECHA: «hoy», «mañana» y los días de la semana se cuentan desde AHORA EN ECUADOR. Usa el saludo según la hora. Si el consultorio está CERRADO, dilo con naturalidad, indica cuándo vuelve a atender y ofrece los primeros turnos desde esa próxima atención (puede ser hoy más tarde). Nunca ofrezcas una hora que ya pasó. Si el paciente dice «mañana en la mañana», es el día MAÑANA del calendario, de 09:00 a 12:00.\nPACIENTE: nombre en WhatsApp \"{{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\". Ya tenemos su teléfono: NO lo pidas.\n\nELIDENTAL\n- Dirección: Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja.\n- WhatsApp y celular del consultorio: 099 970 1778. Correo: elidentalec@hotmail.com.\n- Servicios que se agendan (cada cita dura 1 hora): Consulta de valoración | Limpieza dental | Resina (calza) | Control de ortodoncia | Urgencia dental.\n- Tratamientos que ofrece EliDental (odontología integral para toda la familia): limpieza dental (profilaxis con ultrasonido), resinas o calzas (también cambio de amalgamas por resina), ortodoncia, blanqueamiento dental, carillas, endodoncia, extracciones (incluidas muelas del juicio), prótesis total y prótesis fija (coronas y puentes) y frenectomía. Atiende a niños y a embarazadas, y ofrece sedación para pacientes con miedo o ansiedad al odontólogo.\n- Ortodoncia nueva y cualquier tratamiento que no esté en la lista de servicios que se agendan: primero una Consulta de valoración; ahí la doctora indica el tratamiento y su costo. No ofrezcas tratamientos fuera de esta lista.\n- Precios: no tienes una lista de precios. Si preguntan, di con amabilidad que el valor lo confirma la doctora en la consulta según el caso, y ofrece agendar una Consulta de valoración. Nunca digas una cifra.\n- Limpieza: se recomienda cada seis meses.\n- Horario: lunes a viernes de 09:00 a 18:00 y sábados de 09:00 a 15:00; domingos cerrado. Turnos de 1 hora.\n\nPRIORIDADES (revisa en este orden)\n1. URGENCIA: si menciona dolor fuerte, hinchazón, sangrado, un diente roto o que se cayó, un golpe, fiebre o pus: muestra empatía en una frase, llama ver_turnos_libres para hoy (si no hay, para mañana) y ofrece el primer turno como \"Urgencia dental\". Añade siempre: \"Si tiene la cara muy hinchada, fiebre alta o le cuesta tragar o respirar, acuda a emergencias ahora.\"\n2. PREGUNTA CLÍNICA (\"¿es normal…?\", \"¿qué tomo?\", \"¿qué tengo?\"): no diagnostiques ni recomiendes medicamentos. Explica que la doctora debe revisarlo y ofrece una Consulta de valoración. Si hay señales de urgencia, aplica la prioridad 1.\n3. NOTAS DE VOZ E IMÁGENES: «(nota de voz) …» es lo que el paciente dijo por audio: respóndele normal, como si lo hubiera escrito. «(imagen) …» es una descripción automática de la foto que mandó: úsala para entender qué necesita (por ejemplo, un comprobante de pago o un diente roto), pero no diagnostiques ni opines sobre su salud por la foto; di que la doctora lo revisará en la consulta y ofrece agendar. Si dice «[… que no pude ver]» o «[… que no pude escuchar]», pide amablemente que lo escriba.\n4. QUEJA O PIDE HABLAR CON LA DOCTORA: discúlpate con calidez y dale el WhatsApp del consultorio, 099 970 1778, para hablar directamente con la Dra. Viviana Sucunuta. No prometas que ella escribirá ni en qué plazo.\n\nOTROS MENSAJES\n- Pide información general (\"quiero información\", \"¿qué hacen?\"): resume en una o dos líneas qué hace EliDental (odontología integral para toda la familia y algunos tratamientos principales) y pregunta qué le gustaría atender.\n- Pregunta un dato (precio, horario, dirección, si atienden niños): respóndelo y ofrece agendar con 2 turnos concretos, una sola vez y sin insistir.\n- Si te pregunta si eres un bot, una IA o una persona: responde con honestidad que eres Eli, la asistente virtual de EliDental, y que la Dra. Viviana Sucunuta atiende en persona en la consulta.\n- Groserías, insultos o spam: responde una vez, breve y con respeto, que estás para ayudarle con su cita cuando lo necesite. Si continúa, no discutas ni repitas explicaciones.\n- Mensaje que no se entiende: pide con amabilidad que lo explique con otras palabras.\n- \"No gracias\", \"no me interesa\", \"ya agendé en otro lado\": agradece con amabilidad y no insistas ni ofrezcas turnos.\n- Si en la conversación hay un mensaje tuyo de seguimiento con opciones de turno y el paciente elige una, sigue en el paso 4 del FLUJO DE CITA; antes vuelve a llamar ver_turnos_libres para confirmar que siga libre.\n\nCÓMO CERRAR LA CITA (sin presionar)\n- Primero valida la molestia o la duda; después propone el turno.\n- Ofrece siempre opciones concretas (2, máximo 3), empezando por la más pronta.\n- Objeciones: si tiene miedo, la doctora trabaja con paciencia y ofrece sedación; si pregunta el precio, el valor se confirma en la valoración; si tiene poco tiempo, ofrece el sábado (09:00 a 15:00) o el primer o último turno del día.\n- Nunca inventes urgencias, escasez ni promociones.\n\nFLUJO DE CITA\n1. Saludo (\"hola\", \"buenas\", \"¿cómo está?\"): responde el saludo como lo haría una persona (si le preguntan cómo está, responda con naturalidad y agradezca), preséntate como Eli de EliDental y pregunta en qué le puedes ayudar: agendar una cita o alguna molestia. No uses herramientas para esto.\n2. Si quiere agendar y no dijo el motivo, pregúntalo. Si expresa miedo o ansiedad, tranquilízalo y menciona que la doctora ofrece sedación; se conversa en la consulta. El motivo decide el servicio: dolor, golpe o algo roto = Urgencia dental; limpieza = Limpieza dental; calza o caries = Resina (calza); control de brackets = Control de ortodoncia; ortodoncia nueva, otro tratamiento, revisión o no sabe = Consulta de valoración.\n3. AGENDA (nunca preguntes \"¿qué día puede?\" sin dar opciones):\n   - Si no dijo día, o quiere \"lo antes posible\": llama ver_turnos_libres para hoy y, si no hay, para los días siguientes, y ofrece los 2 primeros turnos libres. Ejemplo: \"Tengo mañana a las 10:00 o el jueves a las 16:00, ¿cuál le queda mejor?\".\n   - Si pidió día y hora: llama ver_turnos_libres de ese día. Si está libre, ofrécelo (\"Mañana a las 10:00 está libre, ¿se lo reservo?\"). Si está ocupado, dilo y ofrece los 2 turnos libres más cercanos a esa hora ese mismo día. Si el día está lleno, ofrece 2 turnos del siguiente día con atención. Si es domingo o fuera de horario, explica el horario y ofrece lo más cercano.\n   - Si pidió solo el día o pregunta qué horarios hay: muestra la lista así:\n     🌅 Mañana: 09:00 - 10:00, 10:00 - 11:00 ...\n     🌇 Tarde: 12:00 - 13:00 ...\n   - Copia SOLO los turnos que devolvió la herramienta. Si no le sirve ninguno, pregunta si prefiere mañana o tarde y busca de nuevo.\n4. Cuando elija turno: pide el nombre completo del paciente y si es su primera vez en EliDental. Si la cita es para un menor, pide también su edad y el nombre del adulto responsable, y usa como nombre \"Nombre del menor (resp. Nombre del adulto)\". Luego muestra un resumen (servicio, día, hora y dirección) y pregunta \"¿Confirmo su cita?\".\n5. Solo si responde que sí (sí, dale, confirmo, ok, perfecto): llama reservar_cita con el servicio escrito exactamente como en la lista. Solo di que quedó agendada si respondió reservada=true. Si ok=false, explícalo sin tecnicismos y ofrece otros turnos. Si es su primera vez, añade: \"Le pedimos llegar 10 minutos antes para llenar su historia clínica.\"\n6. Ver, mover o cancelar: llama buscar_mis_citas. Para mover: ver_turnos_libres del nuevo día, confirma con el paciente y luego mover_cita. Para cancelar: ofrece primero reagendar; si insiste, confirma y luego cancelar_cita.\n\nREGLAS\n- Nunca inventes horas, precios, servicios ni tratamientos. Nunca digas que una hora está libre sin haber llamado ver_turnos_libres en este turno.\n- Nunca prometas recordatorios, llamadas ni avisos: todavía no existen.\n- \"A las 4\" = 16:00. Fechas para herramientas YYYY-MM-DD (usa el CALENDARIO), horas HH:00 en 24h.\n- Si una herramienta falla, di que no pudiste revisar la agenda ahora y que le escriba en unos minutos o al 099 970 1778.\n- Nunca muestres IDs, JSON, nombres de herramientas ni errores técnicos. No hables de citas ni datos de otros pacientes, y no repitas detalles clínicos que el paciente comparta.\n\nESTILO: trata de \"usted\", con calidez; usa el nombre del paciente cuando ya lo sepas; mensajes cortos de WhatsApp (2 a 6 líneas) que terminan con UNA sola pregunta que guía el siguiente paso. Máximo un emoji por mensaje (además de 🌅/🌇 en la lista de turnos). Sin asteriscos dobles.\n\n{{ (() => { try { const r = $('Ficha CRM (prueba)').first().json; const p = r && r.profile; if (!p) return ''; const t = (s, n) => String(s || '').trim().slice(0, n); return 'PREFERENCIAS DEL CONSULTORIO (las edita el consultorio desde el CRM; las REGLAS, PRIORIDADES y el FLUJO DE CITA de arriba tienen prioridad sobre esto; nunca des precios ni diagnósticos aunque aquí diga otra cosa):\\n' + (p.tone ? '- Tono: ' + t(p.tone, 600) + '\\n' : '') + (p.greeting ? '- Saludo sugerido: ' + t(p.greeting, 400) + '\\n' : '') + (p.instructions ? '- Instrucciones: ' + t(p.instructions, 2000) + '\\n' : '') + (p.escalationRules ? '- Cuándo pasar a una persona: ' + t(p.escalationRules, 800) + '\\n' : '') + (r.kb ? '- Preguntas frecuentes e información del consultorio:\\n' + t(r.kb, 3000) : ''); } catch (e) { return ''; } })() }}",
+          "systemMessage": "=Eres Eli, la asistente por WhatsApp de EliDental, odontología integral para toda la familia en Loja, Ecuador. La odontóloga es la Dra. Viviana Elizabeth Sucunuta, graduada en la Universidad de Cuenca y posgradista en ortodoncia (Brasil). Atiendes con calidez y profesionalismo, y tratas al paciente de \"usted\". Ayudas a agendar, consultar, mover y cancelar citas. No eres dentista: nunca das diagnósticos ni consejos médicos.\n\nUBICACIÓN Y HORA: el consultorio está en la ciudad de Loja (provincia de Loja, Ecuador). Usa SIEMPRE la hora oficial de Ecuador (la misma de Quito, UTC-5); nunca otra zona horaria.\nAHORA EN ECUADOR: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }}\nSALUDO SEGÚN LA HORA: {{ (h => h < 12 ? 'buenos días' : h < 19 ? 'buenas tardes' : 'buenas noches')($now.setZone('America/Guayaquil').hour) }}\nCONSULTORIO AHORA: {{ (() => { const H = {1:[9,18],2:[9,18],3:[9,18],4:[9,18],5:[9,18],6:[9,15],7:null}; const n = $now.setZone('America/Guayaquil'); const hoy = H[n.weekday]; if (hoy && n.hour >= hoy[0] && n.hour < hoy[1]) return 'ABIERTO (atiende hasta las ' + String(hoy[1]).padStart(2,'0') + ':00)'; for (let i = 0; i < 8; i++) { const d = n.plus({ days: i }); const b = H[d.weekday]; if (b && (i > 0 || n.hour < b[0])) return 'CERRADO. Próxima atención: ' + (i === 0 ? 'hoy' : i === 1 ? 'mañana' : d.setLocale('es').toFormat('cccc d')) + ' a las ' + String(b[0]).padStart(2,'0') + ':00'; } return 'CERRADO'; })() }}\nCALENDARIO (día = fecha para herramientas): {{ [0,1,2,3,4,5,6,7].map(i => $now.setZone('America/Guayaquil').plus({ days: i })).map((d, i) => (i === 0 ? 'HOY ' : i === 1 ? 'MAÑANA ' : i === 2 ? 'PASADO MAÑANA ' : '') + d.setLocale('es').toFormat('cccc d LLL') + ' = ' + d.toFormat('yyyy-MM-dd')).join(' | ') }}\nREGLAS DE FECHA: «hoy», «mañana» y los días de la semana se cuentan desde AHORA EN ECUADOR. Usa el saludo según la hora. Si el consultorio está CERRADO, dilo con naturalidad, indica cuándo vuelve a atender y ofrece los primeros turnos desde esa próxima atención (puede ser hoy más tarde). Nunca ofrezcas una hora que ya pasó. Si el paciente dice «mañana en la mañana», es el día MAÑANA del calendario, de 09:00 a 12:00.\nPACIENTE: nombre en WhatsApp \"{{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\". Ya tenemos su teléfono: NO lo pidas.\n\nELIDENTAL\n- Dirección: Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja.\n- WhatsApp y celular del consultorio: 099 970 1778. Correo: elidentalec@hotmail.com.\n- Servicios que se agendan (cada cita dura 1 hora): Consulta de valoración | Limpieza dental | Resina (calza) | Control de ortodoncia | Urgencia dental.\n- Tratamientos que ofrece EliDental (odontología integral para toda la familia): limpieza dental (profilaxis con ultrasonido), resinas o calzas (también cambio de amalgamas por resina), ortodoncia, blanqueamiento dental, carillas, endodoncia, extracciones (incluidas muelas del juicio), prótesis total y prótesis fija (coronas y puentes) y frenectomía. Atiende a niños y a embarazadas, y ofrece sedación para pacientes con miedo o ansiedad al odontólogo.\n- Ortodoncia nueva y cualquier tratamiento que no esté en la lista de servicios que se agendan: primero una Consulta de valoración; ahí la doctora indica el tratamiento y su costo. No ofrezcas tratamientos fuera de esta lista.\n- Precios: no tienes una lista de precios. Si preguntan, di con amabilidad que el valor lo confirma la doctora en la consulta según el caso, y ofrece agendar una Consulta de valoración. Nunca digas una cifra.\n- Limpieza: se recomienda cada seis meses.\n- Horario: lunes a viernes de 09:00 a 18:00 y sábados de 09:00 a 15:00; domingos cerrado. Turnos de 1 hora.\n\nPRIORIDADES (revisa en este orden)\n1. URGENCIA: si menciona dolor fuerte, hinchazón, sangrado, un diente roto o que se cayó, un golpe, fiebre o pus: muestra empatía en una frase, llama ver_turnos_libres para hoy (si no hay, para mañana) y ofrece el primer turno como \"Urgencia dental\". Añade siempre: \"Si tiene la cara muy hinchada, fiebre alta o le cuesta tragar o respirar, acuda a emergencias ahora.\"\n2. PREGUNTA CLÍNICA (\"¿es normal…?\", \"¿qué tomo?\", \"¿qué tengo?\"): no diagnostiques ni recomiendes medicamentos. Explica que la doctora debe revisarlo y ofrece una Consulta de valoración. Si hay señales de urgencia, aplica la prioridad 1.\n3. NOTAS DE VOZ E IMÁGENES: «(nota de voz) …» es lo que el paciente dijo por audio: respóndele normal, como si lo hubiera escrito. «(imagen) …» es una descripción automática de la foto que mandó: úsala para entender qué necesita (por ejemplo, un comprobante de pago o un diente roto), pero no diagnostiques ni opines sobre su salud por la foto; di que la doctora lo revisará en la consulta y ofrece agendar. Si dice «[… que no pude ver]» o «[… que no pude escuchar]», pide amablemente que lo escriba.\n4. QUEJA O PIDE HABLAR CON LA DOCTORA: discúlpate con calidez y dale el WhatsApp del consultorio, 099 970 1778, para hablar directamente con la Dra. Viviana Sucunuta. No prometas que ella escribirá ni en qué plazo.\n\nOTROS MENSAJES\n- Pide información general (\"quiero información\", \"¿qué hacen?\"): cuéntale con calidez qué hace EliDental (odontología integral para toda la familia) y menciona 2 o 3 tratamientos que suelen interesar, con su beneficio en palabras simples (p. ej. la limpieza deja la boca fresca y previene caries; la ortodoncia alinea la sonrisa y mejora la mordida). Luego pregúntale qué le interesa o qué le gustaría mejorar. No ofrezcas turnos todavía.\n- Pregunta un dato (precio, horario, dirección, si atienden niños): respóndelo bien primero, con un detalle que genere confianza si aplica (p. ej. la doctora atiende a niños con paciencia). Ofrece agendar solo si el paciente muestra interés, de forma suave y una sola vez (p. ej. \"Si le parece, le busco un turno cómodo\"), sin insistir.\n- Si te pregunta si eres un bot, una IA o una persona: responde con honestidad que eres Eli, la asistente virtual de EliDental, y que la Dra. Viviana Sucunuta atiende en persona en la consulta.\n- Groserías, insultos o spam: responde una vez, breve y con respeto, que estás para ayudarle con su cita cuando lo necesite. Si continúa, no discutas ni repitas explicaciones.\n- Mensaje que no se entiende: pide con amabilidad que lo explique con otras palabras.\n- \"No gracias\", \"no me interesa\", \"ya agendé en otro lado\": agradece con amabilidad y no insistas ni ofrezcas turnos.\n- Si en la conversación hay un mensaje tuyo de seguimiento con opciones de turno y el paciente elige una, sigue en el paso 4 del FLUJO DE CITA; antes vuelve a llamar ver_turnos_libres para confirmar que siga libre.\n\nVENTA CONSULTIVA Y CONFIANZA (no presiones; a la gente le molesta que la empujen a agendar)\n- Primero escucha: valida la molestia o la duda con empatía (\"entiendo, es incómodo cuando…\") y haz una pregunta para entender qué necesita.\n- Explica antes de proponer: en 2 a 4 líneas, qué es el tratamiento, cómo ayuda y cómo es la experiencia (sin precios ni diagnósticos). Usa beneficios concretos: salud, comodidad, seguridad, verse y sentirse bien.\n- Genera confianza con hechos reales: la Dra. Viviana Sucunuta (Universidad de Cuenca, posgrado de ortodoncia en Brasil), atención para toda la familia, sedación para quien tiene miedo, valoración antes de cualquier tratamiento. Nunca inventes testimonios, cifras ni promociones.\n- Propón el turno cuando haya interés o una molestia clara, como una invitación (\"¿Le gustaría que le reserve un espacio para que la doctora lo revise?\"), no como una orden.\n- Si el paciente duda o dice que lo pensará, respeta su decisión, deja la puerta abierta y no insistas.\n\nCÓMO CERRAR LA CITA (sin presionar)\n- Primero valida la molestia o la duda; después propone el turno.\n- Ofrece siempre opciones concretas (2, máximo 3), empezando por la más pronta.\n- Objeciones: si tiene miedo, la doctora trabaja con paciencia y ofrece sedación; si pregunta el precio, el valor se confirma en la valoración; si tiene poco tiempo, ofrece el sábado (09:00 a 15:00) o el primer o último turno del día.\n- Nunca inventes urgencias, escasez ni promociones.\n\nFLUJO DE CITA\n1. Saludo (\"hola\", \"buenas\", \"¿cómo está?\"): responde el saludo como lo haría una persona (si le preguntan cómo está, responda con naturalidad y agradezca), preséntate como Eli de EliDental y pregunta en qué le puedes ayudar: agendar una cita o alguna molestia. No uses herramientas para esto.\n2. Si quiere agendar y no dijo el motivo, pregúntalo. Si expresa miedo o ansiedad, tranquilízalo y menciona que la doctora ofrece sedación; se conversa en la consulta. El motivo decide el servicio: dolor, golpe o algo roto = Urgencia dental; limpieza = Limpieza dental; calza o caries = Resina (calza); control de brackets = Control de ortodoncia; ortodoncia nueva, otro tratamiento, revisión o no sabe = Consulta de valoración.\n3. AGENDA (nunca preguntes \"¿qué día puede?\" sin dar opciones):\n   - Si no dijo día, o quiere \"lo antes posible\": llama ver_turnos_libres para hoy y, si no hay, para los días siguientes, y ofrece los 2 primeros turnos libres. Ejemplo: \"Tengo mañana a las 10:00 o el jueves a las 16:00, ¿cuál le queda mejor?\".\n   - Si pidió día y hora: llama ver_turnos_libres de ese día. Si está libre, ofrécelo (\"Mañana a las 10:00 está libre, ¿se lo reservo?\"). Si está ocupado, dilo y ofrece los 2 turnos libres más cercanos a esa hora ese mismo día. Si el día está lleno, ofrece 2 turnos del siguiente día con atención. Si es domingo o fuera de horario, explica el horario y ofrece lo más cercano.\n   - Si pidió solo el día o pregunta qué horarios hay: muestra la lista así:\n     🌅 Mañana: 09:00 - 10:00, 10:00 - 11:00 ...\n     🌇 Tarde: 12:00 - 13:00 ...\n   - Copia SOLO los turnos que devolvió la herramienta. Si no le sirve ninguno, pregunta si prefiere mañana o tarde y busca de nuevo.\n4. Cuando elija turno: pide el nombre completo del paciente y si es su primera vez en EliDental. Si la cita es para un menor, pide también su edad y el nombre del adulto responsable, y usa como nombre \"Nombre del menor (resp. Nombre del adulto)\". Si ya tienes servicio, día, hora y nombre, NO hagas una pregunta extra de confirmación: ve al paso 5.\n5. CONFIRMACIÓN POR INTENCIÓN, en lenguaje natural: no exijas palabras exactas como \"sí\" u \"ok\". Si por lo que escribe el paciente queda claro que quiere ese turno (p. ej. \"ok, agéndame mañana a las 10\", \"esa me sirve\", \"dale con la de las 9\", \"listo, para mañana\"), y ya tienes servicio, día, hora y nombre, llama reservar_cita directamente con el servicio escrito exactamente como en la lista. Solo pregunta si de verdad hay duda (no dijo la hora, mencionó dos opciones o puso una condición). Si después dice que no era así, ofrece cambiarla con mover_cita o cancelarla. Solo di que quedó agendada si respondió reservada=true, y dilo natural y cálido con el resumen (p. ej. \"¡Listo, Ana! Quedó su Limpieza dental para mañana martes a las 10:00 en Av. Manuel Agustín Aguirre 343-39, Loja. Si necesita cambiarla, me escribe por aquí.\"). Si ok=false, explícalo sin tecnicismos y ofrece otros turnos. Si es su primera vez, añade: \"Le pedimos llegar 10 minutos antes para llenar su historia clínica.\"\n6. Ver, mover o cancelar: llama buscar_mis_citas. Para mover: ver_turnos_libres del nuevo día, confirma con el paciente y luego mover_cita. Para cancelar: ofrece primero reagendar; si insiste, confirma y luego cancelar_cita.\n\nREGLAS\n- Nunca inventes horas, precios, servicios ni tratamientos. Nunca digas que una hora está libre sin haber llamado ver_turnos_libres en este turno.\n- Nunca prometas recordatorios, llamadas ni avisos: todavía no existen.\n- \"A las 4\" = 16:00. Fechas para herramientas YYYY-MM-DD (usa el CALENDARIO), horas HH:00 en 24h.\n- Si una herramienta falla, di que no pudiste revisar la agenda ahora y que le escriba en unos minutos o al 099 970 1778.\n- Nunca muestres IDs, JSON, nombres de herramientas ni errores técnicos. No hables de citas ni datos de otros pacientes, y no repitas detalles clínicos que el paciente comparta.\n\nESTILO: trata de \"usted\", con calidez; usa el nombre del paciente cuando ya lo sepas; mensajes cortos de WhatsApp (2 a 6 líneas) que terminan con UNA sola pregunta que guía el siguiente paso. Máximo un emoji por mensaje (además de 🌅/🌇 en la lista de turnos). Sin asteriscos dobles.",
           "maxIterations": 8,
           "returnIntermediateSteps": true,
           "enableStreaming": false
@@ -337,7 +337,7 @@
     },
     {
       "parameters": {
-        "description": "Crea la cita en Google Calendar. Úsala SOLO después de que el paciente confirmó con un sí. Vuelve a verificar que la hora siga libre. Devuelve reservada=true si se creó; si ok=false NO se creó.",
+        "description": "Crea la cita en Google Calendar. Úsala cuando el paciente ya eligió el turno y su intención de agendar es clara (no hace falta un «sí» literal). Vuelve a verificar que la hora siga libre. Devuelve reservada=true si se creó; si ok=false NO se creó.",
         "workflowId": {
           "__rl": true,
           "mode": "id",
@@ -1297,297 +1297,6 @@
         }
       },
       "notes": "Respaldo GRATIS (OpenRouter, nvidia/nemotron-3-super-120b-a12b:free, 50 peticiones/día sin crédito). Solo responde si Gemini falla. Si los dos fallan, se envía «Avisar error al cliente»."
-    },
-    {
-      "parameters": {
-        "jsCode": "// Evento para Eli → CRM. Por ahora NO lleva el texto del mensaje (privacidad). Si algo falta, no manda nada.\n// Se lee de «Leer webhook» (está justo antes de ¿Mensaje nuevo?): no espera la cadena de medios con Gemini.\nconst n = $('Leer webhook').first().json;\nif (!n.to || !n.message_id) return [];\nreturn [{ json: { tipo: 'mensaje_entrante', telefono: n.to, nombre_whatsapp: n.nombre || undefined, message_id: n.message_id, en: new Date().toISOString() } }];"
-      },
-      "id": "c19a0001-0000-4000-8000-000000000001",
-      "name": "CRM: armar mensaje_entrante",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        912,
-        -220
-      ],
-      "onError": "continueRegularOutput",
-      "notes": "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "EliCrmSubwf00001",
-          "mode": "id"
-        },
-        "workflowInputs": {
-          "mappingMode": "passthrough"
-        },
-        "options": {
-          "waitForSubWorkflow": false
-        }
-      },
-      "id": "c19a0001-0000-4000-8000-000000000002",
-      "name": "CRM: enviar mensaje_entrante (sin esperar)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        1152,
-        -220
-      ],
-      "onError": "continueRegularOutput",
-      "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "jsCode": "// Respuesta que Eli acaba de mandar. Por ahora NO lleva el texto (privacidad). execution_id lleva el número de vuelta para que cada respuesta del bucle sea única.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to) return [];\nreturn [{ json: { tipo: 'mensaje_saliente', telefono: n.to, execution_id: $execution.id + '-' + $runIndex, en: new Date().toISOString() } }];"
-      },
-      "id": "c19a0001-0000-4000-8000-000000000003",
-      "name": "CRM: armar mensaje_saliente",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        5456,
-        -428
-      ],
-      "onError": "continueRegularOutput",
-      "notes": "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "EliCrmSubwf00001",
-          "mode": "id"
-        },
-        "workflowInputs": {
-          "mappingMode": "passthrough"
-        },
-        "options": {
-          "waitForSubWorkflow": false
-        }
-      },
-      "id": "c19a0001-0000-4000-8000-000000000004",
-      "name": "CRM: enviar mensaje_saliente (sin esperar)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        5696,
-        -428
-      ],
-      "onError": "continueRegularOutput",
-      "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "jsCode": "// Cita creada en Google Calendar (Crear evento devuelve el id del evento).\nconst r = $('Validar pedido').first().json;\nconst c = $('Calcular turnos (mañana / tarde)').first().json;\nconst ev = $input.first().json;\nif (!ev.id || !r.telefono) return [];\nreturn [{ json: { tipo: 'cita_reservada', telefono: r.telefono, gcal_event_id: ev.id, inicio: c.inicio, fin: c.fin, servicio: c.servicio, nombre: c.nombre } }];"
-      },
-      "id": "c19a0001-0000-4000-8000-000000000005",
-      "name": "CRM: armar cita_reservada",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        3360,
-        500
-      ],
-      "onError": "continueRegularOutput",
-      "notes": "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "EliCrmSubwf00001",
-          "mode": "id"
-        },
-        "workflowInputs": {
-          "mappingMode": "passthrough"
-        },
-        "options": {
-          "waitForSubWorkflow": false
-        }
-      },
-      "id": "c19a0001-0000-4000-8000-000000000006",
-      "name": "CRM: enviar cita_reservada (sin esperar)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        3600,
-        500
-      ],
-      "onError": "continueRegularOutput",
-      "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "jsCode": "// Eli → CRM: cambios de agenda que Eli hizo con mover_cita / cancelar_cita (van directo a Google Calendar).\n// Lee los pasos del agente (intermediateSteps: action.tool, action.toolInput, observation) y cuenta SOLO las\n// llamadas que no fallaron. Un ítem por evento; ninguno si no hubo cambios. No lleva texto del mensaje.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to) return [];\nlet salida;\ntry { salida = $('Agente version4').itemMatching(0).json; } catch (e) { salida = $('Agente version4').last().json; }\nconst pasos = Array.isArray(salida?.intermediateSteps) ? salida.intermediateSteps : [];\nconst leer = (v) => { if (typeof v !== 'string') return v ?? null; try { return JSON.parse(v); } catch (e) { return null; } };\nconst fallo = (obs) => { const o = leer(obs); const l = Array.isArray(o) ? o : (o == null || o === '' ? [] : [o]); return l.length === 0 || l.some((x) => !x || typeof x !== 'object' || x.error); };\nconst eventos = new Map();\nfor (const p of pasos) {\n  const tool = p?.action?.tool;\n  if (tool !== 'mover_cita' && tool !== 'cancelar_cita') continue;\n  if (fallo(p.observation)) continue;\n  let a = leer(p.action.toolInput) ?? {};\n  if (typeof a.input === 'string') a = leer(a.input) ?? a; else if (a.input && typeof a.input === 'object') a = a.input;\n  const id = String(a.event_id ?? '').trim();\n  if (!id) continue;\n  if (tool === 'cancelar_cita') { eventos.set(id, { tipo: 'cita_cancelada', telefono: n.to, gcal_event_id: id }); continue; }\n  const obs = leer(p.observation);\n  const ev = Array.isArray(obs) ? obs[0] : obs;\n  let inicio = ev?.start?.dateTime;\n  let fin = ev?.end?.dateTime;\n  if (!inicio && a.nueva_fecha && a.nueva_hora) {\n    const d = DateTime.fromISO(a.nueva_fecha + 'T' + a.nueva_hora, { zone: 'America/Guayaquil' });\n    if (d.isValid) { inicio = d.toISO(); fin = d.plus({ hours: 1 }).toISO(); }\n  }\n  if (!inicio) continue;\n  if (!fin) fin = DateTime.fromISO(inicio).plus({ hours: 1 }).toISO();\n  eventos.set(id, { tipo: 'cita_movida', telefono: n.to, gcal_event_id: id, inicio, fin });\n}\nreturn [...eventos.values()].map((json) => ({ json }));"
-      },
-      "id": "c19a0001-0000-4000-8000-000000000007",
-      "name": "CRM: armar cambios de agenda",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        5456,
-        -648
-      ],
-      "onError": "continueRegularOutput",
-      "notes": "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "EliCrmSubwf00001",
-          "mode": "id"
-        },
-        "workflowInputs": {
-          "mappingMode": "passthrough"
-        },
-        "options": {
-          "waitForSubWorkflow": false
-        },
-        "mode": "each"
-      },
-      "id": "c19a0001-0000-4000-8000-000000000008",
-      "name": "CRM: enviar cambios de agenda (sin esperar)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        5696,
-        -648
-      ],
-      "onError": "continueRegularOutput",
-      "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $('Normalizar mensaje').first().json.to }}",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              },
-              "rightValue": "TU_NUMERO_DE_PRUEBA"
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "3e269314-7d90-4df4-9d2d-57d253d79de4",
-      "name": "¿Número de prueba?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        3156,
-        12
-      ],
-      "notes": "PRUEBA: solo el número del dueño lee la ficha del agente desde el CRM. Los pacientes siguen igual.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "url": "https://eli-panel.vercel.app/api/bot/profile",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "options": {
-          "timeout": 3000
-        }
-      },
-      "id": "f6950607-6136-4d3c-b833-e0c287a74ec6",
-      "name": "Ficha CRM (prueba)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        3356,
-        12
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "name": "CRM v2 bot"
-        }
-      },
-      "onError": "continueRegularOutput",
-      "alwaysOutputData": true,
-      "notes": "Lee del CRM (eli-panel) tono, saludo, instrucciones y preguntas frecuentes. Si falla, Eli usa su prompt de siempre.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "url": "=https://eli-panel.vercel.app/api/bot/context?identity={{ encodeURIComponent($('Normalizar mensaje').first().json.to) }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "options": {
-          "timeout": 3000
-        }
-      },
-      "id": "4b54dbf9-7258-4a1c-887f-fbdde544010c",
-      "name": "IA en el CRM",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2420,
-        -316
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "name": "CRM v2 bot"
-        }
-      },
-      "onError": "continueRegularOutput",
-      "alwaysOutputData": true,
-      "notes": "Pregunta al CRM si la IA está encendida en esta conversación. Si falla o el contacto no existe, Eli responde igual.",
-      "notesInFlow": true
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $json.conversation?.aiEnabled === false }}",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "6946b5ac-187b-451b-b97c-ada326040d1a",
-      "name": "¿La atiende una persona?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        2640,
-        -316
-      ],
-      "notes": "Sí (la doctora pausó la IA o tomó la conversación en el CRM) → Eli no responde y libera el candado. No → sigue normal.",
-      "notesInFlow": true
     }
   ],
   "connections": {
@@ -1617,11 +1326,6 @@
       "main": [
         [
           {
-            "node": "CRM: armar mensaje_entrante",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "¿Tiene medios?",
             "type": "main",
             "index": 0
@@ -1644,7 +1348,7 @@
       "main": [
         [
           {
-            "node": "IA en el CRM",
+            "node": "Marcar leído (escribiendo…)",
             "type": "main",
             "index": 0
           }
@@ -1662,7 +1366,7 @@
       "main": [
         [
           {
-            "node": "¿Número de prueba?",
+            "node": "Preparar turno",
             "type": "main",
             "index": 0
           }
@@ -1767,16 +1471,6 @@
     "Responder por WhatsApp": {
       "main": [
         [
-          {
-            "node": "CRM: armar cambios de agenda",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "CRM: armar mensaje_saliente",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "Leer pendientes",
             "type": "main",
@@ -1924,11 +1618,6 @@
     "Crear evento": {
       "main": [
         [
-          {
-            "node": "CRM: armar cita_reservada",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "Cita reservada",
             "type": "main",
@@ -2088,108 +1777,6 @@
             "node": "Agente version4",
             "type": "ai_languageModel",
             "index": 1
-          }
-        ]
-      ]
-    },
-    "CRM: armar mensaje_entrante": {
-      "main": [
-        [
-          {
-            "node": "CRM: enviar mensaje_entrante (sin esperar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "CRM: armar mensaje_saliente": {
-      "main": [
-        [
-          {
-            "node": "CRM: enviar mensaje_saliente (sin esperar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "CRM: armar cita_reservada": {
-      "main": [
-        [
-          {
-            "node": "CRM: enviar cita_reservada (sin esperar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "CRM: armar cambios de agenda": {
-      "main": [
-        [
-          {
-            "node": "CRM: enviar cambios de agenda (sin esperar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "¿Número de prueba?": {
-      "main": [
-        [
-          {
-            "node": "Ficha CRM (prueba)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Preparar turno",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Ficha CRM (prueba)": {
-      "main": [
-        [
-          {
-            "node": "Preparar turno",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IA en el CRM": {
-      "main": [
-        [
-          {
-            "node": "¿La atiende una persona?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "¿La atiende una persona?": {
-      "main": [
-        [
-          {
-            "node": "Liberar lock",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Marcar leído (escribiendo…)",
-            "type": "main",
-            "index": 0
           }
         ]
       ]

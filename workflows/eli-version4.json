@@ -1527,6 +1527,67 @@
       "alwaysOutputData": true,
       "notes": "Lee del CRM (eli-panel) tono, saludo, instrucciones y preguntas frecuentes. Si falla, Eli usa su prompt de siempre.",
       "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "url": "=https://eli-panel.vercel.app/api/bot/context?identity={{ encodeURIComponent($('Normalizar mensaje').first().json.to) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "4b54dbf9-7258-4a1c-887f-fbdde544010c",
+      "name": "IA en el CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        -316
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "CRM v2 bot"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "notes": "Pregunta al CRM si la IA está encendida en esta conversación. Si falla o el contacto no existe, Eli responde igual.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.conversation?.aiEnabled === false }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6946b5ac-187b-451b-b97c-ada326040d1a",
+      "name": "¿La atiende una persona?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2640,
+        -316
+      ],
+      "notes": "Sí (la doctora pausó la IA o tomó la conversación en el CRM) → Eli no responde y libera el candado. No → sigue normal.",
+      "notesInFlow": true
     }
   ],
   "connections": {
@@ -1583,7 +1644,7 @@
       "main": [
         [
           {
-            "node": "Marcar leído (escribiendo…)",
+            "node": "IA en el CRM",
             "type": "main",
             "index": 0
           }
@@ -2098,6 +2159,35 @@
         [
           {
             "node": "Preparar turno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA en el CRM": {
+      "main": [
+        [
+          {
+            "node": "¿La atiende una persona?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿La atiende una persona?": {
+      "main": [
+        [
+          {
+            "node": "Liberar lock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar leído (escribiendo…)",
             "type": "main",
             "index": 0
           }

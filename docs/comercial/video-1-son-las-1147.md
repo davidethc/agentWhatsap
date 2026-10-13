@@ -145,3 +145,13 @@ Tu consultorio cierra. Tu WhatsApp no. Eli responde y agenda pacientes mientras 
 - [ ] Ningún texto en las zonas seguras ni logo de WhatsApp en la animación.
 - [ ] Nombres y números inventados.
 - [ ] Texto del anuncio sin promesas de resultados.
+
+## Ajustes aprobados en la revisión (12-oct-2026) — aplicar en todos los videos
+- **Cabecera del chat** por debajo de la muesca: nombre «Eli · EliDental» 34 px peso 700 completo, avatar 64 px.
+- **Medidas 9:16:** celular 1100 px de alto (y=400 a 1500), textos de escena encima del celular (y=200–380), nunca
+  sobre el chat ni bajo y=1536. En 9:16 la agenda aparece centrada (no lado a lado). Calendario dice «Martes».
+- **Más ritmo (dopamina):** duración 17–19 s; «escribiendo…» 0.4–0.6 s; burbujas con rebote (0.85→1.05→1);
+  punch-in de cámara 1.0→1.08 en cada burbuja y en el ✓; contador «respondió en 3 s» animado; confeti turquesa al
+  confirmar; pulso en la hora 23:47; textos palabra por palabra; whip/whoosh a la agenda.
+- **Sonido obligatorio:** beat electrónico 115–125 BPM sin voz (−16 LUFS) + SFX: notificación, «pop» por
+  burbuja, tecleo corto, «ding» + chispa en el ✓, whoosh en transiciones, «tap» en el botón final.

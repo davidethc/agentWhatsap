@@ -69,10 +69,10 @@ await db
 const creds = await getCredentialsByOrg(organizationId);
 console.log(
   [
-    `✓ Canal conectado (solo recepción): phone_number_id=${phoneNumberId}`,
+    `✓ Canal conectado (${process.env.WA_TOKEN?.trim() ? "envía por Kapso" : "solo recepción"}): phone_number_id=${phoneNumberId}`,
     `  Organización: ${organizationId}`,
     `  WABA (etiqueta): ${creds?.wabaId}`,
-    "  Credencial de envío: (vacía — el CRM no envía)",
+    `  Credencial de envío: ${process.env.WA_TOKEN?.trim() ? "guardada (cifrada)" : "(vacía — el CRM no envía)"}`,
     "  Agente incluido: APAGADO",
     "  Webhook: apunta el proveedor a /api/webhooks/wa/<META_WEBHOOK_VERIFY_TOKEN>",
   ].join("\n")

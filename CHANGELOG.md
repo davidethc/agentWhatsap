@@ -5,6 +5,12 @@ Ecuador.
 
 ## [Sin publicar]
 
+### Primera entrega de conversaciones — 2026-10-16
+- Especificación aprobada: acceso exclusivo doctora, pausa manual persistente, conservación 90 días y borrado sin eliminar ficha.
+- Base verificada: 1026 pruebas, lint, tipos y build; especialistas aislados con gpt-6.1-sol.
+- Se añade como paso final el arranque y verificación de Docker/n8n/panel/ngrok solicitado para prueba WhatsApp. Implementación y conexión aún en curso.
+
+
 ### Coordinación CRM — 2026-10-16
 - Transición SDD al CRM nuevo, ADR 0013 y roles Codex con operaciones y apoyo.
 - Orquestación tmux con registro persistente, recuperación y revisión antes de integrar.

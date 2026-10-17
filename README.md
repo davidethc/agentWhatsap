@@ -1,5 +1,7 @@
 # Eli: asistente de citas por WhatsApp para EliDental
 
+> Construcción actual: [privacidad aprobada](docs/crm/v2/privacidad.md), [plan y evidencia](docs/crm/v2/construccion.md). Incluye preparar Docker/n8n/panel/ngrok para prueba personal por WhatsApp al finalizar; todavía en verificación.
+
 Eli contesta el WhatsApp de un consultorio dental como lo haría una recepcionista: saluda, resuelve
 dudas, busca un horario libre y deja la cita anotada en Google Calendar. Lo que necesita a la doctora
 (dudas de salud, quejas) se lo pasa a ella. Hoy atiende a [EliDental](https://www.facebook.com/EliDentalec)

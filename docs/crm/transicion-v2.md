@@ -24,9 +24,9 @@ Los IDs V2/ORQ son identificadores del alcance nuevo, independientes del autonú
 
 | ID | Responsable | Dependencias | Archivos permitidos | Aceptación y evidencia | Estado inicial |
 |---|---|---|---|---|---|
-| ORQ-01 | operaciones | plan usuario | scripts/crm-agents.py, scripts/pruebas/test_crm_agents.py, docs/crm/orquestacion-cli.md | iniciar/estado/recuperar/detener; límite; padre y UUID; fallos; pruebas sintéticas | In progress |
-| ORQ-02 | apoyo + coordinador | plan usuario | docs/crm/, .Codex/agents/, docs/adr/0013*, README, GUIA, CHANGELOG, AGENTS.md | matriz 41 TK, Notion 00–06, roles y decisión explícita | In progress |
-| ORQ-03 | QA independiente | ORQ-01, ORQ-02 | docs/crm/orquestacion-qa.md | dos agentes visibles; apoyo; límite; recuperación; fallo; revisión antes de integrar; trazabilidad | Ready; espera dependencias |
+| ORQ-01 | operaciones | plan usuario | scripts/crm-agents.py, scripts/pruebas/test_crm_agents.py, docs/crm/orquestacion-cli.md | iniciar/estado/recuperar/detener; límite; padre y UUID; fallos; pruebas sintéticas | Done: ver orquestacion-qa.md |
+| ORQ-02 | apoyo + coordinador | plan usuario | docs/crm/, .Codex/agents/, docs/adr/0013*, README, GUIA, CHANGELOG, AGENTS.md | matriz 41 TK, Notion 00–06, roles y decisión explícita | Done: ver orquestacion-qa.md |
+| ORQ-03 | QA independiente | ORQ-01, ORQ-02 | docs/crm/orquestacion-qa.md | dos agentes visibles; apoyo; límite; recuperación; fallo; revisión antes de integrar; trazabilidad | Done: revisión y simulacro |
 | V2-01 | planificador + datos | ORQ-02 | docs/crm/v2/privacidad.md | matriz permisos; lectura/envío/adjuntos; conservación y borrado incluidos backups; revocación; pausa/handoff y carrera IA-humana con pruebas negativas definidas | Ready: especificar |
 | V2-02 | n8n + planificador | V2-01 | docs/crm/v2/agenda.md | fuente única Calendar; ocupación externa; duración; zona; reservas simultáneas; reprogramación/cancelación y reconciliación definidas | Backlog |
 | V2-03 | datos + n8n | V2-01, V2-02 | docs/crm/v2/integracion.md | contrato firmado; idempotencia; orden; reintentos; cola durable y replay ante caída; ninguna doble respuesta | Backlog |
@@ -42,3 +42,11 @@ TK-13: checksum local no acredita backup remoto ni restauración. TK-36: evidenc
 ## Validación de orquestación
 
 No declarar lista hasta verificar dos agentes visibles sin pisarse archivos, apoyo registrado dentro del límite, recuperación por UUID tras cerrar ventana, entrega fallida detectada, revisión independiente previa y correspondencia tarea/cambios/pruebas/tablero. Usar solo datos ficticios. La compilación y piloto conectado del producto son evidencia separada, no consecuencia de que el lanzador pase.
+
+## Historias
+
+HU-7 se marcó Cambiada en Notion el 2026-10-16: el criterio histórico de solo lectura se conserva, sustituido para el CRM nuevo por conversación e intervención restringida. V2-01 debe especificar permisos, conservación, eliminación y prevención de respuestas simultáneas antes de activar.
+
+## Restricción operativa verificada
+
+En el simulacro real el sandbox permitió archivos propios pero rechazó index.lock del Git común incluso con writable_roots. En ese caso el agente entrega sin SHA y lo declara; el coordinador revisa el diff y crea el commit local antes de integrar. No se desactiva el sandbox. awaiting-review no significa Done ni entrega aceptada.

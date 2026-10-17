@@ -1,0 +1,49 @@
+{
+  "name": "Eli Panel — privacidad — simulación INACTIVA",
+  "active": false,
+  "nodes": [
+    {
+      "id": "manual",
+      "name": "Simulación manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "fixture",
+      "name": "Contrato ficticio sin envío",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [{json:{simulation:true,conversationId:'ficticia-privacidad',epoch:1,idempotencyKey:'eli:evento-ficticio:0',text:'Respuesta ficticia de Eli',next:'Ejecutar node --test scripts/eli-privacidad.test.mjs en crm-v2-diseno; no contiene envío HTTP'}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Simulación manual": {
+      "main": [
+        [
+          {
+            "node": "Contrato ficticio sin envío",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none"
+  },
+  "pinData": {}
+}

@@ -188,3 +188,12 @@ confundirse con una respuesta procesada: comprobar el informe o reanudar
 explícitamente. Para intervención inmediata: stop y luego recover por UUID,
 con el contexto persistente. No se debe abrir un segundo proceso de la misma
 sesión mientras el primero siga activo.
+
+## Resultado del simulacro real del sandbox
+
+En esta instalación, SIM-B y SIM-C pudieron crear su archivo y verificarlo,
+pero Git rechazó index.lock del Git común pese a --add-dir/writable_roots.
+No se afirma que esas opciones permitan commits de workers. El fallback
+operativo verificado es entrega sin SHA y con fallo declarado; el coordinador
+revisa el diff y hace git add/commit local. No desactivar el sandbox. El informe
+no vacío queda awaiting-review hasta esa revisión; nunca equivale a Done.

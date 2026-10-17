@@ -6,6 +6,10 @@ Fecha de sincronización: 2026-10-16. Relectura tras escritura; historial preser
 
 [Fuente](https://app.notion.com/p/3f55445f5f868115ab4acac0869bd112?pvs=204)
 
+## Entrega de coordinación verificada — 2026-10-16
+ORQ-01, ORQ-02 y ORQ-03 terminadas: lanzador Codex/tmux, transición SDD y revisión independiente integrados en feat/crm. 21 pruebas + smoke tmux real PASS; simulacro con los tres modelos, apoyo, límite, recuperación y stop. Commit de evidencia: 0e3315f.
+Próximas Ready: V2-01 (especificar privacidad/bandeja) y V2-07 (conciliar seguridad). Las demás líneas esperan sus dependencias y especificación. Esto no declara listo el CRM nuevo ni prueba producción.
+Sandbox: si Git común impide commit del worker, este lo informa; coordinador revisa y crea commit local. Sin push ni activaciones de producción.
 ## Dirección vigente — 2026-10-16
 Continuamos **crm-v2-diseno** con **Codex y tmux**. Conversaciones e intervención de doctora con acceso restringido; permisos, conservación y eliminación se definirán antes de activar. El primer CRM y TK-1–41 se conservan como historial: sus Done no certifican el nuevo.
 La coordinación está en implementación y validación sintética. Máximo coordinador + tres trabajadores, apoyos incluidos. Solo el coordinador actualiza este tablero. Código, pruebas locales y producción se registran por separado. Espejo vigente: docs/crm/transicion-v2.md y ADR 0013.
@@ -61,6 +65,10 @@ Stack nuevo observado: Next.js, PostgreSQL, Drizzle, Better Auth. Orden: privaci
 
 [Fuente](https://app.notion.com/p/3f55445f5f86818fb454c4fa8d44319b?pvs=204)
 
+## Validación operativa — 2026-10-16
+Los tres modelos previstos respondieron en el simulacro real. Dos workers y un apoyo quedaron visibles; cuarto rechazado; recuperación por UUID y stop comprobados. Revisión independiente F1–F4 corregidos, commit 32ceccc.
+**Restricción comprobada:** el sandbox permite archivos propios pero Git común rechaza index.lock incluso con writable_roots. El worker declara ausencia de SHA; el coordinador revisa diff y pruebas y crea el commit local. No desactivar sandbox. awaiting-review no equivale a Done.
+Espejo de evidencia: docs/crm/orquestacion-qa.md y evidencias/orquestacion-20261016.json.
 ## Equipo Codex/tmux vigente — 2026-10-16
 Roles .Codex/agents/\*.toml: planificador y orquestador gpt-6-astra; datos, frontend, n8n, QA y operaciones gpt-6.1-sol; apoyo documental gpt-6-luna. Verificar catálogo y aceptación real del servicio. scripts/[crm-agents.py](http://crm-agents.py) sustituye los comandos de agentes anteriores; codex exec no usa --agent. Cada ejecución tiene ventana visible, tarea, padre, modelo, rama, worktree, panel, sesión e informe persistente. Solo coordinador escribe Notion. Skills locales verificadas; no instalar paquetes masivos.
 **El contenido siguiente se conserva como historial del primer CRM; no es aprobación del CRM nuevo.**
@@ -73,6 +81,5 @@ Roles .Codex/agents/\*.toml: planificador y orquestador gpt-6-astra; datos, fron
 ## Flujo vigente — 2026-10-16
 Ready → In progress → In review → Testing → Done, con evidencia independiente antes de integrar. Sesión eli-crm; coordinador externo y hasta tres trabajadores, incluidos apoyos. Un nivel adicional. Cerrar ventana no es entregar: recuperar mediante UUID explícito y registro de intentos. El piloto futuro cubrirá mensaje, paciente, respuesta, reserva, reprogramación, cancelación e intervención; no se declara conectado por pruebas locales.
 **El contenido siguiente se conserva como historial del primer CRM; no es aprobación del CRM nuevo.**
-
 
 

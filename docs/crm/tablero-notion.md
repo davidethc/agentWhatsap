@@ -45,9 +45,9 @@ Fecha: 2026-10-16. Los IDs ORQ/V2 son nombres de tarea; Notion asigna también u
 | TK-39 | [QA: revisión de seguridad y datos de salud](https://app.notion.com/p/3f55445f5f86811cabd7d05f70817275) | Done | Legado | Pendiente de verificar |
 | TK-40 | [Documentación final del Eli Panel](https://app.notion.com/p/3f55445f5f86811581dae86db79f82ee) | Testing | Legado | Sustituido |
 | TK-41 | [Quitar del CRM el contenido de los mensajes (por ahora)](https://app.notion.com/p/3f65445f5f868197ae3ae4cb168f4064) | Testing | Legado | Sustituido |
-| TK-42 | [ORQ-01 · Lanzador Codex/tmux](https://app.notion.com/p/3fc5445f5f86819e8dffd41b1b905723) | In progress | Orquestación | — |
-| TK-43 | [ORQ-02 · Transición SDD y roles](https://app.notion.com/p/3fc5445f5f868191af8aef34a85d3cb2) | In progress | Orquestación | — |
-| TK-44 | [ORQ-03 · Revisión y simulacro de orquestación](https://app.notion.com/p/3fc5445f5f8681fb87fbf8a859f608b5) | In progress | Orquestación | — |
+| TK-42 | [ORQ-01 · Lanzador Codex/tmux](https://app.notion.com/p/3fc5445f5f86819e8dffd41b1b905723) | Done | Orquestación | — |
+| TK-43 | [ORQ-02 · Transición SDD y roles](https://app.notion.com/p/3fc5445f5f868191af8aef34a85d3cb2) | Done | Orquestación | — |
+| TK-44 | [ORQ-03 · Revisión y simulacro de orquestación](https://app.notion.com/p/3fc5445f5f8681fb87fbf8a859f608b5) | Done | Orquestación | — |
 | TK-45 | [V2-01 · Especificar privacidad y bandeja](https://app.notion.com/p/3fc5445f5f8681f78184e15c015bbc8f) | Ready | CRM nuevo | — |
 | TK-46 | [V2-02 · Especificar agenda única](https://app.notion.com/p/3fc5445f5f8681ac8bc7d41e6ace4bd9) | Backlog | CRM nuevo | — |
 | TK-47 | [V2-03 · Especificar integración fiable](https://app.notion.com/p/3fc5445f5f868123b874fc683e06381b) | Backlog | CRM nuevo | — |
@@ -55,4 +55,3 @@ Fecha: 2026-10-16. Los IDs ORQ/V2 son nombres de tarea; Notion asigna también u
 | TK-49 | [V2-05 · Especificar funciones de doctora](https://app.notion.com/p/3fc5445f5f86813085ffe0cb16edcba9) | Backlog | CRM nuevo | — |
 | TK-50 | [V2-06 · Piloto completo conectado](https://app.notion.com/p/3fc5445f5f8681de8184df4072168aa1) | Backlog | CRM nuevo | — |
 | TK-51 | [V2-07 · Conciliar cierres y seguridad](https://app.notion.com/p/3fc5445f5f8681419a9efd37b4175d11) | Ready | CRM nuevo | — |
-

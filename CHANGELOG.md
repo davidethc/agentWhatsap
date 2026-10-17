@@ -10,6 +10,7 @@ Ecuador.
 - Orquestación tmux con registro persistente, recuperación y revisión antes de integrar.
 - Historial conservado; permisos, conservación y eliminación pendientes antes de activar conversaciones.
 - Verificado: 21 pruebas, smoke tmux real y simulacro Codex con tres modelos, apoyo, límite, recuperación y stop; revisión independiente antes de integrar.
+- Relevo del coordinador gpt-6-astra guardado; V2-01 y V2-07 preparadas para especificación/auditoría, sin iniciar producto.
 - Restricción confirmada: workers no pueden escribir index.lock del Git común; el coordinador revisa y crea sus commits sin desactivar sandbox.
 
 

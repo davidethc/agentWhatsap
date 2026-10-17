@@ -1,3 +1,5 @@
+> **Vigencia 2026-10-16:** historial del CRM legado. Para el CRM nuevo rige [transicion-v2.md](transicion-v2.md) y ADR 0013. Las aprobaciones anteriores no se trasladan automáticamente.
+
 # Constitución del Eli Panel
 
 > Espejo de la página «01 · Constitución» del [hub de Notion](https://app.notion.com/p/3f55445f5f868115ab4acac0869bd112).

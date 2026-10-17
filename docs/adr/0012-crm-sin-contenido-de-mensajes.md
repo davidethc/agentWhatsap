@@ -1,6 +1,6 @@
 # ADR 0012: El CRM no guarda ni muestra el contenido de los mensajes
 
-- **Estado:** Aceptada (decisión del usuario, 2026-10-11, TK-41). Reemplaza en parte el contrato de
+- **Estado:** Sustituida para el CRM nuevo por [ADR 0013](0013-crm-v2-conversaciones-codex-tmux.md); conserva el contrato legado. Originalmente aceptada (decisión del usuario, 2026-10-11, TK-41). Reemplaza en parte el contrato de
   [ADR 0008](0008-crm-supabase-eventos.md): los eventos de Eli ya no llevan `texto`.
 - **Fecha:** 2026-10-11
 

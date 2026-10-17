@@ -1,5 +1,7 @@
 # Guía paso a paso: instalar Eli desde cero
 
+> Eli Panel continúa en crm-v2-diseno. Consulta [SDD](docs/crm/README.md) y [lanzador Codex/tmux](docs/crm/orquestacion-cli.md). Esta guía de Eli no activa el CRM nuevo.
+
 Al terminar esta guía tendrás a Eli respondiendo por WhatsApp, agendando en Google Calendar, con n8n
 en modo queue dentro de Docker en tu computador.
 

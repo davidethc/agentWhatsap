@@ -1,3 +1,5 @@
+> **Coordinación vigente 2026-10-16:** Notion y ../../docs/crm/transicion-v2.md. Usar ../../scripts/crm-agents.py con Codex/tmux. Los comandos slash y agentes descritos abajo son historial del proyecto base, no capacidades verificadas de Codex.
+
 # El flujo SDD (Spec-Driven Development)
 
 La regla de oro: **specs antes de código**. Ninguna feature se implementa sin una

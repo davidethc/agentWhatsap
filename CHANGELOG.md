@@ -5,6 +5,12 @@ Ecuador.
 
 ## [Sin publicar]
 
+### Coordinación CRM — 2026-10-16
+- Transición SDD al CRM nuevo, ADR 0013 y roles Codex con operaciones y apoyo.
+- Orquestación tmux con registro persistente, recuperación y revisión antes de integrar.
+- Historial conservado; permisos, conservación y eliminación pendientes antes de activar conversaciones.
+
+
 ### Agregado
 - **Eli → CRM sincronizado: eventos `cita_movida` y `cita_cancelada` (pedido del usuario).** En la
   misma migración `20261012000100`: mover cambia la hora de la cita (o la crea si el CRM no la

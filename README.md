@@ -10,10 +10,13 @@ dudas, busca un horario libre y deja la cita anotada en Google Calendar. Lo que 
 
 | | |
 |---|---|
-| **En producción** | Workflow `version4` como **Eli**: conversación natural, sin botones, con los datos reales de EliDental ([workflow](workflows/eli-version4.json)) |
+| **En producción** | Workflow `version4` como **Eli**: conversación natural, sin botones, con los datos reales de EliDental (JSON fuera del repo) |
 | **Eli Panel (CRM)** | Panel de la doctora (resumen, tablero de pacientes, fichas y citas) sobre Supabase, conectado a Eli con avisos sin esperar y **sin guardar el contenido de los mensajes**. Probado con datos inventados; falta conectarlo al `version4` real y Google Calendar ([guía](docs/crm/guia-doctora.md)) |
 | **Siguiente paso** | Seguimientos a quien deja de responder y recordatorios de cita ([qué falta](docs/conversacion.md)) |
 | **Piezas** | WhatsApp · Kapso · n8n 2.41.5 (queue mode) · Gemini · Google Calendar · PostgreSQL · Redis · Docker · ngrok |
+
+> **Nota:** los JSON de `workflows/` **no están en el repo** (se quedan solo en local y se comparten por
+> separado). Si trabajas sin ellos, pídelos a quien mantiene el proyecto.
 
 ```mermaid
 flowchart LR
@@ -66,7 +69,7 @@ Qué leer según lo que necesites. Cada documento tiene **un solo tema**, sin re
 |---|---|
 | [docs/arquitectura.md](docs/arquitectura.md) | Cómo están conectadas las piezas por dentro, recorrido técnico de un mensaje y datos guardados en Redis |
 | [docs/adr/](docs/adr/) | Registro de decisiones: **por qué** el sistema es como es (modo queue, Redis local, Gemini, un solo workflow, conversación sin botones, Kapso) |
-| [workflows/README.md](workflows/README.md) | Qué hay en cada archivo de workflow (producción, pruebas e histórico) |
+| workflows/README.md (fuera del repo) | Qué hay en cada archivo de workflow (producción, pruebas e histórico); los JSON se comparten por separado |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Normas para hacer cambios sin romper producción: ramas, cómo cambiar un workflow, definición de terminado |
 | [CHANGELOG.md](CHANGELOG.md) | Historial: qué cambió y cuándo |
 
@@ -84,7 +87,8 @@ scripts/check.sh             # todo debe salir OK
 ```
 
 Después: abre n8n, crea las credenciales (Kapso, Gemini, Google Calendar, Redis local) e importa
-`workflows/eli-version4.json` ([GUIA, pasos 8 y 9](GUIA.md#8-credenciales-en-n8n)).
+`workflows/eli-version4.json` ([GUIA, pasos 8 y 9](GUIA.md#8-credenciales-en-n8n)). Ese JSON **no está
+en el repo**: pídelo a quien mantiene el proyecto.
 
 ## Comandos
 
@@ -104,9 +108,10 @@ Después: abre n8n, crea las credenciales (Kapso, Gemini, Google Calendar, Redis
 ├── README.md, GUIA.md, CONTRIBUTING.md, CHANGELOG.md
 ├── docker-compose.yml, .env.example   Cómo se levantan los servicios
 ├── scripts/                           init-env, check, backup, export-workflow
-├── docs/                              Toda la documentación (ver la guía de arriba)
-└── workflows/                         Workflows de n8n: producción, pruebas e histórico
+└── docs/                              Toda la documentación (ver la guía de arriba)
 ```
+
+`workflows/` (los JSON de n8n) no está en el repo: se queda en local y se comparte por separado.
 
 ## Límites actuales
 

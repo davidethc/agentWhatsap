@@ -6,6 +6,9 @@ Ecuador.
 ## [Sin publicar]
 
 ### Cambiado
+- **`workflows/` ya no se versiona** (para compartir el repo sin los JSON de n8n): la carpeta se queda
+  solo en local, sigue en `.gitignore` y los JSON se comparten por separado. README y GUIA avisan de que
+  no están en el repo.
 - **Eli vuelve a responder solo con n8n** (versión previa al CRM: Gemini + respaldo OpenRouter, voz e
   imágenes, fecha de Ecuador, seguimientos). Todo lo del CRM quedó en la rama `crm-agente-whatsapp-elidental`.
 - Prompt: **confirma por intención** (no exige «sí» literal: «ok, agéndame mañana a las 10» ya reserva) y

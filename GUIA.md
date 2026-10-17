@@ -208,7 +208,8 @@ Si Google dice «Google no verificó esta app»: *Configuración avanzada → Ir
 ## 9. Importar y configurar el workflow
 
 1. n8n → **Create workflow** → menú **⋯** → **Import from File** →
-   [`workflows/eli-version4.json`](workflows/eli-version4.json).
+   `workflows/eli-version4.json`. Ese JSON **no está en el repo** (se comparte por separado): pídelo a
+   quien mantiene el proyecto.
 2. Configura estos nodos:
 
    | Nodo | Qué cambiar |
@@ -237,7 +238,8 @@ Si Google dice «Google no verificó esta app»: *Configuración avanzada → Ir
 ## 10. Probar
 
 1. **Autotests sin efectos externos:** importa `workflows/pruebas/queue-selftest.json` y
-   `redis-selftest.json` (en el segundo, elige la credencial `Redis local`), publícalos y abre:
+   `redis-selftest.json` (también fuera del repo: se comparten por separado; en el segundo, elige la
+   credencial `Redis local`), publícalos y abre:
    - `https://TU-DOMINIO.ngrok-free.dev/webhook/queue-selftest-7f3a9c` → `{"ok":true,"sum":6,...}`
    - `https://TU-DOMINIO.ngrok-free.dev/webhook/redis-selftest-4b8e2d` → `{"valor":"ok-local"}`
 

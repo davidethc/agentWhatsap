@@ -1,0 +1,2025 @@
+{
+  "name": "version4 · COPIA CRM (prueba, inactiva)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "copia-crm-tk19-no-usar",
+        "options": {}
+      },
+      "id": "3b87eb5f-e7ee-4c82-9f10-e135832940c9",
+      "name": "Webhook Kapso",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "c0b1a000-0000-4000-8000-000000000019",
+      "notesInFlow": true,
+      "notes": "Entrada: recibe de Kapso los mensajes de WhatsApp (agrupados por el búfer de 5 s)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Kapso agrupa mensajes (búfer): body.data = [ { message, conversation, phone_number_id }, ... ]\n// Valida origen, ignora salientes y junta el lote. Notas de voz: usa la transcripción de Kapso.\n// Imágenes (y audios sin transcripción) van a «medios» para que Gemini los entienda.\nconst PERMITIDO = 'TU_PHONE_NUMBER_ID'; // phone_number_id del negocio\nconst MAX_MEDIOS = 3;   // tope por lote, para cuidar el costo\nconst limpiar = (s, n) => String(s || '').replace(/[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g, '').trim().slice(0, n);\nconst body = $json.body ?? $json;\nconst items = Array.isArray(body.data) ? body.data : [body];\nconst textos = [], ids = [], medios = [];\nlet from = '', pnid = '', nombre = '';\n\nfor (const it of items) {\n  const msg = it.message ?? {};\n  const k = msg.kapso ?? {};\n  if (k.direction && k.direction !== 'inbound') continue;\n  const p = String(it.phone_number_id || it.conversation?.phone_number_id || '');\n  if (p && p !== PERMITIDO) continue;\n  pnid = p || pnid;\n  from = msg.from || it.conversation?.phone_number || from;\n  nombre = it.conversation?.contact_name || nombre;\n  if (msg.id) ids.push(String(msg.id));\n\n  const tipo = msg.type || 'text';\n  const url = k.media_url || k.media_data?.url || '';\n  const mime = String(k.media_data?.content_type || msg[tipo]?.mime_type || '').split(';')[0];\n\n  if (tipo === 'text') {\n    const t = limpiar(msg.text?.body || k.content, 1000);\n    if (t) textos.push(t);\n  } else if (tipo === 'audio') {\n    const t = limpiar(k.transcript?.text, 1000);\n    if (t) textos.push('(nota de voz) ' + t);\n    else if (url && medios.length < MAX_MEDIOS) {\n      textos.push('{{MEDIO_' + medios.length + '}}');\n      medios.push({ tipo: 'audio', url, mime: mime || 'audio/ogg', caption: '' });\n    } else textos.push('[El cliente envió una nota de voz que no pude escuchar]');\n  } else if (tipo === 'image') {\n    const caption = limpiar(msg.image?.caption, 500);\n    if (url && medios.length < MAX_MEDIOS) {\n      textos.push('{{MEDIO_' + medios.length + '}}');\n      medios.push({ tipo: 'imagen', url, mime: mime || 'image/jpeg', caption });\n    } else textos.push('[El cliente envió una imagen que no pude ver]' + (caption ? ' con el texto: ' + caption : ''));\n  } else if (tipo === 'interactive' || tipo === 'button') {\n    const t = limpiar(msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || msg.button?.text || k.content, 300);\n    if (t) textos.push(t);\n  } else if (tipo === 'reaction') {\n    continue; // una reacción (👍) no necesita respuesta\n  } else {\n    const caption = limpiar(msg[tipo]?.caption, 500);\n    textos.push('[El cliente envió un mensaje de tipo \"' + tipo + '\" que no puedo abrir]' + (caption ? ' con el texto: ' + caption : ''));\n  }\n}\n\nconst to = String(from).replace(/\\D/g, '');\nif (!to || textos.length === 0) return [];\n\nreturn [{ json: {\n  text: textos.join('\\n').slice(0, 3000),\n  to, nombre: String(nombre).slice(0, 80),\n  phoneNumberId: pnid || PERMITIDO,\n  message_id: ids[ids.length - 1] || ('sin-id-' + $execution.id),\n  message_ids: ids,\n  medios\n} }];"
+      },
+      "id": "eaf1f0f1-03b3-48b2-beef-5a7d6e5b640e",
+      "name": "Leer webhook",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "Valida que el mensaje sea para EliDental, junta el lote en un solo texto, usa la transcripción de las notas de voz y separa imágenes/audios para Gemini."
+    },
+    {
+      "parameters": {
+        "operation": "incr",
+        "key": "={{ 'v4:dedup:' + $json.message_id }}",
+        "expire": true,
+        "ttl": 86400
+      },
+      "id": "ea56eb06-b026-422f-a023-4a9d2a3e7de2",
+      "name": "Dedup mensaje",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "notes": "Redis: cuenta cada message_id para no responder dos veces el mismo mensaje (24 h)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Number(Object.values($json)[0]) }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              },
+              "rightValue": 1
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "910556b9-7bdd-4e2f-917e-3bacded6d178",
+      "name": "¿Mensaje nuevo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "Sigue solo si es la primera vez que llega este mensaje."
+    },
+    {
+      "parameters": {
+        "operation": "incr",
+        "key": "={{ 'v4:lock:' + $('Normalizar mensaje').first().json.to }}",
+        "expire": true,
+        "ttl": 120
+      },
+      "id": "91620607-69e3-4e06-a222-b8961b823b59",
+      "name": "Lock conversación",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2192,
+        0
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "notes": "Redis: candado por paciente para no responder dos mensajes a la vez (120 s)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Number(Object.values($json)[0]) }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              },
+              "rightValue": 1
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "685a996c-0b14-4fc3-a188-471c5e711b69",
+      "name": "¿Conversación libre?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2416,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "Libre → Eli responde. Ocupada (ya está respondiendo) → el mensaje va a la cola."
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
+        "messageId": "={{ $('Normalizar mensaje').first().json.message_id }}",
+        "typingIndicator": true
+      },
+      "id": "f4676c45-79e1-48a7-9288-a069cd5932c7",
+      "name": "Marcar leído (escribiendo…)",
+      "type": "@kapso/n8n-nodes-kapso.kapso",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        -96
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "kapsoApi": {
+          "name": "Kapso account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Kapso: marca el mensaje como leído y muestra «escribiendo…»."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Texto para el agente: el lote original o los mensajes que llegaron mientras respondía.\nconst p = $input.first().json.pendientes;\nconst texto = Array.isArray(p) && p.length ? p.join('\\n') : $('Normalizar mensaje').first().json.text;\nreturn [{ json: { texto } }];"
+      },
+      "id": "80ebd1fa-9a50-4656-9c6e-3a9521a7a0f7",
+      "name": "Preparar turno",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3376,
+        -208
+      ],
+      "notesInFlow": true,
+      "notes": "Texto que recibe el agente: el lote original o los mensajes que esperaban en la cola."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.texto }}",
+        "options": {
+          "systemMessage": "=Eres Eli, la asistente por WhatsApp de EliDental, odontología integral para toda la familia en Loja, Ecuador. La odontóloga es la Dra. Viviana Elizabeth Sucunuta, graduada en la Universidad de Cuenca y posgradista en ortodoncia (Brasil). Atiendes con calidez y profesionalismo, y tratas al paciente de \"usted\". Ayudas a agendar, consultar, mover y cancelar citas. No eres dentista: nunca das diagnósticos ni consejos médicos.\n\nUBICACIÓN Y HORA: el consultorio está en la ciudad de Loja (provincia de Loja, Ecuador). Usa SIEMPRE la hora oficial de Ecuador (la misma de Quito, UTC-5); nunca otra zona horaria.\nAHORA EN ECUADOR: {{ $now.setZone('America/Guayaquil').setLocale('es').toFormat(\"cccc d 'de' LLLL 'de' yyyy, HH:mm\") }}\nSALUDO SEGÚN LA HORA: {{ (h => h < 12 ? 'buenos días' : h < 19 ? 'buenas tardes' : 'buenas noches')($now.setZone('America/Guayaquil').hour) }}\nCONSULTORIO AHORA: {{ (() => { const H = {1:[9,18],2:[9,18],3:[9,18],4:[9,18],5:[9,18],6:[9,15],7:null}; const n = $now.setZone('America/Guayaquil'); const hoy = H[n.weekday]; if (hoy && n.hour >= hoy[0] && n.hour < hoy[1]) return 'ABIERTO (atiende hasta las ' + String(hoy[1]).padStart(2,'0') + ':00)'; for (let i = 0; i < 8; i++) { const d = n.plus({ days: i }); const b = H[d.weekday]; if (b && (i > 0 || n.hour < b[0])) return 'CERRADO. Próxima atención: ' + (i === 0 ? 'hoy' : i === 1 ? 'mañana' : d.setLocale('es').toFormat('cccc d')) + ' a las ' + String(b[0]).padStart(2,'0') + ':00'; } return 'CERRADO'; })() }}\nCALENDARIO (día = fecha para herramientas): {{ [0,1,2,3,4,5,6,7].map(i => $now.setZone('America/Guayaquil').plus({ days: i })).map((d, i) => (i === 0 ? 'HOY ' : i === 1 ? 'MAÑANA ' : i === 2 ? 'PASADO MAÑANA ' : '') + d.setLocale('es').toFormat('cccc d LLL') + ' = ' + d.toFormat('yyyy-MM-dd')).join(' | ') }}\nREGLAS DE FECHA: «hoy», «mañana» y los días de la semana se cuentan desde AHORA EN ECUADOR. Usa el saludo según la hora. Si el consultorio está CERRADO, dilo con naturalidad, indica cuándo vuelve a atender y ofrece los primeros turnos desde esa próxima atención (puede ser hoy más tarde). Nunca ofrezcas una hora que ya pasó. Si el paciente dice «mañana en la mañana», es el día MAÑANA del calendario, de 09:00 a 12:00.\nPACIENTE: nombre en WhatsApp \"{{ $('Normalizar mensaje').first().json.nombre || 'desconocido' }}\". Ya tenemos su teléfono: NO lo pidas.\n\nELIDENTAL\n- Dirección: Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja.\n- WhatsApp y celular del consultorio: 099 970 1778. Correo: elidentalec@hotmail.com.\n- Servicios que se agendan (cada cita dura 1 hora): Consulta de valoración | Limpieza dental | Resina (calza) | Control de ortodoncia | Urgencia dental.\n- Tratamientos que ofrece EliDental (odontología integral para toda la familia): limpieza dental (profilaxis con ultrasonido), resinas o calzas (también cambio de amalgamas por resina), ortodoncia, blanqueamiento dental, carillas, endodoncia, extracciones (incluidas muelas del juicio), prótesis total y prótesis fija (coronas y puentes) y frenectomía. Atiende a niños y a embarazadas, y ofrece sedación para pacientes con miedo o ansiedad al odontólogo.\n- Ortodoncia nueva y cualquier tratamiento que no esté en la lista de servicios que se agendan: primero una Consulta de valoración; ahí la doctora indica el tratamiento y su costo. No ofrezcas tratamientos fuera de esta lista.\n- Precios: no tienes una lista de precios. Si preguntan, di con amabilidad que el valor lo confirma la doctora en la consulta según el caso, y ofrece agendar una Consulta de valoración. Nunca digas una cifra.\n- Limpieza: se recomienda cada seis meses.\n- Horario: lunes a viernes de 09:00 a 18:00 y sábados de 09:00 a 15:00; domingos cerrado. Turnos de 1 hora.\n\nPRIORIDADES (revisa en este orden)\n1. URGENCIA: si menciona dolor fuerte, hinchazón, sangrado, un diente roto o que se cayó, un golpe, fiebre o pus: muestra empatía en una frase, llama ver_turnos_libres para hoy (si no hay, para mañana) y ofrece el primer turno como \"Urgencia dental\". Añade siempre: \"Si tiene la cara muy hinchada, fiebre alta o le cuesta tragar o respirar, acuda a emergencias ahora.\"\n2. PREGUNTA CLÍNICA (\"¿es normal…?\", \"¿qué tomo?\", \"¿qué tengo?\"): no diagnostiques ni recomiendes medicamentos. Explica que la doctora debe revisarlo y ofrece una Consulta de valoración. Si hay señales de urgencia, aplica la prioridad 1.\n3. NOTAS DE VOZ E IMÁGENES: «(nota de voz) …» es lo que el paciente dijo por audio: respóndele normal, como si lo hubiera escrito. «(imagen) …» es una descripción automática de la foto que mandó: úsala para entender qué necesita (por ejemplo, un comprobante de pago o un diente roto), pero no diagnostiques ni opines sobre su salud por la foto; di que la doctora lo revisará en la consulta y ofrece agendar. Si dice «[… que no pude ver]» o «[… que no pude escuchar]», pide amablemente que lo escriba.\n4. QUEJA O PIDE HABLAR CON LA DOCTORA: discúlpate con calidez y dale el WhatsApp del consultorio, 099 970 1778, para hablar directamente con la Dra. Viviana Sucunuta. No prometas que ella escribirá ni en qué plazo.\n\nOTROS MENSAJES\n- Pide información general (\"quiero información\", \"¿qué hacen?\"): resume en una o dos líneas qué hace EliDental (odontología integral para toda la familia y algunos tratamientos principales) y pregunta qué le gustaría atender.\n- Pregunta un dato (precio, horario, dirección, si atienden niños): respóndelo y ofrece agendar con 2 turnos concretos, una sola vez y sin insistir.\n- Si te pregunta si eres un bot, una IA o una persona: responde con honestidad que eres Eli, la asistente virtual de EliDental, y que la Dra. Viviana Sucunuta atiende en persona en la consulta.\n- Groserías, insultos o spam: responde una vez, breve y con respeto, que estás para ayudarle con su cita cuando lo necesite. Si continúa, no discutas ni repitas explicaciones.\n- Mensaje que no se entiende: pide con amabilidad que lo explique con otras palabras.\n- \"No gracias\", \"no me interesa\", \"ya agendé en otro lado\": agradece con amabilidad y no insistas ni ofrezcas turnos.\n- Si en la conversación hay un mensaje tuyo de seguimiento con opciones de turno y el paciente elige una, sigue en el paso 4 del FLUJO DE CITA; antes vuelve a llamar ver_turnos_libres para confirmar que siga libre.\n\nCÓMO CERRAR LA CITA (sin presionar)\n- Primero valida la molestia o la duda; después propone el turno.\n- Ofrece siempre opciones concretas (2, máximo 3), empezando por la más pronta.\n- Objeciones: si tiene miedo, la doctora trabaja con paciencia y ofrece sedación; si pregunta el precio, el valor se confirma en la valoración; si tiene poco tiempo, ofrece el sábado (09:00 a 15:00) o el primer o último turno del día.\n- Nunca inventes urgencias, escasez ni promociones.\n\nFLUJO DE CITA\n1. Saludo (\"hola\", \"buenas\", \"¿cómo está?\"): responde el saludo como lo haría una persona (si le preguntan cómo está, responda con naturalidad y agradezca), preséntate como Eli de EliDental y pregunta en qué le puedes ayudar: agendar una cita o alguna molestia. No uses herramientas para esto.\n2. Si quiere agendar y no dijo el motivo, pregúntalo. Si expresa miedo o ansiedad, tranquilízalo y menciona que la doctora ofrece sedación; se conversa en la consulta. El motivo decide el servicio: dolor, golpe o algo roto = Urgencia dental; limpieza = Limpieza dental; calza o caries = Resina (calza); control de brackets = Control de ortodoncia; ortodoncia nueva, otro tratamiento, revisión o no sabe = Consulta de valoración.\n3. AGENDA (nunca preguntes \"¿qué día puede?\" sin dar opciones):\n   - Si no dijo día, o quiere \"lo antes posible\": llama ver_turnos_libres para hoy y, si no hay, para los días siguientes, y ofrece los 2 primeros turnos libres. Ejemplo: \"Tengo mañana a las 10:00 o el jueves a las 16:00, ¿cuál le queda mejor?\".\n   - Si pidió día y hora: llama ver_turnos_libres de ese día. Si está libre, ofrécelo (\"Mañana a las 10:00 está libre, ¿se lo reservo?\"). Si está ocupado, dilo y ofrece los 2 turnos libres más cercanos a esa hora ese mismo día. Si el día está lleno, ofrece 2 turnos del siguiente día con atención. Si es domingo o fuera de horario, explica el horario y ofrece lo más cercano.\n   - Si pidió solo el día o pregunta qué horarios hay: muestra la lista así:\n     🌅 Mañana: 09:00 - 10:00, 10:00 - 11:00 ...\n     🌇 Tarde: 12:00 - 13:00 ...\n   - Copia SOLO los turnos que devolvió la herramienta. Si no le sirve ninguno, pregunta si prefiere mañana o tarde y busca de nuevo.\n4. Cuando elija turno: pide el nombre completo del paciente y si es su primera vez en EliDental. Si la cita es para un menor, pide también su edad y el nombre del adulto responsable, y usa como nombre \"Nombre del menor (resp. Nombre del adulto)\". Luego muestra un resumen (servicio, día, hora y dirección) y pregunta \"¿Confirmo su cita?\".\n5. Solo si responde que sí (sí, dale, confirmo, ok, perfecto): llama reservar_cita con el servicio escrito exactamente como en la lista. Solo di que quedó agendada si respondió reservada=true. Si ok=false, explícalo sin tecnicismos y ofrece otros turnos. Si es su primera vez, añade: \"Le pedimos llegar 10 minutos antes para llenar su historia clínica.\"\n6. Ver, mover o cancelar: llama buscar_mis_citas. Para mover: ver_turnos_libres del nuevo día, confirma con el paciente y luego mover_cita. Para cancelar: ofrece primero reagendar; si insiste, confirma y luego cancelar_cita.\n\nREGLAS\n- Nunca inventes horas, precios, servicios ni tratamientos. Nunca digas que una hora está libre sin haber llamado ver_turnos_libres en este turno.\n- Nunca prometas recordatorios, llamadas ni avisos: todavía no existen.\n- \"A las 4\" = 16:00. Fechas para herramientas YYYY-MM-DD (usa el CALENDARIO), horas HH:00 en 24h.\n- Si una herramienta falla, di que no pudiste revisar la agenda ahora y que le escriba en unos minutos o al 099 970 1778.\n- Nunca muestres IDs, JSON, nombres de herramientas ni errores técnicos. No hables de citas ni datos de otros pacientes, y no repitas detalles clínicos que el paciente comparta.\n\nESTILO: trata de \"usted\", con calidez; usa el nombre del paciente cuando ya lo sepas; mensajes cortos de WhatsApp (2 a 6 líneas) que terminan con UNA sola pregunta que guía el siguiente paso. Máximo un emoji por mensaje (además de 🌅/🌇 en la lista de turnos). Sin asteriscos dobles.",
+          "maxIterations": 8,
+          "returnIntermediateSteps": true,
+          "enableStreaming": false
+        },
+        "needsFallback": true
+      },
+      "id": "d2d7529f-c68a-4d7d-bbd8-1fd27ee9af28",
+      "name": "Agente version4",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        3600,
+        -208
+      ],
+      "notesInFlow": true,
+      "onError": "continueErrorOutput",
+      "notes": "Eli (IA): conversa, agenda, mueve y cancela citas. Sabe la fecha y hora de Ecuador y si el consultorio está abierto."
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 1024,
+          "temperature": 0.3
+        }
+      },
+      "id": "0545b66c-9bc6-4f17-aca8-539073cf44c9",
+      "name": "Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        3568,
+        128
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "googlePalmApi": {
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "notes": "Modelo principal del agente (gemini-3.5-flash-lite). Si falla (p. ej. se acabó la cuota), responde el modelo de respaldo de OpenRouter."
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ 'v4:chat:' + $('Normalizar mensaje').first().json.to }}",
+        "sessionTTL": 86400,
+        "contextWindowLength": 12
+      },
+      "id": "f199af11-c3d7-4651-ba2c-4b7fe9525992",
+      "name": "Memoria Redis",
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.6,
+      "position": [
+        3712,
+        128
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "notes": "Memoria de la conversación de cada paciente en Redis."
+    },
+    {
+      "parameters": {
+        "description": "Devuelve los turnos LIBRES de 1 hora (L-V 09:00-18:00, sábado 09:00-15:00) de un día, separados en \"manana\" y \"tarde\", leyendo Google Calendar. Úsala SIEMPRE antes de mencionar horas. Si ok=false lee \"mensaje\".",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $workflow.id }}"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false,
+          "schema": [
+            {
+              "id": "accion",
+              "displayName": "accion",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "hora",
+              "displayName": "hora",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "servicio",
+              "displayName": "servicio",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": false,
+              "display": true,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "accion": "turnos",
+            "fecha": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fecha', 'Día en formato YYYY-MM-DD (usa el CALENDARIO del prompt)') }}",
+            "hora": "",
+            "servicio": "",
+            "nombre": "",
+            "telefono": "={{ $('Normalizar mensaje').first().json.to }}"
+          }
+        }
+      },
+      "id": "4cd7f956-8232-4f74-83e7-7790872db16a",
+      "name": "ver_turnos_libres",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        3856,
+        128
+      ],
+      "notesInFlow": true,
+      "notes": "Herramienta: consulta los turnos libres de un día (llama a «Agenda (entrada interna)»)."
+    },
+    {
+      "parameters": {
+        "description": "Crea la cita en Google Calendar. Úsala SOLO después de que el paciente confirmó con un sí. Vuelve a verificar que la hora siga libre. Devuelve reservada=true si se creó; si ok=false NO se creó.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $workflow.id }}"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false,
+          "schema": [
+            {
+              "id": "accion",
+              "displayName": "accion",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "hora",
+              "displayName": "hora",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "servicio",
+              "displayName": "servicio",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": false,
+              "display": true,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "accion": "reservar",
+            "fecha": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fecha', 'Día en formato YYYY-MM-DD') }}",
+            "hora": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('hora', 'Hora de inicio HH:00 en 24h, una de los turnos libres (ej. 15:00)') }}",
+            "servicio": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('servicio', 'Nombre exacto del servicio de la lista') }}",
+            "nombre": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('nombre', 'Nombre de quien asistirá a la cita') }}",
+            "telefono": "={{ $('Normalizar mensaje').first().json.to }}"
+          }
+        }
+      },
+      "id": "734acaaf-68aa-4021-80a9-7626d2833f34",
+      "name": "reservar_cita",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        4000,
+        128
+      ],
+      "notesInFlow": true,
+      "notes": "Herramienta: crea la cita en Google Calendar después de que el paciente confirma."
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Lista las próximas citas de ESTE cliente (de hoy a 60 días). Devuelve id (event_id), summary y start. Úsala antes de mover o cancelar.",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "limit": 10,
+        "timeMin": "={{ $now.toISO() }}",
+        "timeMax": "={{ $now.plus({ days: 60 }).toISO() }}",
+        "options": {
+          "fields": "items(id,summary,start,end)",
+          "orderBy": "startTime",
+          "query": "={{ $('Normalizar mensaje').first().json.to }}"
+        }
+      },
+      "id": "2fd218e1-f1e7-4e86-9436-772d37b50293",
+      "name": "buscar_mis_citas",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        4144,
+        128
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      },
+      "notes": "Herramienta: lista las próximas citas de este paciente en Google Calendar."
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Mueve una cita del cliente a otro día/hora (1 hora). Usa el event_id de buscar_mis_citas y una hora que salió libre en ver_turnos_libres. Solo después de que el cliente confirme.",
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('event_id', 'id del evento devuelto por buscar_mis_citas') }}",
+        "updateFields": {
+          "end": "={{ DateTime.fromISO($fromAI('nueva_fecha', 'Nuevo día YYYY-MM-DD', 'string') + 'T' + $fromAI('nueva_hora', 'Nueva hora HH:00 24h', 'string'), { zone: 'America/Guayaquil' }).plus({ hours: 1 }).toISO() }}",
+          "start": "={{ DateTime.fromISO($fromAI('nueva_fecha', 'Nuevo día YYYY-MM-DD', 'string') + 'T' + $fromAI('nueva_hora', 'Nueva hora HH:00 24h', 'string'), { zone: 'America/Guayaquil' }).toISO() }}"
+        }
+      },
+      "id": "1bbe7d6c-4fd0-4de0-b03d-e592aa804803",
+      "name": "mover_cita",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        4288,
+        128
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      },
+      "notes": "Herramienta: cambia una cita del paciente a otro día u hora."
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Cancela (elimina) una cita del cliente. Usa el event_id de buscar_mis_citas. Solo después de que el cliente confirme.",
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('event_id', 'id del evento devuelto por buscar_mis_citas') }}",
+        "options": {}
+      },
+      "id": "762ff0f8-67c1-4c47-89f5-e7417a7cb72d",
+      "name": "cancelar_cita",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        4432,
+        128
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      },
+      "notes": "Herramienta: cancela una cita del paciente."
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ 'v4:pending:' + $('Normalizar mensaje').first().json.to }}",
+        "messageData": "={{ $('Normalizar mensaje').first().json.text }}",
+        "tail": true
+      },
+      "id": "cfd97de4-2d25-42c0-9b76-6390291c82f9",
+      "name": "Encolar pendiente",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        208
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "notes": "Guarda en Redis el mensaje que llegó mientras Eli respondía, para contestarlo después."
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
+        "to": "={{ $('Normalizar mensaje').first().json.to }}",
+        "message": "={{ $json.output }}"
+      },
+      "id": "5df7987e-766b-4779-83b6-57371c2d9d11",
+      "name": "Responder por WhatsApp",
+      "type": "@kapso/n8n-nodes-kapso.kapso",
+      "typeVersion": 1,
+      "position": [
+        5216,
+        -208
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notesInFlow": true,
+      "credentials": {
+        "kapsoApi": {
+          "name": "Kapso account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Kapso: envía la respuesta de Eli al paciente."
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "pendientes",
+        "key": "={{ 'v4:pending:' + $('Normalizar mensaje').first().json.to }}",
+        "keyType": "list",
+        "options": {}
+      },
+      "id": "c060c5a4-9cfd-4db9-aa8c-395a0874685c",
+      "name": "Leer pendientes",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        5424,
+        -208
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Lee los mensajes que llegaron mientras Eli respondía."
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'v4:pending:' + $('Normalizar mensaje').first().json.to }}"
+      },
+      "id": "05de85fa-1288-4b33-9c22-d1254811517b",
+      "name": "Borrar pendientes",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        5648,
+        -208
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Vacía la cola de pendientes ya leída."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Array.isArray($('Leer pendientes').first().json.pendientes) && $('Leer pendientes').first().json.pendientes.length > 0 }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2ce62f9f-5e08-4528-b555-613088597f7b",
+      "name": "¿Hay pendientes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5872,
+        -208
+      ],
+      "notesInFlow": true,
+      "notes": "Sí → Eli responde también esos mensajes. No → libera el candado."
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'v4:lock:' + $('Normalizar mensaje').first().json.to }}"
+      },
+      "id": "2f55ac85-6f15-43f8-8740-63597e1c1b5e",
+      "name": "Liberar lock",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        6096,
+        -96
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Quita el candado: la conversación queda libre para el próximo mensaje."
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
+        "to": "={{ $('Normalizar mensaje').first().json.to }}",
+        "message": "Hola, en este momento no pude procesar su mensaje. Por favor escríbame de nuevo en unos minutos o al 099 970 1778 🙏 Si es una urgencia grave, acuda a emergencias."
+      },
+      "id": "6b0db3b5-2d44-4f02-965c-86fb5720e122",
+      "name": "Avisar error al cliente",
+      "type": "@kapso/n8n-nodes-kapso.kapso",
+      "typeVersion": 1,
+      "position": [
+        5216,
+        32
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "kapsoApi": {
+          "name": "Kapso account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Si el agente falla (p. ej. cuota de Gemini), avisa al paciente con un mensaje amable."
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "accion"
+            },
+            {
+              "name": "fecha"
+            },
+            {
+              "name": "hora"
+            },
+            {
+              "name": "servicio"
+            },
+            {
+              "name": "nombre"
+            },
+            {
+              "name": "telefono"
+            }
+          ]
+        }
+      },
+      "id": "99766751-37b5-4cea-a328-f2c411d83ac2",
+      "name": "Agenda (entrada interna)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        640
+      ],
+      "notesInFlow": true,
+      "notes": "Sub-flujo de agenda: lo llaman las herramientas ver_turnos_libres y reservar_cita."
+    },
+    {
+      "parameters": {
+        "jsCode": "// CONFIGURACIÓN DEL NEGOCIO (editar aquí)\nconst TZ = 'America/Guayaquil';\n// Horario por día: bloques [inicio, fin) en horas. Día sin bloques = cerrado.\n// Horario de EliDental publicado en Instagram (21/9/2024): L-V 09:00-18:00, sábado 09:00-15:00.\nconst HORARIO = {\n  lunes: [[9, 18]],\n  martes: [[9, 18]],\n  'miércoles': [[9, 18]],\n  jueves: [[9, 18]],\n  viernes: [[9, 18]],\n  'sábado': [[9, 15]],\n  domingo: []\n};\nconst MAX_DIAS = 60;\n// Servicios de EliDental (Loja). precio: null = la doctora lo confirma en la consulta.\nconst SERVICIOS = [\n  { nombre: 'Consulta de valoración', precio: null },\n  { nombre: 'Limpieza dental', precio: null },\n  { nombre: 'Resina (calza)', precio: null },\n  { nombre: 'Control de ortodoncia', precio: null },\n  { nombre: 'Urgencia dental', precio: null }\n];\n\nconst inp = $('Agenda (entrada interna)').first().json;\nconst fail = (error, mensaje) => [{ json: { valido: false, ok: false, error, mensaje } }];\nconst accion = String(inp.accion || 'turnos').trim().toLowerCase();\nif (!['turnos', 'reservar'].includes(accion)) return fail('ACCION_INVALIDA', 'accion debe ser turnos o reservar');\n\nconst fecha = String(inp.fecha || '').trim();\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(fecha)) return fail('FECHA_INVALIDA', 'La fecha debe tener formato YYYY-MM-DD');\nconst dia = DateTime.fromISO(fecha, { zone: TZ });\nif (!dia.isValid) return fail('FECHA_INVALIDA', 'Esa fecha no existe');\nconst hoy = DateTime.now().setZone(TZ).startOf('day');\nif (dia < hoy) return fail('FECHA_PASADA', 'Esa fecha ya pasó');\nif (dia > hoy.plus({ days: MAX_DIAS })) return fail('FECHA_MUY_LEJANA', 'Solo agendamos hasta ' + MAX_DIAS + ' días adelante');\nconst nombreDia = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo'][dia.weekday - 1];\nconst bloques = HORARIO[nombreDia] || [];\nif (!bloques.length) return fail('DIA_CERRADO', 'El ' + nombreDia + ' no atendemos');\nconst APERTURA = Math.min(...bloques.map(b => b[0]));\nconst CIERRE = Math.max(...bloques.map(b => b[1]));\n\nlet servicio = null, hora = '', nombre = '';\nif (accion === 'reservar') {\n  const q = String(inp.servicio || '').trim().toLowerCase();\n  servicio = SERVICIOS.find(s => s.nombre.toLowerCase() === q) || SERVICIOS.find(s => q && (s.nombre.toLowerCase().includes(q) || q.includes(s.nombre.toLowerCase())));\n  if (!servicio) return fail('SERVICIO_INVALIDO', 'Servicios: ' + SERVICIOS.map(s => s.nombre).join(', '));\n  hora = String(inp.hora || '').trim().slice(0, 5);\n  if (/^\\d:\\d{2}$/.test(hora)) hora = '0' + hora;\n  if (!/^([01]\\d|2[0-3]):00$/.test(hora)) return fail('HORA_INVALIDA', 'La hora debe ser en punto, formato HH:00 (24h)');\n  nombre = String(inp.nombre || '').trim().slice(0, 80);\n  if (nombre.length < 2) return fail('FALTA_NOMBRE', 'Falta el nombre del paciente');\n}\n\nreturn [{ json: {\n  valido: true, accion, fecha, dia: nombreDia, apertura: APERTURA, cierre: CIERRE, bloques,\n  desde: dia.set({ hour: APERTURA }).toISO(), hasta: dia.set({ hour: CIERRE }).toISO(),\n  hora, nombre, servicio: servicio?.nombre || '', precio: servicio?.precio ?? null,\n  telefono: String(inp.telefono || '').replace(/\\D/g, '')\n} }];"
+      },
+      "id": "c991f129-c66c-4b93-9232-3b9437da64ec",
+      "name": "Validar pedido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        880
+      ],
+      "notesInFlow": true,
+      "notes": "Revisa fecha, hora y servicio, y aplica el horario del consultorio (L-V 09-18, sáb 09-15, dom cerrado)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valido }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "470e04b3-c266-4458-acf7-e652d34ae581",
+      "name": "¿Pedido válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2224,
+        880
+      ],
+      "notesInFlow": true,
+      "notes": "Válido → lee la agenda. Inválido → devuelve el error al agente."
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json.desde }}",
+        "timeMax": "={{ $json.hasta }}",
+        "options": {
+          "orderBy": "startTime"
+        }
+      },
+      "id": "3dbbe9ed-aca1-4b19-8d5a-57fa1eb294e8",
+      "name": "Leer Google Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        2448,
+        800
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "alwaysOutputData": true,
+      "notesInFlow": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      },
+      "notes": "Lee los eventos del día en Google Calendar."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turnos de 1 hora dentro de los bloques del día (Validar pedido) que no chocan con Google Calendar.\nconst TZ = 'America/Guayaquil';\nconst req = $('Validar pedido').first().json;\nconst dia = DateTime.fromISO(req.fecha, { zone: TZ });\nconst minimo = DateTime.now().setZone(TZ).plus({ minutes: 15 });\n\nconst ocupados = [];\nfor (const it of $input.all()) {\n  const ev = it.json || {};\n  if (!ev.start || ev.status === 'cancelled' || ev.transparency === 'transparent') continue;\n  const ini = ev.start.dateTime ? DateTime.fromISO(ev.start.dateTime) : DateTime.fromISO(ev.start.date, { zone: TZ });\n  const fin = ev.end?.dateTime ? DateTime.fromISO(ev.end.dateTime) : DateTime.fromISO(ev.end?.date || ev.start.date, { zone: TZ }).plus(ev.end?.date ? {} : { days: 1 });\n  if (ini.isValid && fin.isValid) ocupados.push([ini, fin]);\n}\n\nconst manana = [], tarde = [], libres = [];\nfor (let h = req.apertura; h < req.cierre; h++) {\n  const t = dia.set({ hour: h, minute: 0, second: 0, millisecond: 0 });\n  const f = t.plus({ hours: 1 });\n  if (!req.bloques.some(([a, b]) => h >= a && h + 1 <= b)) continue; // fuera de horario (p. ej. almuerzo)\n  if (t < minimo) continue;\n  if (ocupados.some(([a, b]) => t < b && f > a)) continue;\n  libres.push(t.toFormat('HH:mm'));\n  (h < 12 ? manana : tarde).push(t.toFormat('HH:mm') + ' - ' + f.toFormat('HH:mm'));\n}\n\nconst base = { fecha: req.fecha, dia: req.dia, manana, tarde };\nif (req.accion === 'turnos') {\n  return [{ json: { ok: true, crear: false, ...base, total: libres.length,\n    mensaje: libres.length ? 'Turnos libres de 1 hora' : 'No hay turnos libres ese día' } }];\n}\nif (!libres.includes(req.hora)) {\n  return [{ json: { ok: false, crear: false, error: 'HORA_NO_DISPONIBLE', ...base,\n    mensaje: 'Esa hora ya no está libre. Ofrece otra de manana/tarde.' } }];\n}\nconst inicio = dia.set({ hour: Number(req.hora.slice(0, 2)), minute: 0 });\nreturn [{ json: { ok: true, crear: true, fecha: req.fecha, dia: req.dia, hora: req.hora,\n  inicio: inicio.toISO(), fin: inicio.plus({ hours: 1 }).toISO(),\n  titulo: '🦷 ' + req.servicio + ' - ' + req.nombre,\n  descripcion: 'Paciente: ' + req.nombre + '\\nTel: ' + req.telefono + '\\nServicio: ' + req.servicio + (req.precio != null ? ' ($' + req.precio + ')' : '') + '\\nAgendado por WhatsApp (Eli)',\n  servicio: req.servicio, precio: req.precio, nombre: req.nombre } }];"
+      },
+      "id": "fdee3e3f-7912-42e1-a857-947254876deb",
+      "name": "Calcular turnos (mañana / tarde)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        800
+      ],
+      "notesInFlow": true,
+      "notes": "Turnos libres de 1 hora, sin horas pasadas (hora de Ecuador) ni choques con el calendario."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.crear }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2303153a-4119-4510-b99a-d19bf6b7aae4",
+      "name": "¿Crear cita?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2896,
+        800
+      ],
+      "notesInFlow": true,
+      "notes": "Si es una reserva y la hora sigue libre → crea el evento; si no, devuelve los turnos."
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "TU_CALENDARIO@gmail.com",
+          "cachedResultName": "TU_CALENDARIO@gmail.com"
+        },
+        "start": "={{ $json.inicio }}",
+        "end": "={{ $json.fin }}",
+        "additionalFields": {
+          "description": "={{ $json.descripcion }}",
+          "location": "EliDental, Av. Manuel Agustín Aguirre 343-39, entre Miguel Riofrío y Azuay, Loja",
+          "summary": "={{ $json.titulo }}"
+        }
+      },
+      "id": "8599c916-f62a-4a77-b037-d2ad60a807ea",
+      "name": "Crear evento",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        3120,
+        720
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "name": "Google Calendar account"
+        }
+      },
+      "notes": "Crea la cita en Google Calendar."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ok",
+              "name": "ok",
+              "value": "={{ !!$json.id }}",
+              "type": "boolean"
+            },
+            {
+              "id": "reservada",
+              "name": "reservada",
+              "value": "={{ !!$json.id }}",
+              "type": "boolean"
+            },
+            {
+              "id": "event_id",
+              "name": "event_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "fecha",
+              "name": "fecha",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.fecha }}",
+              "type": "string"
+            },
+            {
+              "id": "dia",
+              "name": "dia",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.dia }}",
+              "type": "string"
+            },
+            {
+              "id": "hora",
+              "name": "hora",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.hora }}",
+              "type": "string"
+            },
+            {
+              "id": "servicio",
+              "name": "servicio",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.servicio }}",
+              "type": "string"
+            },
+            {
+              "id": "precio",
+              "name": "precio",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.precio }}",
+              "type": "number"
+            },
+            {
+              "id": "nombre",
+              "name": "nombre",
+              "value": "={{ $('Calcular turnos (mañana / tarde)').first().json.nombre }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "18c962e8-6783-4630-ab1e-a8f617ddd4b8",
+      "name": "Cita reservada",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3344,
+        720
+      ],
+      "notesInFlow": true,
+      "notes": "Respuesta al agente: la cita quedó reservada."
+    },
+    {
+      "parameters": {},
+      "id": "fd752fef-e012-4ec9-b89b-0457dea4a042",
+      "name": "Respuesta turnos",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        896
+      ],
+      "notesInFlow": true,
+      "notes": "Respuesta al agente con los turnos libres."
+    },
+    {
+      "parameters": {},
+      "id": "87fc1dea-775f-4f86-abac-bc65f5845163",
+      "name": "Respuesta pedido inválido",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2448,
+        992
+      ],
+      "notesInFlow": true,
+      "notes": "Devuelve al agente por qué el pedido no es válido."
+    },
+    {
+      "parameters": {
+        "content": "## version4 · Eli, asistente de EliDental (Loja)\n**Arriba (Webhook Kapso):** normaliza el lote → dedup Redis → lock por conversación → agente Sofi (Gemini, memoria Redis) → responde por Kapso → procesa pendientes → libera lock.\n\n**Abajo (Agenda interna):** el propio flujo se llama a sí mismo como herramienta. `turnos` = turnos libres de 1h según el horario por día (mañana / tarde) desde Google Calendar. `reservar` = re-chequea y crea el evento (sin doble reserva).\n\nHorario, días cerrados y servicios: nodo **Validar pedido**.",
+        "height": 260,
+        "width": 620,
+        "color": 5
+      },
+      "id": "0f6f6138-d99a-4f45-8fbd-6103e88ac4c1",
+      "name": "Sticky Note 5f2e1c3e",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "seg",
+        "key": "={{ 'v4:seg:' + $('Normalizar mensaje').first().json.to }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "id": "2ad81321-863a-4d47-b4d3-6a97262061a8",
+      "name": "Seg: leer (paciente)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2208,
+        224
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: lee en Redis el estado de seguimiento del paciente."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Seguimiento: el paciente escribió. Reinicia los seguimientos (o los detiene si no quiere más).\nconst n = $('Normalizar mensaje').first().json;\nlet s = {};\ntry { s = JSON.parse($json.seg || '{}') || {}; } catch (e) { s = {}; }\nconst NEGATIVO = /(no gracias|no me interesa|no me escriba|no me escribas|ya agend[eé]|ya tengo cita|no necesito)/i;\ns.in = new Date().toISOString();\ns.n = (s.n || 0) + 1;\ns.paso = NEGATIVO.test(n.text || '') ? 'fin' : null;\ns.pnid = n.phoneNumberId;\ns.nombre = n.nombre || s.nombre || '';\nreturn [{ json: { key: 'v4:seg:' + n.to, valor: JSON.stringify(s), ttl: 86400 } }];\n"
+      },
+      "id": "c20e7c5a-52c1-46a4-964b-37b3579012a3",
+      "name": "Seg: paciente escribió",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2432,
+        224
+      ],
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: anota que el paciente escribió (reinicia los tiempos de seguimiento)."
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ $json.key }}",
+        "value": "={{ $json.valor }}",
+        "keyType": "string",
+        "expire": true,
+        "ttl": "={{ $json.ttl }}"
+      },
+      "id": "80a98c68-dc6c-4269-85e9-03a366dd5127",
+      "name": "Seg: guardar (paciente)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2656,
+        224
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: guarda el estado en Redis."
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "seg",
+        "key": "={{ 'v4:seg:' + $('Normalizar mensaje').first().json.to }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "id": "0757fc39-a972-4a0d-9804-9b33dd6dbd9b",
+      "name": "Seg: leer (Eli)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        5440,
+        -432
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: lee el estado después de que Eli respondió."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Seguimiento: Eli respondió. Guarda la hora y si en este turno se reservó o movió una cita.\nconst n = $('Normalizar mensaje').first().json;\nlet s = {};\ntry { s = JSON.parse($json.seg || '{}') || {}; } catch (e) { s = {}; }\nconst pasos = $('Agente version4').first().json.intermediateSteps || [];\nconst txt = x => (typeof x === 'string' ? x : JSON.stringify(x || ''));\nconst reservo = pasos.some(p => p.action?.tool === 'reservar_cita' && /\"?reservada\"?\\s*:\\s*true/.test(txt(p.observation)))\n  || pasos.some(p => p.action?.tool === 'mover_cita' && !/error/i.test(txt(p.observation)));\nconst ahora = new Date();\ns.out = ahora.toISOString();\nif (!s.in) s.in = s.out;\nif (!s.n) s.n = 1;\nif (reservo) s.agendado = true;\ns.pnid = s.pnid || n.phoneNumberId;\ns.nombre = s.nombre || n.nombre || '';\n// La clave vive hasta que se cierra la ventana de 24 h desde el último mensaje del paciente.\nconst ttl = Math.max(60, Math.round((new Date(s.in).getTime() + 86400000 - ahora.getTime()) / 1000));\nreturn [{ json: { key: 'v4:seg:' + n.to, valor: JSON.stringify(s), ttl } }];\n"
+      },
+      "id": "088e05d7-a028-4cff-87b9-0ca93e4cb4bd",
+      "name": "Seg: Eli respondió",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5664,
+        -432
+      ],
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: anota la respuesta de Eli y si quedó agendado."
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ $json.key }}",
+        "value": "={{ $json.valor }}",
+        "keyType": "string",
+        "expire": true,
+        "ttl": "={{ $json.ttl }}"
+      },
+      "id": "5e09b266-9a5d-40f7-8218-ea92af3937fd",
+      "name": "Seg: guardar (Eli)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        5888,
+        -432
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis local"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Seguimiento: guarda el estado en Redis (lo usa el workflow «Eli · Seguimiento»)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ ($('Leer webhook').first().json.medios || []).length }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e5eb801f-60bc-4cef-9fec-1e78f1333a16",
+      "name": "¿Tiene medios?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "¿Llegó una imagen o un audio sin transcripción? Sí → Gemini lo entiende. No → sigue directo."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Un ítem por imagen o audio, con la instrucción para Gemini.\nconst PROMPT_IMG = \"Eres el apoyo de Eli, asistente de WhatsApp de un consultorio dental. Describe en español, en máximo 3 frases y sin inventar, lo que se ve en esta imagen que mandó un paciente y lo que le importa al consultorio (por ejemplo: diente roto, encía inflamada, radiografía, receta, comprobante de pago, captura de pantalla). Si hay texto escrito, cópialo. No des diagnósticos.\";\nconst PROMPT_AUDIO = \"Transcribe literalmente esta nota de voz en español. Responde solo con la transcripción.\";\nreturn ($('Leer webhook').first().json.medios || []).map((m, i) => ({ json: {\n  i, tipo: m.tipo, url: m.url, mime: m.mime, caption: m.caption,\n  prompt: m.tipo === 'audio' ? PROMPT_AUDIO : PROMPT_IMG + (m.caption ? ' El paciente escribió junto a la imagen: ' + m.caption : '')\n} }));"
+      },
+      "id": "a708db1d-c5aa-49dc-992a-989d9551f657",
+      "name": "Medios a procesar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        208
+      ],
+      "notesInFlow": true,
+      "notes": "Un ítem por imagen o audio, con la instrucción para Gemini (máx. 3 por lote)."
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "id": "a7330c6c-912d-47b3-b65b-5212ede70a9c",
+      "name": "Descargar medio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        208
+      ],
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "notes": "Descarga la imagen o el audio desde la URL de Kapso."
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "destinationKey": "b64",
+        "options": {}
+      },
+      "id": "379e5197-36fd-4677-86f7-d0cd3492c7ac",
+      "name": "Medio a base64",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        208
+      ],
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "notes": "Convierte el archivo a base64 para mandarlo a Gemini."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [ { text: $('Medios a procesar').item.json.prompt }, { inline_data: { mime_type: $('Medios a procesar').item.json.mime, data: $json.b64 } } ] }], generationConfig: { temperature: 0, maxOutputTokens: 300 } }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "43111f28-73fc-45c8-ba15-6b6e44254062",
+      "name": "Entender con Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        208
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "googlePalmApi": {
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Gemini flash-lite describe la imagen o transcribe el audio (barato: ~1.100 tokens por imagen)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Une el texto del lote con lo que Gemini entendió de cada imagen o audio.\n// Los demás nodos leen $('Normalizar mensaje'): aquí queda el mensaje final.\nconst base = $('Leer webhook').first().json;\nconst medios = base.medios || [];\nlet text = base.text;\nif (medios.length) {\n  const resp = $input.all();\n  medios.forEach((m, i) => {\n    const r = resp[i]?.json ?? {};\n    const leido = String(r.candidates?.[0]?.content?.parts?.map(p => p.text || '').join(' ') || '').trim().slice(0, 1000);\n    let t;\n    if (m.tipo === 'audio') t = leido ? '(nota de voz) ' + leido : '[El cliente envió una nota de voz que no pude escuchar]';\n    else t = leido ? '(imagen) ' + leido + (m.caption ? ' — el cliente escribió: ' + m.caption : '')\n                   : '[El cliente envió una imagen que no pude ver]' + (m.caption ? ' con el texto: ' + m.caption : '');\n    text = text.replace('{{MEDIO_' + i + '}}', t);\n  });\n}\nconst { medios: _, ...resto } = base;\nreturn [{ json: { ...resto, text: text.slice(0, 3000) } }];"
+      },
+      "id": "b9b29067-11ac-48e9-9d04-5f8859e2a126",
+      "name": "Normalizar mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "Mensaje final: une el texto con lo que Gemini entendió. Los demás nodos leen este nodo."
+    },
+    {
+      "parameters": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 1024,
+          "timeout": 60000
+        }
+      },
+      "id": "aa697ab8-8caf-4512-8953-a1e793630b7e",
+      "name": "OpenRouter (respaldo)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        3728,
+        128
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "name": "OpenRouter account"
+        }
+      },
+      "notes": "Respaldo GRATIS (OpenRouter, nvidia/nemotron-3-super-120b-a12b:free, 50 peticiones/día sin crédito). Solo responde si Gemini falla. Si los dos fallan, se envía «Avisar error al cliente».",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Evento para Eli → CRM. Por ahora NO lleva el texto del mensaje (privacidad). Si algo falta, no manda nada.\n// Se lee de «Leer webhook» (está justo antes de ¿Mensaje nuevo?): no espera la cadena de medios con Gemini.\nconst n = $('Leer webhook').first().json;\nif (!n.to || !n.message_id) return [];\nreturn [{ json: { tipo: 'mensaje_entrante', telefono: n.to, nombre_whatsapp: n.nombre || undefined, message_id: n.message_id, en: new Date().toISOString() } }];"
+      },
+      "id": "c19a0001-0000-4000-8000-000000000001",
+      "name": "CRM: armar mensaje_entrante",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        -220
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "EliCrmSubwf00001",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "passthrough"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "c19a0001-0000-4000-8000-000000000002",
+      "name": "CRM: enviar mensaje_entrante (sin esperar)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1152,
+        -220
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Respuesta que Eli acaba de mandar. Por ahora NO lleva el texto (privacidad). execution_id lleva el número de vuelta para que cada respuesta del bucle sea única.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to) return [];\nreturn [{ json: { tipo: 'mensaje_saliente', telefono: n.to, execution_id: $execution.id + '-' + $runIndex, en: new Date().toISOString() } }];"
+      },
+      "id": "c19a0001-0000-4000-8000-000000000003",
+      "name": "CRM: armar mensaje_saliente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5456,
+        -428
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "EliCrmSubwf00001",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "passthrough"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "c19a0001-0000-4000-8000-000000000004",
+      "name": "CRM: enviar mensaje_saliente (sin esperar)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        5696,
+        -428
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Cita creada en Google Calendar (Crear evento devuelve el id del evento).\nconst r = $('Validar pedido').first().json;\nconst c = $('Calcular turnos (mañana / tarde)').first().json;\nconst ev = $input.first().json;\nif (!ev.id || !r.telefono) return [];\nreturn [{ json: { tipo: 'cita_reservada', telefono: r.telefono, gcal_event_id: ev.id, inicio: c.inicio, fin: c.fin, servicio: c.servicio, nombre: c.nombre } }];"
+      },
+      "id": "c19a0001-0000-4000-8000-000000000005",
+      "name": "CRM: armar cita_reservada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        500
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "EliCrmSubwf00001",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "passthrough"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "c19a0001-0000-4000-8000-000000000006",
+      "name": "CRM: enviar cita_reservada (sin esperar)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3600,
+        500
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Eli → CRM: cambios de agenda que Eli hizo con mover_cita / cancelar_cita (van directo a Google Calendar).\n// Lee los pasos del agente (intermediateSteps: action.tool, action.toolInput, observation) y cuenta SOLO las\n// llamadas que no fallaron. Un ítem por evento; ninguno si no hubo cambios. No lleva texto del mensaje.\nconst n = $('Normalizar mensaje').first().json;\nif (!n.to) return [];\nlet salida;\ntry { salida = $('Agente version4').itemMatching(0).json; } catch (e) { salida = $('Agente version4').last().json; }\nconst pasos = Array.isArray(salida?.intermediateSteps) ? salida.intermediateSteps : [];\nconst leer = (v) => { if (typeof v !== 'string') return v ?? null; try { return JSON.parse(v); } catch (e) { return null; } };\nconst fallo = (obs) => { const o = leer(obs); const l = Array.isArray(o) ? o : (o == null || o === '' ? [] : [o]); return l.length === 0 || l.some((x) => !x || typeof x !== 'object' || x.error); };\nconst eventos = new Map();\nfor (const p of pasos) {\n  const tool = p?.action?.tool;\n  if (tool !== 'mover_cita' && tool !== 'cancelar_cita') continue;\n  if (fallo(p.observation)) continue;\n  let a = leer(p.action.toolInput) ?? {};\n  if (typeof a.input === 'string') a = leer(a.input) ?? a; else if (a.input && typeof a.input === 'object') a = a.input;\n  const id = String(a.event_id ?? '').trim();\n  if (!id) continue;\n  if (tool === 'cancelar_cita') { eventos.set(id, { tipo: 'cita_cancelada', telefono: n.to, gcal_event_id: id }); continue; }\n  const obs = leer(p.observation);\n  const ev = Array.isArray(obs) ? obs[0] : obs;\n  let inicio = ev?.start?.dateTime;\n  let fin = ev?.end?.dateTime;\n  if (!inicio && a.nueva_fecha && a.nueva_hora) {\n    const d = DateTime.fromISO(a.nueva_fecha + 'T' + a.nueva_hora, { zone: 'America/Guayaquil' });\n    if (d.isValid) { inicio = d.toISO(); fin = d.plus({ hours: 1 }).toISO(); }\n  }\n  if (!inicio) continue;\n  if (!fin) fin = DateTime.fromISO(inicio).plus({ hours: 1 }).toISO();\n  eventos.set(id, { tipo: 'cita_movida', telefono: n.to, gcal_event_id: id, inicio, fin });\n}\nreturn [...eventos.values()].map((json) => ({ json }));"
+      },
+      "id": "c19a0001-0000-4000-8000-000000000007",
+      "name": "CRM: armar cambios de agenda",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5456,
+        -648
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Eli Panel (CRM): arma el evento sin texto del mensaje. Rama en paralelo; si falla, Eli sigue igual.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "EliCrmSubwf00001",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "passthrough"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        },
+        "mode": "each"
+      },
+      "id": "c19a0001-0000-4000-8000-000000000008",
+      "name": "CRM: enviar cambios de agenda (sin esperar)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        5696,
+        -648
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Llama al sub-workflow «Eli → CRM» SIN esperar la respuesta. Si el CRM está caído, el evento queda en la lista Redis v4:crm:errores.",
+      "notesInFlow": true
+    }
+  ],
+  "connections": {
+    "Webhook Kapso": {
+      "main": [
+        [
+          {
+            "node": "Leer webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup mensaje": {
+      "main": [
+        [
+          {
+            "node": "¿Mensaje nuevo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Mensaje nuevo?": {
+      "main": [
+        [
+          {
+            "node": "CRM: armar mensaje_entrante",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "¿Tiene medios?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lock conversación": {
+      "main": [
+        [
+          {
+            "node": "¿Conversación libre?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Conversación libre?": {
+      "main": [
+        [
+          {
+            "node": "Marcar leído (escribiendo…)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Encolar pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar leído (escribiendo…)": {
+      "main": [
+        [
+          {
+            "node": "Preparar turno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar turno": {
+      "main": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente version4": {
+      "main": [
+        [
+          {
+            "node": "Responder por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar error al cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Redis": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ver_turnos_libres": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reservar_cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_mis_citas": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mover_cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar_cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder por WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "CRM: armar cambios de agenda",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CRM: armar mensaje_saliente",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer pendientes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Seg: leer (Eli)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer pendientes": {
+      "main": [
+        [
+          {
+            "node": "Borrar pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar pendientes": {
+      "main": [
+        [
+          {
+            "node": "¿Hay pendientes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay pendientes?": {
+      "main": [
+        [
+          {
+            "node": "Preparar turno",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Liberar lock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar error al cliente": {
+      "main": [
+        [
+          {
+            "node": "Liberar lock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agenda (entrada interna)": {
+      "main": [
+        [
+          {
+            "node": "Validar pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar pedido": {
+      "main": [
+        [
+          {
+            "node": "¿Pedido válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Pedido válido?": {
+      "main": [
+        [
+          {
+            "node": "Leer Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta pedido inválido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Calcular turnos (mañana / tarde)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular turnos (mañana / tarde)": {
+      "main": [
+        [
+          {
+            "node": "¿Crear cita?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Crear cita?": {
+      "main": [
+        [
+          {
+            "node": "Crear evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta turnos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear evento": {
+      "main": [
+        [
+          {
+            "node": "CRM: armar cita_reservada",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cita reservada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seg: leer (paciente)": {
+      "main": [
+        [
+          {
+            "node": "Seg: paciente escribió",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seg: paciente escribió": {
+      "main": [
+        [
+          {
+            "node": "Seg: guardar (paciente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seg: leer (Eli)": {
+      "main": [
+        [
+          {
+            "node": "Seg: Eli respondió",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seg: Eli respondió": {
+      "main": [
+        [
+          {
+            "node": "Seg: guardar (Eli)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer webhook": {
+      "main": [
+        [
+          {
+            "node": "Dedup mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene medios?": {
+      "main": [
+        [
+          {
+            "node": "Medios a procesar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalizar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Medios a procesar": {
+      "main": [
+        [
+          {
+            "node": "Descargar medio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar medio": {
+      "main": [
+        [
+          {
+            "node": "Medio a base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Medio a base64": {
+      "main": [
+        [
+          {
+            "node": "Entender con Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entender con Gemini": {
+      "main": [
+        [
+          {
+            "node": "Normalizar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar mensaje": {
+      "main": [
+        [
+          {
+            "node": "Lock conversación",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Seg: leer (paciente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter (respaldo)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente version4",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "CRM: armar mensaje_entrante": {
+      "main": [
+        [
+          {
+            "node": "CRM: enviar mensaje_entrante (sin esperar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM: armar mensaje_saliente": {
+      "main": [
+        [
+          {
+            "node": "CRM: enviar mensaje_saliente (sin esperar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM: armar cita_reservada": {
+      "main": [
+        [
+          {
+            "node": "CRM: enviar cita_reservada (sin esperar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM: armar cambios de agenda": {
+      "main": [
+        [
+          {
+            "node": "CRM: enviar cambios de agenda (sin esperar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "description": "Eli, asistente de EliDental (Loja, Dra. Viviana Elizabeth Sucunuta), en UN solo flujo: webhook Kapso → agente Eli (Gemini, memoria Redis) + agenda Google Calendar interna (turnos de 1h: L-V 09-18, sábado 09-15).",
+  "id": "Zv4CopiaCrmTk19001"
+}

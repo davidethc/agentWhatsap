@@ -34,8 +34,7 @@ Tiempo estimado: 1 a 2 horas la primera vez, sobre todo por Google Cloud.
 10. [Probar](#10-probar)
 11. [Uso diario](#11-uso-diario)
 12. [Opcional: Claude con Kapso y n8n (MCP)](#12-opcional-claude-con-kapso-y-n8n-mcp)
-13. [Opcional: el CRM (Eli Panel)](#13-opcional-el-crm-eli-panel)
-14. [Errores frecuentes](#errores-frecuentes)
+13. [Errores frecuentes](#errores-frecuentes)
 
 ---
 
@@ -208,8 +207,7 @@ Si Google dice «Google no verificó esta app»: *Configuración avanzada → Ir
 ## 9. Importar y configurar el workflow
 
 1. n8n → **Create workflow** → menú **⋯** → **Import from File** →
-   `workflows/eli-version4.json`. Ese JSON **no está en el repo** (se comparte por separado): pídelo a
-   quien mantiene el proyecto.
+   `workflows/eli-version4.json`.
 2. Configura estos nodos:
 
    | Nodo | Qué cambiar |
@@ -289,19 +287,6 @@ Más procedimientos (publicar por CLI, restaurar, cambiar de URL, migrar) en
 - **n8n en Claude:** n8n → *Settings → Instance-level MCP* → **Enable MCP access**. En cada workflow,
   activa *⋯ → Settings → Available in MCP*. En Claude, agrega el conector con la URL
   `https://TU-DOMINIO.ngrok-free.dev/mcp-server/http`.
-
----
-
-## 13. Opcional: el CRM (Eli Panel)
-
-El **Eli Panel** es el panel de la doctora (resumen del día, tablero de pacientes, fichas y citas). Es una
-parte aparte de Eli: se instala con Supabase y la carpeta `crm/`, no con los pasos de arriba, y **Eli responde
-igual si el panel no está**.
-
-- Cómo se usa: [docs/crm/guia-doctora.md](docs/crm/guia-doctora.md).
-- Cómo levantarlo, cambiar la base, sacar copias y qué hacer si cae: [docs/crm/operacion.md](docs/crm/operacion.md).
-- Cómo Eli le avisa (sin enviarle el texto de los mensajes): [docs/crm/eli-crm.md](docs/crm/eli-crm.md).
-- Pendiente: la sincronización con **Google Calendar** del panel (la de arriba, sección 6, es la de Eli).
 
 ---
 

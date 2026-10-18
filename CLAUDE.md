@@ -13,9 +13,8 @@ Eli es la asistente de WhatsApp de EliDental (n8n en Docker + Kapso + Gemini + G
 ## Git
 - Commits locales pequeños. **Nunca `git push`**: lo hace el usuario con `! git push`.
 - No reescribas la historia (`reset --hard`, `rebase`, `push --force`) ni borres ramas.
-- El trabajo del CRM va en `feat/crm` (y en las ramas `feat/crm-*` de cada agente), **nunca en `main`**.
-  `feat/crm` vive en el worktree `/Users/d/agentWhatsap-crm`; esta carpeta (`/Users/d/agentWhatsap`) queda en
-  `main` para las demás sesiones.
+- Solo hay dos ramas: `main` (Eli en producción, **sin CRM**) y `version-crm` (todo el CRM «Eli Panel»).
+  El trabajo del CRM va en `version-crm`, **nunca en `main`**.
 
 ## Eli en producción
 - Antes de tocar `workflows/eli-version4.json` o el workflow en n8n: `scripts/backup.sh`. Prueba en una
@@ -27,9 +26,6 @@ Eli es la asistente de WhatsApp de EliDental (n8n en Docker + Kapso + Gemini + G
 - Datos de pacientes = datos de salud: nunca uses datos reales en pruebas, docs, Notion ni logs.
 - $0 en software: si algo pide tarjeta o tiene un límite que afecte el uso real, avisa antes.
 
-## CRM «Eli Panel» (SDD)
-- La fuente de verdad es Notion, en el hub «Eli Panel — SDD Hub» (https://app.notion.com/p/3f55445f5f868115ab4acac0869bd112). El espejo está en
-  `docs/crm/`.
-- Agentes en `.claude/agents/`: `crm-planificador` → `crm-orquestador` → `crm-datos`,
-  `crm-frontend`, `crm-n8n` y `crm-qa-docs`. Cada agente corre en su propio panel de herdr.
-  Cómo se trabaja: `docs/crm/README.md`.
+## CRM «Eli Panel»
+- Vive solo en la rama `version-crm` (código, `docs/crm/`, agentes `.claude/agents/`, Supabase). Esta rama
+  (`main`) no lo incluye.

@@ -10,13 +10,10 @@ dudas, busca un horario libre y deja la cita anotada en Google Calendar. Lo que 
 
 | | |
 |---|---|
-| **En producción** | Workflow `version4` como **Eli**: conversación natural, sin botones, con los datos reales de EliDental (JSON fuera del repo) |
-| **Eli Panel (CRM)** | Panel de la doctora (resumen, tablero de pacientes, fichas y citas) sobre Supabase, conectado a Eli con avisos sin esperar y **sin guardar el contenido de los mensajes**. Probado con datos inventados; falta conectarlo al `version4` real y Google Calendar ([guía](docs/crm/guia-doctora.md)) |
+| **En producción** | Workflow `version4` como **Eli**: conversación natural, sin botones, con los datos reales de EliDental ([`workflows/`](workflows/README.md)) |
+| **CRM (Eli Panel)** | No está en esta rama: vive aparte en la rama `version-crm` (`git switch version-crm`) |
 | **Siguiente paso** | Seguimientos a quien deja de responder y recordatorios de cita ([qué falta](docs/conversacion.md)) |
 | **Piezas** | WhatsApp · Kapso · n8n 2.41.5 (queue mode) · Gemini · Google Calendar · PostgreSQL · Redis · Docker · ngrok |
-
-> **Nota:** los JSON de `workflows/` **no están en el repo** (se quedan solo en local y se comparten por
-> separado). Si trabajas sin ellos, pídelos a quien mantiene el proyecto.
 
 ```mermaid
 flowchart LR
@@ -54,22 +51,13 @@ Qué leer según lo que necesites. Cada documento tiene **un solo tema**, sin re
 | [docs/operacion.md](docs/operacion.md) | El día a día: encender todo **después de reiniciar**, revisar que funcione, publicar cambios, respaldar, restaurar y problemas conocidos |
 | [docs/seguridad.md](docs/seguridad.md) | Reglas para no filtrar contraseñas ni datos de pacientes |
 
-### Eli Panel (CRM)
-
-| Documento | Para qué sirve |
-|---|---|
-| [docs/crm/guia-doctora.md](docs/crm/guia-doctora.md) | **Para la doctora.** Cómo entrar, el resumen, el tablero, la ficha, nuevo paciente y citas, sin tecnicismos |
-| [docs/crm/operacion.md](docs/crm/operacion.md) | **Para quien administra.** Arrancar en local, migraciones, copias de seguridad y qué hacer si el CRM cae |
-| [docs/crm/eli-crm.md](docs/crm/eli-crm.md) | Cómo se entera el CRM de lo que hace Eli (y por qué no guarda los mensajes) |
-| [docs/crm/](docs/crm/README.md) | Todo el proyecto: Spec, Plan, Tareas, informe de QA y decisiones |
-
 ### Para quien desarrolla
 
 | Documento | Para qué sirve |
 |---|---|
 | [docs/arquitectura.md](docs/arquitectura.md) | Cómo están conectadas las piezas por dentro, recorrido técnico de un mensaje y datos guardados en Redis |
 | [docs/adr/](docs/adr/) | Registro de decisiones: **por qué** el sistema es como es (modo queue, Redis local, Gemini, un solo workflow, conversación sin botones, Kapso) |
-| workflows/README.md (fuera del repo) | Qué hay en cada archivo de workflow (producción, pruebas e histórico); los JSON se comparten por separado |
+| [workflows/README.md](workflows/README.md) | Qué hay en cada archivo de workflow (producción, pruebas e histórico) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Normas para hacer cambios sin romper producción: ramas, cómo cambiar un workflow, definición de terminado |
 | [CHANGELOG.md](CHANGELOG.md) | Historial: qué cambió y cuándo |
 
@@ -87,8 +75,7 @@ scripts/check.sh             # todo debe salir OK
 ```
 
 Después: abre n8n, crea las credenciales (Kapso, Gemini, Google Calendar, Redis local) e importa
-`workflows/eli-version4.json` ([GUIA, pasos 8 y 9](GUIA.md#8-credenciales-en-n8n)). Ese JSON **no está
-en el repo**: pídelo a quien mantiene el proyecto.
+`workflows/eli-version4.json` ([GUIA, pasos 8 y 9](GUIA.md#8-credenciales-en-n8n))..
 
 ## Comandos
 
@@ -107,11 +94,12 @@ en el repo**: pídelo a quien mantiene el proyecto.
 ```
 ├── README.md, GUIA.md, CONTRIBUTING.md, CHANGELOG.md
 ├── docker-compose.yml, .env.example   Cómo se levantan los servicios
+├── workflows/                         Los JSON de n8n (Eli en producción, seguimiento, pruebas, histórico)
 ├── scripts/                           init-env, check, backup, export-workflow
 └── docs/                              Toda la documentación (ver la guía de arriba)
 ```
 
-`workflows/` (los JSON de n8n) no está en el repo: se queda en local y se comparte por separado.
+El CRM (Eli Panel) está en la rama `version-crm`, no en `main`.
 
 ## Límites actuales
 

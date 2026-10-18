@@ -1,3 +1,4 @@
+import { availableContent, setConversationControl } from "@/server/privacy/service";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { scoped } from "@/lib/db/tenant";
@@ -76,6 +77,7 @@ export async function listConversations(
         schema.conversation.organizationId,
         organizationId,
         eq(schema.conversation.isTest, false),
+        availableContent(),
         since ? gt(schema.conversation.updatedAt, since) : undefined
       )
     )
@@ -113,7 +115,8 @@ export async function getConversation(
       scoped(
         schema.conversation.organizationId,
         organizationId,
-        eq(schema.conversation.id, conversationId)
+        eq(schema.conversation.id, conversationId),
+        availableContent()
       )
     )
     .limit(1);
@@ -130,6 +133,7 @@ export async function listMessages(
   return db
     .select({ message: schema.message, media: schema.mediaAsset })
     .from(schema.message)
+    .innerJoin(schema.conversation, and(eq(schema.message.conversationId, schema.conversation.id), eq(schema.message.organizationId, schema.conversation.organizationId)))
     .leftJoin(
       schema.mediaAsset,
       eq(schema.message.mediaAssetId, schema.mediaAsset.id)
@@ -139,6 +143,7 @@ export async function listMessages(
         schema.message.organizationId,
         organizationId,
         eq(schema.message.conversationId, conversationId),
+        availableContent(),
         since ? gt(schema.message.createdAt, since) : undefined
       )
     )
@@ -173,16 +178,16 @@ export function serializeConversation(
 export async function updateConversation(
   organizationId: string,
   conversationId: string,
-  patch: { aiEnabled?: boolean; reactivate?: boolean; markRead?: boolean }
+  patch: { aiEnabled?: boolean; reactivate?: boolean; markRead?: boolean },
+  actorUserId?: string
 ) {
   const db = getDb();
   const set: Record<string, unknown> = { updatedAt: new Date() };
-  if (patch.aiEnabled !== undefined) set.aiEnabled = patch.aiEnabled;
-  if (patch.reactivate) {
-    set.handoffAt = null;
-    set.handoffReason = null;
-    set.aiEnabled = patch.aiEnabled ?? true;
+  if (patch.aiEnabled !== undefined || patch.reactivate) {
+    if (!actorUserId) throw new Error("actor_required");
+    await setConversationControl(organizationId, conversationId, patch.aiEnabled ?? true, actorUserId);
   }
+
   if (patch.markRead) set.unreadCount = 0;
 
   const updated = await db
@@ -191,7 +196,8 @@ export async function updateConversation(
     .where(
       and(
         eq(schema.conversation.organizationId, organizationId),
-        eq(schema.conversation.id, conversationId)
+        eq(schema.conversation.id, conversationId),
+        availableContent()
       )
     )
     .returning();

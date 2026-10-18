@@ -31,6 +31,8 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
   if (!form) {
     return apiError(400, "invalid", "Se esperaba multipart/form-data");
   }
+  const idempotencyKey = form.get("idempotencyKey");
+  if (typeof idempotencyKey !== "string" || !idempotencyKey || idempotencyKey.length > 128) return apiError(422, "invalid", "Falta idempotencyKey");
   const file = form.get("file");
   if (!(file instanceof File)) {
     return apiError(422, "invalid", "Falta el archivo (campo `file`)");
@@ -46,6 +48,7 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
   try {
     const result = await sendMediaMessage({
       conversationId: id,
+      idempotencyKey,
       organizationId: session.organizationId,
       file: {
         data,

@@ -1,7 +1,7 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@/lib/db";
+import { getDb, inDbTransaction, schema } from "@/lib/db";
 import { getEnv } from "@/lib/env";
 import { graphAuthHeaders, graphRequest, MetaApiError } from "@/lib/meta/client";
 import {
@@ -205,7 +205,7 @@ export async function downloadGraphMedia(
  * media. Nunca lanza hacia el webhook: el que llama decide qué hacer con el
  * resultado. Devuelve el asset actualizado o null si no se pudo.
  */
-export async function ensureAssetAvailable(
+async function ensureAssetAvailableImpl(
   organizationId: string,
   assetId: string
 ): Promise<typeof schema.mediaAsset.$inferSelect | null> {
@@ -242,13 +242,12 @@ export async function ensureAssetAvailable(
       .where(eq(schema.mediaAsset.id, assetId))
       .returning();
     return updated[0] ?? null;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+  } catch {
     await db
       .update(schema.mediaAsset)
-      .set({ fetchStatus: "failed", fetchError: message, updatedAt: new Date() })
+      .set({ fetchStatus: "failed", fetchError: "download_failed", updatedAt: new Date() })
       .where(eq(schema.mediaAsset.id, assetId));
-    console.warn(`[media] descarga del asset ${assetId} falló: ${message}`);
+    console.warn("[media] descarga falló");
     return null;
   }
 }
@@ -311,4 +310,14 @@ export async function uploadGraphMedia(
     });
   }
   return id;
+}
+
+/** La descarga y su escritura comparten lock de asset con la purga. */
+export async function ensureAssetAvailable(organizationId: string, assetId: string) {
+  return getDb().transaction(async tx => inDbTransaction(tx, async () => {
+    const [asset] = await tx.select({ id: schema.mediaAsset.id }).from(schema.mediaAsset)
+      .where(eq(schema.mediaAsset.id, assetId)).for("update").limit(1);
+    if (!asset) return null;
+    return ensureAssetAvailableImpl(organizationId, assetId);
+  }));
 }

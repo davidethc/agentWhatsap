@@ -1,3 +1,5 @@
+import { afterCommit } from "@/lib/db/transaction-context";
+import { availableContent } from "@/server/privacy/service";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
@@ -75,13 +77,9 @@ export async function registrarAnuncioDeOrigen(input: {
     const { organizationId, conversationId } = input;
     const sourceId = a.sourceId;
     const imageUrl = a.imageUrl;
-    void guardarCreativo({ organizationId, conversationId, sourceId, imageUrl }).catch(
-      (err) =>
-        console.warn(
-          `[atribucion] imagen del anuncio ${sourceId} no guardada:`,
-          err instanceof Error ? err.message : err
-        )
-    );
+    afterCommit(() => {
+      void guardarCreativo({ organizationId, conversationId, sourceId, imageUrl }).catch(() => console.warn("[atribucion] imagen no guardada"));
+    });
   }
 }
 
@@ -108,18 +106,19 @@ export async function getAttributionForConversation(
 async function primeraFilaDelContacto(organizationId: string, contactId: string) {
   const db = getDb();
   const filas = await db
-    .select()
+    .select({ anuncio: schema.adAttribution })
     .from(schema.adAttribution)
+    .innerJoin(schema.conversation, and(eq(schema.adAttribution.conversationId, schema.conversation.id), eq(schema.adAttribution.organizationId, schema.conversation.organizationId)))
     .where(
       scoped(
         schema.adAttribution.organizationId,
         organizationId,
-        eq(schema.adAttribution.contactId, contactId)
+        eq(schema.adAttribution.contactId, contactId), availableContent()
       )
     )
     .orderBy(asc(schema.adAttribution.createdAt), asc(schema.adAttribution.id))
     .limit(1);
-  return filas[0] ?? null;
+  return filas[0]?.anuncio ?? null;
 }
 
 export async function anuncioDelContacto(
@@ -188,10 +187,10 @@ export function repararImagenSiFalta(organizationId: string, contactId: string):
       sourceId: fila.sourceId,
       imageUrl: anuncio.imageUrl,
     });
-  })().catch((err) =>
+  })().catch(() =>
     console.warn(
       `[atribucion] reparación de imagen del contacto ${contactId} falló:`,
-      err instanceof Error ? err.message : err
+      "operación pendiente"
     )
   );
 }

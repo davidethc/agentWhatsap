@@ -1,3 +1,4 @@
+import { acceptConversationSend } from "@/server/privacy/send";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
@@ -291,11 +292,13 @@ async function persistOutbound(input: {
 }
 
 /** Envía un mensaje de texto libre por WhatsApp. */
-export async function sendText(input: {
+async function sendTextImpl(input: {
   conversationId: string;
   organizationId: string;
+  idempotencyKey?: string;
   text: string;
   aiGenerated?: boolean;
+  expectedEpoch?: number;
 }): Promise<SendResult> {
   const target = await prepareSend(input.conversationId, input.organizationId);
   const { credentials } = target;
@@ -336,9 +339,10 @@ export async function sendText(input: {
  * si Graph falla tras eso, el mensaje se persiste `failed` (visible en el
  * hilo, nunca se pierde en silencio) y el SendError lleva `messageId`.
  */
-export async function sendMediaMessage(input: {
+async function sendMediaMessageImpl(input: {
   conversationId: string;
   organizationId: string;
+  idempotencyKey?: string;
   file: { data: Buffer; mimeType: string; fileName?: string };
   caption?: string;
 }): Promise<SendResult> {
@@ -453,10 +457,11 @@ export type LocationInput = {
 export type ContactInput = { name: string; phone: string };
 
 /** 008 — Envía una ubicación o contactos (payload estructurado, sin archivo). */
-export async function sendStructured(
+async function sendStructuredImpl(
   input: {
     conversationId: string;
     organizationId: string;
+    idempotencyKey?: string;
   } & (
     | { kind: "location"; location: LocationInput }
     | { kind: "contacts"; contacts: ContactInput[] }
@@ -656,4 +661,16 @@ async function callMessengerSend(
     }
     throw err;
   }
+}
+
+export async function sendText(input: Parameters<typeof sendTextImpl>[0]): Promise<SendResult> {
+  return acceptConversationSend(input, () => sendTextImpl(input));
+}
+
+export async function sendMediaMessage(input: Parameters<typeof sendMediaMessageImpl>[0]): Promise<SendResult> {
+  return acceptConversationSend(input, () => sendMediaMessageImpl(input));
+}
+
+export async function sendStructured(input: Parameters<typeof sendStructuredImpl>[0]): Promise<SendResult> {
+  return acceptConversationSend(input, () => sendStructuredImpl(input));
 }

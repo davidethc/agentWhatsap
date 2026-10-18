@@ -1,3 +1,5 @@
+import { hasOperationalAccess } from "@/server/privacy/access";
+import { mediaContentAvailable } from "@/server/privacy/media";
 import { eq } from "drizzle-orm";
 import { apiError, withAuth } from "@/lib/api";
 import { getDb, schema } from "@/lib/db";
@@ -36,6 +38,7 @@ export const GET = withAuth(async (session, _req: Request, ctx: Params) => {
       )
     )
     .limit(1);
+  if (!(await mediaContentAvailable(session.organizationId, assetId))) return apiError(404, "not_found", "Adjunto no encontrado");
   let asset = rows[0];
   if (!asset) return apiError(404, "not_found", "Adjunto no encontrado");
 
@@ -58,6 +61,8 @@ export const GET = withAuth(async (session, _req: Request, ctx: Params) => {
 
   try {
     const data = await readMediaFile(session.organizationId, assetId);
+    if (!(await hasOperationalAccess(session))) return apiError(403, "operational_access_required", "Acceso reservado a la doctora");
+    if (!(await mediaContentAvailable(session.organizationId, assetId))) return apiError(404, "not_found", "Adjunto no encontrado");
     // #78: nosniff + CSP sandbox siempre; inline solo para lo previsualizable.
     return new Response(new Uint8Array(data), {
       headers: mediaResponseHeaders(asset, data.byteLength),

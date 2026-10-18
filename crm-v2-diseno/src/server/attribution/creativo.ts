@@ -1,3 +1,5 @@
+import { contentAvailable } from "@/server/privacy/policy";
+import { withConversationLock } from "@/server/privacy/service";
 import { eq, isNull } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
@@ -268,7 +270,7 @@ export function descargaEnCurso(organizationId: string, sourceId: string): boole
   return enCurso.has(`${organizationId}:${sourceId}`);
 }
 
-export async function guardarCreativo(input: {
+async function guardarCreativoImpl(input: {
   organizationId: string;
   conversationId: string;
   sourceId: string;
@@ -345,7 +347,7 @@ async function descargarYGuardar(
       await db.delete(schema.mediaAsset).where(eq(schema.mediaAsset.id, assetId));
       return imagenExistente(organizationId, sourceId);
     }
-  } catch (err) {
+  } catch {
     // Se quita lo que se alcanzó a crear; si ya estaba asignada, la clave
     // foránea deja esas filas sin imagen (`set null`), no apuntando a nada.
     if (guardado) await deleteMediaFile(organizationId, assetId).catch(() => {});
@@ -355,11 +357,18 @@ async function descargarYGuardar(
       .catch(() => {});
     console.warn(
       `[atribucion] no se pudo guardar la imagen del anuncio ${sourceId}:`,
-      err instanceof Error ? err.message : err
+      "operación pendiente"
     );
     return null;
   }
 
   avisar();
   return assetId;
+}
+
+export async function guardarCreativo(input: Parameters<typeof guardarCreativoImpl>[0]): Promise<string | null> {
+  return withConversationLock(input.organizationId, input.conversationId, async c => {
+    if (!contentAvailable(c)) return null;
+    return guardarCreativoImpl(input);
+  });
 }

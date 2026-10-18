@@ -1,3 +1,4 @@
+import { contentAvailable } from "@/server/privacy/policy";
 import { desc, eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { scoped } from "@/lib/db/tenant";
@@ -123,7 +124,7 @@ export async function construirEvento(
       )
     )
     .limit(1);
-  if (!conv) return null;
+  if (!conv || !contentAvailable(conv) || !conv.aiEnabled || conv.handoffAt) return null;
 
   const [org] = await db
     .select({ id: schema.organization.id, slug: schema.organization.slug })
@@ -154,6 +155,7 @@ export async function construirEvento(
     conversation: {
       id: conv.id,
       channel: conv.channel,
+      epoch: conv.controlEpoch,
       aiEnabled: conv.aiEnabled,
       windowOpen: isWindowOpen(conv.lastInboundAt),
       windowExpiresAt: conv.lastInboundAt

@@ -1,3 +1,5 @@
+import { contentAvailable } from "@/server/privacy/policy";
+import { prepareInbound, withConversationLock } from "@/server/privacy/service";
 import { and, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
@@ -172,13 +174,9 @@ async function attachMediaAsset(
       .update(schema.message)
       .set({ mediaAssetId: asset.id })
       .where(eq(schema.message.id, messageId));
-    if (asset.fetchStatus === "pending") {
-      // Descarga in-process, sin bloquear la ingesta; on-demand reintenta.
-      void ensureAssetAvailable(organizationId, asset.id).catch(() => {});
-    }
     return asset;
-  } catch (err) {
-    console.warn(`[media] no se pudo registrar el adjunto de ${messageId}:`, err);
+  } catch {
+    console.warn("[media] no se pudo registrar el adjunto");
     return null;
   }
 }
@@ -334,9 +332,9 @@ export async function processEchoesValue(value: WebhookValue): Promise<void> {
     }
     try {
       await ingestManualEcho(credentials.organizationId, echo);
-    } catch (err) {
+    } catch {
       // Un echo malformado jamás tumba el webhook (edge case del spec).
-      console.error(`[webhook] error procesando echo ${echo.id}:`, err);
+      console.error("[webhook] error procesando echo");
     }
   }
 }
@@ -378,7 +376,6 @@ export async function ingestOutboundMessage(input: {
   media?: MediaInput | null;
   pauseAi?: boolean;
 }): Promise<void> {
-  const db = getDb();
   const { organizationId } = input;
   const identity = normalizeMx(input.to);
 
@@ -390,6 +387,9 @@ export async function ingestOutboundMessage(input: {
   });
   const conversation = await getOrCreateConversation(organizationId, contact.id);
 
+  await withConversationLock(organizationId, conversation.id, async current => {
+  if (!contentAvailable(current)) return;
+  const db = getDb();
   const waTimestamp = toDate(input.timestamp);
 
   // Idempotencia dura: los mensajes ya registrados (o echoes repetidos) no
@@ -420,7 +420,7 @@ export async function ingestOutboundMessage(input: {
   // Solo lastMessageAt: un mensaje del negocio NUNCA abre la ventana de 24 h.
   await db
     .update(schema.conversation)
-    .set({ lastMessageAt: waTimestamp, updatedAt: new Date() })
+    .set({ lastMessageAt: sql`greatest(${schema.conversation.lastMessageAt}, ${waTimestamp})`, updatedAt: new Date() })
     .where(eq(schema.conversation.id, conversation.id));
 
   if (input.pauseAi) {
@@ -429,6 +429,7 @@ export async function ingestOutboundMessage(input: {
       .update(schema.conversation)
       .set({
         aiEnabled: false,
+        controlEpoch: sql`${schema.conversation.controlEpoch} + 1`,
         handoffAt: new Date(),
         handoffReason: "manual_reply",
         updatedAt: new Date(),
@@ -458,6 +459,7 @@ export async function ingestOutboundMessage(input: {
     type: "conversation.updated",
     data: { conversation: { id: conversation.id } },
   });
+  });
 }
 
 export async function ingestInboundMessage(input: {
@@ -473,7 +475,6 @@ export async function ingestInboundMessage(input: {
   /** 016/018: el anuncio que abrió la conversación, ya normalizado por el canal. */
   anuncio?: AnuncioDeOrigen | null;
 }): Promise<void> {
-  const db = getDb();
   const { organizationId } = input;
 
   const { contact } = await getOrCreateContactByIdentity(
@@ -486,6 +487,10 @@ export async function ingestInboundMessage(input: {
     { channel: contact.channel, threadRef: input.threadRef ?? null }
   );
 
+  await withConversationLock(organizationId, conversation.id, async current => {
+  const waTimestamp = toDate(input.timestamp);
+  if (!(await prepareInbound(current, input.waMessageId, waTimestamp))) return;
+  const db = getDb();
   // 016/018 — Si el mensaje viene de un anuncio, capturar su origen ANTES del
   // dedup de mensaje: es idempotente por sí mismo (el primer anuncio gana) y
   // así un reintento de Meta que llegue con el referral no lo pierde por
@@ -502,15 +507,14 @@ export async function ingestInboundMessage(input: {
         conversationId: conversation.id,
         anuncio: input.anuncio,
       });
-    } catch (err) {
+    } catch {
       console.warn(
         `[atribucion] no se registró el anuncio de ${conversation.id}:`,
-        err instanceof Error ? err.message : err
+        "operación pendiente"
       );
     }
   }
 
-  const waTimestamp = toDate(input.timestamp);
 
   // Idempotencia dura: mismo wa_message_id → sin efectos adicionales.
   const inserted = await db
@@ -538,8 +542,8 @@ export async function ingestInboundMessage(input: {
   await db
     .update(schema.conversation)
     .set({
-      lastInboundAt: waTimestamp,
-      lastMessageAt: waTimestamp,
+      lastInboundAt: sql`greatest(${schema.conversation.lastInboundAt}, ${waTimestamp})`,
+      lastMessageAt: sql`greatest(${schema.conversation.lastMessageAt}, ${waTimestamp})`,
       unreadCount: sql`${schema.conversation.unreadCount} + 1`,
       updatedAt: new Date(),
     })
@@ -559,6 +563,12 @@ export async function ingestInboundMessage(input: {
     data: { conversation: { id: conversation.id } },
   });
 
+  });
+
+  if (input.media?.fetchStatus === "pending") {
+    const [saved] = await getDb().select({ assetId: schema.message.mediaAssetId }).from(schema.message).where(eq(schema.message.waMessageId, input.waMessageId)).limit(1);
+    if (saved?.assetId) void ensureAssetAvailable(organizationId, saved.assetId).catch(() => {});
+  }
   await maybeRunAgentTurn(conversation.id, organizationId);
 }
 

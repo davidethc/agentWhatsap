@@ -1,3 +1,7 @@
+import { and, eq } from "drizzle-orm";
+import { getDb, schema } from "@/lib/db";
+import { scoped } from "@/lib/db/tenant";
+import { availableContent } from "@/server/privacy/service";
 import { apiError } from "@/lib/api";
 import { requireBotKey, resolveInstanceOrg } from "@/server/bot/auth";
 import { getCredentialsByOrg } from "@/server/whatsapp/credentials";
@@ -36,12 +40,18 @@ export async function GET(
     return apiError(422, "invalid", "mediaId inválido");
   }
 
+  const stillAvailable = () => getDb().select({ id: schema.message.id }).from(schema.message)
+    .innerJoin(schema.mediaAsset, eq(schema.message.mediaAssetId, schema.mediaAsset.id))
+    .innerJoin(schema.conversation, eq(schema.message.conversationId, schema.conversation.id))
+    .where(scoped(schema.message.organizationId, organizationId, eq(schema.mediaAsset.organizationId, organizationId), eq(schema.mediaAsset.waMediaId, mediaId), availableContent(), eq(schema.conversation.aiEnabled, true))).limit(1);
+  if (!(await stillAvailable())[0]) return apiError(404, "not_found", "Adjunto no encontrado");
   try {
     const { data, mimeType } = await downloadGraphMedia(
       creds.token,
       mediaId,
       MAX_MEDIA_BYTES
     );
+    if (!(await stillAvailable())[0]) return apiError(404, "not_found", "Adjunto no encontrado");
     return new Response(new Uint8Array(data), {
       headers: {
         "content-type": mimeType ?? "application/octet-stream",

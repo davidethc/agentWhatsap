@@ -1,3 +1,4 @@
+import { contentAvailable } from "@/server/privacy/policy";
 import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { apiError } from "@/lib/api";
@@ -85,7 +86,7 @@ export async function GET(req: Request) {
     }
   }
 
-  if (!contact || !conversation) {
+  if (!contact || !conversation || !contentAvailable(conversation)) {
     return apiError(404, "not_found", "Conversación no encontrada");
   }
 
@@ -121,6 +122,7 @@ export async function GET(req: Request) {
     },
     conversation: {
       id: conversation.id,
+      epoch: conversation.controlEpoch,
       // Una sola verdad para el bot: si hay handoff, la IA está apagada
       // aunque el flag siga en true.
       aiEnabled: conversation.aiEnabled && !conversation.handoffAt,

@@ -1,3 +1,4 @@
+import { acceptConversationSend } from "@/server/privacy/send";
 import { and, eq } from "drizzle-orm";
 import {
   countVariables,
@@ -280,10 +281,11 @@ export async function applyTemplateStatusEvent(
 }
 
 /** Envía una plantilla APROBADA a una conversación (ventana cerrada, FR-051). */
-export async function sendTemplate(input: {
+async function sendTemplateImpl(input: {
   organizationId: string;
   conversationId: string;
   templateId: string;
+  idempotencyKey?: string;
   variables?: string[];
 }): Promise<{ messageId: string }> {
   const db = getDb();
@@ -416,4 +418,8 @@ export async function sendTemplate(input: {
   });
 
   return { messageId: message.id };
+}
+
+export async function sendTemplate(input: Parameters<typeof sendTemplateImpl>[0]) {
+  return acceptConversationSend(input, () => sendTemplateImpl(input));
 }

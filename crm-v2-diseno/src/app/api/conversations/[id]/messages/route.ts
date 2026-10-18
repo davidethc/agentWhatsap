@@ -30,10 +30,12 @@ export const GET = withAuth(async (session, req: Request, ctx: Params) => {
 // por `type`; sin `type` sigue siendo texto — compat con clientes previos).
 const sendSchema = z.union([
   z.object({
+    idempotencyKey: z.string().min(1).max(128),
     type: z.literal("text").optional(),
     text: z.string().trim().min(1).max(4096),
   }),
   z.object({
+    idempotencyKey: z.string().min(1).max(128),
     type: z.literal("location"),
     location: z.object({
       latitude: z.number().min(-90).max(90),
@@ -43,6 +45,7 @@ const sendSchema = z.union([
     }),
   }),
   z.object({
+    idempotencyKey: z.string().min(1).max(128),
     type: z.literal("contacts"),
     contacts: z
       .array(
@@ -78,18 +81,21 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
         ? await sendText({
             conversationId: id,
             organizationId: session.organizationId,
+            idempotencyKey: data.idempotencyKey,
             text: data.text,
           })
         : data.type === "location"
           ? await sendStructured({
               conversationId: id,
               organizationId: session.organizationId,
+            idempotencyKey: data.idempotencyKey,
               kind: "location",
               location: data.location,
             })
           : await sendStructured({
               conversationId: id,
               organizationId: session.organizationId,
+            idempotencyKey: data.idempotencyKey,
               kind: "contacts",
               contacts: data.contacts,
             });

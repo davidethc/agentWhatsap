@@ -1,3 +1,4 @@
+import { transactionContext } from "./transaction-context";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { getEnv } from "@/lib/env";
@@ -65,7 +66,14 @@ export function getSql() {
 
 let cachedDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
+/** Conserva la misma transacción en servicios anidados, incluido el emisor. */
+export function inDbTransaction<T>(tx: unknown, action: () => Promise<T>, afterCommit: (() => void)[] = []): Promise<T> {
+  return transactionContext.run({ db: tx, afterCommit }, action);
+}
+
 export function getDb() {
+  const transaction = transactionContext.getStore();
+  if (transaction) return transaction.db as ReturnType<typeof drizzle<typeof schema>>;
   if (!cachedDb) cachedDb = drizzle(getSql(), { schema });
   return cachedDb;
 }

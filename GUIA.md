@@ -290,6 +290,13 @@ Más procedimientos (publicar por CLI, restaurar, cambiar de URL, migrar) en
 
 ---
 
+## Si vas a formatear el computador
+
+Lee [docs/recuperacion.md](docs/recuperacion.md): qué se guarda en GitHub, qué no (`.env`, `backups/`) y cómo
+restaurar. El CRM queda guardado en la rama `version-crm`.
+
+---
+
 ## Errores frecuentes
 
 | Error | Causa | Solución |

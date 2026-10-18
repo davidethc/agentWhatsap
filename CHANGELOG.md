@@ -5,6 +5,11 @@ Ecuador.
 
 ## [Sin publicar]
 
+### Agregado
+- **`docs/recuperacion.md`**: qué se guarda en GitHub y qué no, lista antes de formatear y cómo volver a
+  levantar Eli. El CRM queda guardado completo en la rama `version-crm` para continuarlo más adelante.
+  Para subir todo: `git push origin main version-crm`.
+
 ### Cambiado
 - **`main` queda sin CRM** (la versión que se presenta a la doctora): Eli con WhatsApp, Kapso, n8n,
   Docker, Gemini y Google Calendar. Se quitaron `crm/`, `crm-v2-diseno/`, `supabase/`, `docs/crm/`, los

@@ -49,6 +49,7 @@ Qué leer según lo que necesites. Cada documento tiene **un solo tema**, sin re
 | [GUIA.md](GUIA.md) | Instalar todo desde cero en **Mac**: cuentas, Docker, ngrok, Kapso, Google, Gemini, credenciales e importar el workflow |
 | [docs/instalacion-windows.md](docs/instalacion-windows.md) | Lo mismo, paso a paso en **Windows** 10/11 |
 | [docs/operacion.md](docs/operacion.md) | El día a día: encender todo **después de reiniciar**, revisar que funcione, publicar cambios, respaldar, restaurar y problemas conocidos |
+| [docs/recuperacion.md](docs/recuperacion.md) | **Si vas a formatear o cambiar de computador:** qué está en GitHub, qué no, y cómo volver a levantar todo |
 | [docs/seguridad.md](docs/seguridad.md) | Reglas para no filtrar contraseñas ni datos de pacientes |
 
 ### Para quien desarrolla

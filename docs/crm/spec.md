@@ -1,3 +1,5 @@
+> **Vigencia 2026-10-16:** historial del CRM legado. Para el CRM nuevo rige [transicion-v2.md](transicion-v2.md) y ADR 0013. Las aprobaciones anteriores no se trasladan automáticamente.
+
 # Eli Panel: Spec (aprobada)
 
 > Espejo de Notion: «02 · Spec» y la base «Historias de usuario» del hub

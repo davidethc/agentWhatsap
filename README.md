@@ -1,5 +1,7 @@
 # Eli: asistente de citas por WhatsApp para EliDental
 
+> Construcción actual: [privacidad aprobada](docs/crm/v2/privacidad.md), [plan y evidencia](docs/crm/v2/construccion.md). Incluye preparar Docker/n8n/panel/ngrok para prueba personal por WhatsApp al finalizar; todavía en verificación.
+
 Eli contesta el WhatsApp de un consultorio dental como lo haría una recepcionista: saluda, resuelve
 dudas, busca un horario libre y deja la cita anotada en Google Calendar. Lo que necesita a la doctora
 (dudas de salud, quejas) se lo pasa a ella. Hoy atiende a [EliDental](https://www.facebook.com/EliDentalec)
@@ -12,6 +14,8 @@ dudas, busca un horario libre y deja la cita anotada en Google Calendar. Lo que 
 |---|---|
 | **En producción** | Workflow `version4` como **Eli**: conversación natural, sin botones, con los datos reales de EliDental (JSON fuera del repo) |
 | **Eli Panel (CRM)** | Panel de la doctora (resumen, tablero de pacientes, fichas y citas) sobre Supabase, conectado a Eli con avisos sin esperar y **sin guardar el contenido de los mensajes**. Probado con datos inventados; falta conectarlo al `version4` real y Google Calendar ([guía](docs/crm/guia-doctora.md)) |
+| **En producción** | Workflow `version4` como **Eli**: conversación natural, sin botones, con los datos reales de EliDental ([workflow](workflows/eli-version4.json)) |
+| **Eli Panel (CRM)** | Continúa en crm-v2-diseno: conversaciones e intervención restringidas, SDD y Codex/tmux. Las pruebas del primer CRM no certifican el nuevo. [Estado y coordinación](docs/crm/README.md). |
 | **Siguiente paso** | Seguimientos a quien deja de responder y recordatorios de cita ([qué falta](docs/conversacion.md)) |
 | **Piezas** | WhatsApp · Kapso · n8n 2.41.5 (queue mode) · Gemini · Google Calendar · PostgreSQL · Redis · Docker · ngrok |
 

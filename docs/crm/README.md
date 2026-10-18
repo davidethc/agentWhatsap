@@ -1,73 +1,17 @@
-# Eli Panel (CRM de EliDental)
+# Eli Panel — SDD
 
-CRM propio de EliDental: resumen del día, kanban de pacientes (como Kommo), ficha del paciente
-y citas sincronizadas con Google Calendar. Se construye con **SDD (Spec-Driven Development)**.
+El producto vigente es **crm-v2-diseno**. [Notion](https://app.notion.com/p/3f55445f5f868115ab4acac0869bd112) es fuente de verdad; esta carpeta conserva espejo e historial.
 
-**Fuente de verdad:** el hub de Notion [«Eli Panel — SDD Hub»](https://app.notion.com/p/3f55445f5f868115ab4acac0869bd112).
-Esta carpeta es su espejo: cada documento se copia aquí cuando el usuario lo aprueba.
+- [Decisiones, tareas y límites](transicion-v2.md).
+- [Enmiendas Notion 00–06](notion-vigente.md) y [foto del tablero](tablero-notion.md).
+- [Lanzador Codex/tmux](orquestacion-cli.md): iniciar, estado, recuperar y detener. Roles en .Codex/agents/*.toml.
+- [Auditoría y relación con el alcance nuevo](auditoria-transicion.md).
+- [Evidencia de orquestación](orquestacion-qa.md) y [revisión final](orquestacion-qa-final.md).
+- [Plantilla de encargo](encargo-template.md) y [relevo del coordinador](relevo-coordinador.md).
+- [ADR 0013](../adr/0013-crm-v2-conversaciones-codex-tmux.md).
 
-| Documento | Estado |
-|---|---|
-| [constitution.md](constitution.md) | Escrita (10-oct-2026) |
-| [spec.md](spec.md) | Aprobada (10-oct-2026): 14 historias |
-| [plan.md](plan.md) | Aprobado (10-oct-2026): arquitectura, datos, contrato Eli → CRM, Calendar, pantallas |
-| [tasks.md](tasks.md) | Aprobadas (10-oct-2026): TK-1 a TK-40 en Ready |
-| `integracion.md` | La escribe el orquestador durante la construcción |
-| [guia-doctora.md](guia-doctora.md) | **Guía para la doctora** (TK-40): entrar, resumen, tablero, ficha, nuevo paciente y citas |
-| [operacion.md](operacion.md) | **Guía de operación** (TK-40): arrancar en local, migraciones, copias, qué hacer si el CRM cae |
-| [eli-crm.md](eli-crm.md) | **Cómo funciona Eli → CRM** (TK-40): avisos sin esperar, reglas, errores; sin texto de mensajes |
-| [qa.md](qa.md) | Informe de QA por tarea (ronda 1: TK-1 a TK-11, TK-14, TK-21 y TK-22; ronda 2: TK-13, TK-18, TK-19 y TK-23; ronda 3: TK-24, TK-27, TK-29, TK-32, TK-33 y TK-41; ronda 4: TK-25, TK-26, TK-28, TK-30 y TK-34; ronda 5: TK-36, TK-37 y TK-39) |
-| [backup-crm.md](backup-crm.md) | Copia semanal de la base con `scripts/backup-crm.sh` y cómo restaurar (TK-13) |
-| [tk-12-proyecto-remoto.md](tk-12-proyecto-remoto.md) | Paso a paso para crear `eli-crm` en la nube (✋ espera aprobación) |
+constitution.md, spec.md, plan.md, tasks.md, qa.md y guías anteriores conservan el primer CRM (crm/, Supabase). Sus Done no certifican el producto nuevo. Conversaciones e intervención están aprobadas como dirección; permisos, conservación y eliminación se definen antes de activar.
 
-## Estado
+Trabajo en /Users/d/agentWhatsap-crm, rama feat/crm; especialistas en worktrees y ramas feat/crm-*. Máximo coordinador + tres trabajadores, apoyos incluidos, un nivel adicional. Solo el coordinador escribe Notion e integra después de revisión independiente. Informes y commits persistentes; sin push.
 
-| Parte | Estado |
-|---|---|
-| Base de datos, seguridad y reglas del embudo | ✅ hecho y probado ([qa.md](qa.md): TK-39, 261 pruebas pgTAP) |
-| Panel de la doctora (resumen, tablero, ficha, nuevo paciente, citas) | ✅ hecho y probado (TK-36) |
-| Eli → CRM sin texto de mensajes | ✅ probado con la copia inactiva de `version4` (TK-37) |
-| Conversación con Eli en la ficha | ⏸ pospuesta por privacidad ([ADR 0012](../adr/0012-crm-sin-contenido-de-mensajes.md)) |
-| Conectar el `version4` real, proyecto en la nube y publicar el panel | ⏳ esperan aprobación (TK-12, TK-20, TK-35) |
-| **Pendiente: Google Calendar** | ⏳ última parte (TK-14 a TK-17, TK-38): [google-calendar.md](google-calendar.md) |
-
-## Agentes (`.claude/agents/`)
-
-| Agente | Modelo | Rama / worktree | Para qué |
-|---|---|---|---|
-| `crm-planificador` | opus | `feat/crm` | Preguntas, Spec, Plan y Tareas en Notion. No programa |
-| `crm-orquestador` | opus | `feat/crm` | Líder: abre un panel de herdr por agente, revisa, integra y actualiza Notion |
-| `crm-datos` | opus | `feat/crm-datos` · `../agentWhatsap-crm-datos` | Supabase: tablas, RLS, auditoría, login |
-| `crm-frontend` | sonnet | `feat/crm-frontend` · `../agentWhatsap-crm-frontend` | Next.js: resumen, kanban, ficha, citas |
-| `crm-n8n` | sonnet | `feat/crm-n8n` · `../agentWhatsap-crm-n8n` | Eli → CRM y Google Calendar, sin romper Eli |
-| `crm-qa-docs` | sonnet | `feat/crm-docs` · `../agentWhatsap-crm-docs` | Pruebas con evidencia y documentación |
-
-Para verlos en Claude Code: `/agents`.
-
-## Cómo se trabaja
-
-```bash
-# Fase A: planear (una terminal)
-claude --agent crm-planificador
-#   ✋ apruebas la Spec  →  ✋ apruebas el Plan + Tareas
-
-# Fase B: construir (un panel de herdr por agente)
-# En herdr, en una pestaña nueva con la carpeta /Users/d/agentWhatsap-crm:
-claude --agent crm-orquestador
-#   el orquestador abre los paneles datos, frontend, n8n y qa con `herdr agent start`
-#   ✋ apruebas antes de tocar Eli en producción
-
-# Al final (tú): pasar feat/crm a main y hacer git push
-```
-
-## Configuración
-
-- `CLAUDE.md`: reglas para todas las sesiones.
-- `.claude/settings.json`: comandos bloqueados (`git push`, `reset --hard`, `rebase`, `branch -D`,
-  cambiar a `main` y leer `.env`).
-- Carpetas: `/Users/d/agentWhatsap` = `main` (Eli y otras sesiones); `/Users/d/agentWhatsap-crm` =
-  worktree de `feat/crm` (planificador y orquestador); `/Users/d/agentWhatsap-crm-<agente>` =
-  worktree de cada agente.
-- `.claude/skills/` → `.agents/skills/` + `skills-lock.json`: skills de skills.sh
-  (`mattpocock/skills`, `obra/superpowers`, `vercel-labs/agent-skills`), revisadas antes de
-  instalarlas. Para reinstalarlas: `npx skills experimental_install`.
+Para observar: tmux attach -t eli-crm. Los workers usan codex exec; consultar la guía para intervenir y recuperar. Nunca introducir datos de pacientes en prompts ni logs.

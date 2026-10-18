@@ -1,5 +1,9 @@
 # Guía paso a paso: instalar Eli desde cero
 
+> Construcción actual: [privacidad aprobada](docs/crm/v2/privacidad.md), [plan y evidencia](docs/crm/v2/construccion.md). Incluye preparar Docker/n8n/panel/ngrok para prueba personal por WhatsApp al finalizar; todavía en verificación.
+
+> Eli Panel continúa en crm-v2-diseno. Consulta [SDD](docs/crm/README.md) y [lanzador Codex/tmux](docs/crm/orquestacion-cli.md). El [relevo del coordinador](docs/crm/relevo-coordinador.md) indica las siguientes tareas. Esta guía de Eli no activa el CRM nuevo.
+
 Al terminar esta guía tendrás a Eli respondiendo por WhatsApp, agendando en Google Calendar, con n8n
 en modo queue dentro de Docker en tu computador.
 

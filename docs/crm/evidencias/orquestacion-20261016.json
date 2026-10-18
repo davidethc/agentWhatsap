@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-16",
+  "scope": "Orquestación sintética; no producto ni producción",
+  "launcher_commit": "32ceccc",
+  "unit_tests": {
+    "count": 21,
+    "result": "PASS"
+  },
+  "tmux_fake_codex": {
+    "result": "PASS",
+    "event": "turn.failed",
+    "exit": 0,
+    "state": "failed"
+  },
+  "global_limit": "Cuarto worker rechazado con tres activos",
+  "runs": [
+    {
+      "id": "defe9fc6842a47ec982a538f8dff3b89",
+      "task": "SIM-STOP",
+      "role": "crm-apoyo",
+      "model": "gpt-6-luna",
+      "parent": null,
+      "branch": "feat/crm-sim-b",
+      "worktree": "/Users/d/agentWhatsap-crm-sim-b",
+      "pane": "%10",
+      "codex_session": "01a14801-d4e8-7e00-93fd-5d70296b40cc",
+      "state": "stopped",
+      "exit": null,
+      "cleanup": "Grupo detenido con identidad verificada",
+      "attempts": [
+        {
+          "number": 1,
+          "started_at": "2026-10-17T03:57:21.205121+00:00",
+          "ended_at": "2026-10-17T03:57:30.899361+00:00",
+          "state": "stopped",
+          "exit": null,
+          "resume": null,
+          "pane": "%10",
+          "codex_session": "01a14801-d4e8-7e00-93fd-5d70296b40cc"
+        }
+      ]
+    },
+    {
+      "id": "5bd1767ae27f440797ad4f6691249abf",
+      "task": "SIM-C",
+      "role": "crm-apoyo",
+      "model": "gpt-6-luna",
+      "parent": "f545b74c6e624992b43cc768e647383c",
+      "branch": "feat/crm-sim-c",
+      "worktree": "/Users/d/agentWhatsap-crm-sim-c",
+      "pane": "%7",
+      "codex_session": "01a147ff-a5ec-7ce1-bfcf-1fddd5ff4d7a",
+      "state": "awaiting-review",
+      "exit": 0,
+      "cleanup": null,
+      "attempts": [
+        {
+          "number": 1,
+          "started_at": "2026-10-17T03:54:58.228253+00:00",
+          "ended_at": "2026-10-17T03:55:46.041655+00:00",
+          "state": "awaiting-review",
+          "exit": 0,
+          "resume": null,
+          "pane": "%7",
+          "codex_session": "01a147ff-a5ec-7ce1-bfcf-1fddd5ff4d7a"
+        }
+      ],
+      "review": {
+        "reviewer": "coordinador",
+        "acceptance": "archivo exacto SIM_*_OK, diff --check y ownership verificados; commit por coordinador por restricción sandbox",
+        "commit": "f4585bf90375b8f51785acc3323bfa117e092738"
+      }
+    },
+    {
+      "id": "f545b74c6e624992b43cc768e647383c",
+      "task": "SIM-A",
+      "role": "crm-planificador",
+      "model": "gpt-6-astra",
+      "parent": null,
+      "branch": "feat/crm-sim-a",
+      "worktree": "/Users/d/agentWhatsap-crm-sim-a",
+      "pane": "%8",
+      "codex_session": "01a147ff-a5ed-7021-b129-823d90ce287a",
+      "state": "awaiting-review",
+      "exit": 0,
+      "cleanup": null,
+      "attempts": [
+        {
+          "number": 1,
+          "started_at": "2026-10-17T03:54:58.000123+00:00",
+          "ended_at": "2026-10-17T03:55:16.468597+00:00",
+          "state": "failed",
+          "exit": -9,
+          "resume": null,
+          "pane": "%5",
+          "codex_session": "01a147ff-a5ed-7021-b129-823d90ce287a"
+        },
+        {
+          "number": 2,
+          "started_at": "2026-10-17T03:55:16.814811+00:00",
+          "ended_at": "2026-10-17T03:56:28.410415+00:00",
+          "state": "awaiting-review",
+          "exit": 0,
+          "resume": "01a147ff-a5ed-7021-b129-823d90ce287a",
+          "pane": "%8",
+          "codex_session": "01a147ff-a5ed-7021-b129-823d90ce287a"
+        }
+      ],
+      "review": {
+        "reviewer": "coordinador",
+        "acceptance": "archivo exacto SIM_*_OK, diff --check y ownership verificados; commit por coordinador por restricción sandbox",
+        "commit": "083844e13bb3cc624c6f6ea494e42152b0dfa7e4"
+      }
+    },
+    {
+      "id": "ec3a8c309a5a47988d4eabc94308a7a1",
+      "task": "SIM-B",
+      "role": "crm-datos",
+      "model": "gpt-6.1-sol",
+      "parent": null,
+      "branch": "feat/crm-sim-b",
+      "worktree": "/Users/d/agentWhatsap-crm-sim-b",
+      "pane": "%6",
+      "codex_session": "01a147ff-a5eb-7ba1-8469-7288a82890ec",
+      "state": "awaiting-review",
+      "exit": 0,
+      "cleanup": null,
+      "attempts": [
+        {
+          "number": 1,
+          "started_at": "2026-10-17T03:54:58.108306+00:00",
+          "ended_at": "2026-10-17T03:55:48.128276+00:00",
+          "state": "awaiting-review",
+          "exit": 0,
+          "resume": null,
+          "pane": "%6",
+          "codex_session": "01a147ff-a5eb-7ba1-8469-7288a82890ec"
+        }
+      ],
+      "review": {
+        "reviewer": "coordinador",
+        "acceptance": "archivo exacto SIM_*_OK, diff --check y ownership verificados; commit por coordinador por restricción sandbox",
+        "commit": "06aa47765e9e2f0fdaebfaec1d34d71c31e6f8b4"
+      }
+    }
+  ],
+  "independent_review_commit": "280b747",
+  "integration_commit": "193484bc58d569fb993244a89724e0461a852635",
+  "integrated_verification": {
+    "unit_tests": 21,
+    "result": "PASS",
+    "tmux_smoke": "PASS"
+  }
+}

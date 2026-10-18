@@ -13,6 +13,20 @@ Ecuador.
   imágenes, fecha de Ecuador, seguimientos). Todo lo del CRM quedó en la rama `crm-agente-whatsapp-elidental`.
 - Prompt: **confirma por intención** (no exige «sí» literal: «ok, agéndame mañana a las 10» ya reserva) y
   **venta consultiva**: explica el tratamiento y genera confianza antes de proponer turno, sin presionar.
+### Primera entrega de conversaciones — 2026-10-16
+- Especificación aprobada: acceso exclusivo doctora, pausa manual persistente, conservación 90 días y borrado sin eliminar ficha.
+- Base verificada: 1026 pruebas, lint, tipos y build; especialistas aislados con gpt-6.1-sol.
+- Se añade como paso final el arranque y verificación de Docker/n8n/panel/ngrok solicitado para prueba WhatsApp. Implementación y conexión aún en curso.
+
+
+### Coordinación CRM — 2026-10-16
+- Transición SDD al CRM nuevo, ADR 0013 y roles Codex con operaciones y apoyo.
+- Orquestación tmux con registro persistente, recuperación y revisión antes de integrar.
+- Historial conservado; permisos, conservación y eliminación pendientes antes de activar conversaciones.
+- Verificado: 21 pruebas, smoke tmux real y simulacro Codex con tres modelos, apoyo, límite, recuperación y stop; revisión independiente antes de integrar.
+- Relevo del coordinador gpt-6-astra guardado; V2-01 y V2-07 preparadas para especificación/auditoría, sin iniciar producto.
+- Restricción confirmada: workers no pueden escribir index.lock del Git común; el coordinador revisa y crea sus commits sin desactivar sandbox.
+
 
 ### Agregado
 - **Prueba: Eli lee su «ficha» desde el CRM** (solo para el número del dueño): tono, saludo,

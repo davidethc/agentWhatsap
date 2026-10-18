@@ -1,3 +1,4 @@
+import { hasOperationalAccess } from "@/server/privacy/access";
 import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
@@ -15,6 +16,14 @@ export default async function AppLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await getSessionOrNull();
   if (!session) redirect("/login");
+  if (!(await hasOperationalAccess(session))) {
+    return (
+      <main className="mx-auto max-w-lg p-8" aria-labelledby="acceso-restringido">
+        <h1 id="acceso-restringido" className="text-xl font-semibold">Acceso restringido</h1>
+        <p className="mt-3">Solo la cuenta habilitada de la doctora puede consultar conversaciones y atender pacientes.</p>
+      </main>
+    );
+  }
   const branding = await getBranding(session.organizationId);
   const authSession = await getAuth().api.getSession({
     headers: await headers(),

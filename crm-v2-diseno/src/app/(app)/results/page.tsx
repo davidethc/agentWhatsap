@@ -1,3 +1,4 @@
+import { hasOperationalAccess } from "@/server/privacy/access";
 import { redirect } from "next/navigation";
 import { getSessionOrNull } from "@/lib/auth/session";
 import { todayInTz } from "@/lib/time/slots";
@@ -21,6 +22,14 @@ export default async function ResultsPage() {
   // resuelve primero.
   const session = await getSessionOrNull();
   if (!session) redirect("/login");
+  if (!(await hasOperationalAccess(session))) {
+    return (
+      <main className="mx-auto max-w-lg p-8" aria-labelledby="acceso-restringido">
+        <h1 id="acceso-restringido" className="text-xl font-semibold">Acceso restringido</h1>
+        <p className="mt-3">Solo la cuenta habilitada de la doctora puede consultar conversaciones y atender pacientes.</p>
+      </main>
+    );
+  }
   const [branding, timezone] = await Promise.all([
     getBranding(session.organizationId),
     businessTimezone(session.organizationId),

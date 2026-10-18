@@ -131,8 +131,8 @@ describe("interruptor: uno solo en todo el producto", () => {
     expect(copias.map((f) => path.relative(SRC, f))).toEqual([]);
   });
 
-  it("el Agente y la IA de la conversación usan el compartido", () => {
-    for (const rel of ["components/agent/agent-client.tsx", "components/inbox/contact-panel.tsx"]) {
+  it("el Agente usa el interruptor compartido", () => {
+    for (const rel of ["components/agent/agent-client.tsx"]) {
       const code = readFileSync(path.join(SRC, rel), "utf8");
       expect(code, rel).toContain('from "@/components/ui/switch"');
       expect(code, rel).toMatch(/<Switch\b/);

@@ -14,6 +14,7 @@ import type { ConversationDto, TemplateDto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatBytes, formatRemaining } from "./helpers";
 import { TemplateSender } from "./template-sender";
+import { createSendAttempt, UNCERTAIN_SEND } from "./send-attempt";
 
 /** 008 — Panel secundario del clip: formulario de ubicación o contacto. */
 type AttachPanel = "location" | "contact" | null;
@@ -35,10 +36,12 @@ export function Composer({
   conversation,
   onSend,
   onSent,
+  onAccessDenied,
 }: {
   conversation: ConversationDto;
-  onSend: (text: string) => Promise<string | null>;
+  onSend: (text: string, idempotencyKey: string) => Promise<string | null>;
   onSent: () => void;
+  onAccessDenied: () => void;
 }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -53,6 +56,8 @@ export function Composer({
   const [contactPhone, setContactPhone] = useState("");
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const attempt = useRef(createSendAttempt());
+  const textRetry = useRef<{ content: string; key: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +88,7 @@ export function Composer({
   }
 
   function pickFile(f: File | null) {
+    attempt.current.clear();
     if (filePreview) URL.revokeObjectURL(filePreview);
     setFile(f);
     setFilePreview(f && f.type.startsWith("image/") ? URL.createObjectURL(f) : null);
@@ -91,10 +97,27 @@ export function Composer({
   }
 
   async function apiSend(path: string, init: RequestInit): Promise<string | null> {
-    const res = await fetch(path, init);
-    if (res.ok) return null;
-    const data = (await res.json().catch(() => null)) as { message?: string } | null;
-    return data?.message ?? `Error ${res.status}`;
+    // Firma del contenido sin la clave: un clic de reintento conserva el intento.
+    let signature: string;
+    if (init.body instanceof FormData) {
+      signature = JSON.stringify([...init.body.entries()].map(([name, value]) =>
+        [name, value instanceof File ? [value.name, value.size, value.lastModified, value.type] : value]));
+      init.body.set("idempotencyKey", attempt.current.key(path + signature));
+    } else {
+      const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+      signature = JSON.stringify(body);
+      init.body = JSON.stringify({ ...body, idempotencyKey: attempt.current.key(path + signature) });
+    }
+    const res = await fetch(path, init).catch(() => null);
+    if (!res) return UNCERTAIN_SEND;
+    if (res.status === 409) {
+      const body = await res.json().catch(() => null);
+      return body?.error?.code === "human_control_required" ? "Toma la conversación para responder" : UNCERTAIN_SEND;
+    }
+    if (res.status === 403) { onAccessDenied(); return "Acceso denegado"; }
+    if (res.ok) { attempt.current.clear(); return null; }
+    const data = (await res.json().catch(() => null)) as { error?: { message?: string }; message?: string } | null;
+    return data?.error?.message ?? data?.message ?? `Error ${res.status}`;
   }
 
   async function submit() {
@@ -133,12 +156,17 @@ export function Composer({
     // "enviando" del hilo es la que informa el estado real.
     setText("");
     if (taRef.current) taRef.current.style.height = "auto";
-    const err = await onSend(value);
+    const idempotencyKey = textRetry.current?.content === value ? textRetry.current.key : crypto.randomUUID();
+    textRetry.current = null;
+    const err = await onSend(value, idempotencyKey);
     if (err) {
       setError(err);
       // Lo que no salió vuelve al campo. Si ya empezaste a escribir otra cosa
       // se antepone en vez de pisarte: nada se pierde en silencio.
-      setText((actual) => (actual ? `${value}\n${actual}` : value));
+      setText((actual) => {
+        if (!actual) textRetry.current = { content: value, key: idempotencyKey };
+        return actual ? `${value}\n${actual}` : value;
+      });
       taRef.current?.focus();
       setTimeout(autogrow, 0);
     }
@@ -197,6 +225,10 @@ export function Composer({
     onSent();
   }
 
+  if (conversation.aiEnabled && !conversation.handoffAt) {
+    return <p role="status" className="border-t bg-background px-4 py-4 text-sm text-text-2">Toma la conversación para responder</p>;
+  }
+
   if (!conversation.windowOpen) {
     return (
       <div className="border-t bg-background px-[18px] py-3.5">
@@ -211,7 +243,7 @@ export function Composer({
             </p>
           </div>
         </div>
-        <TemplateSender conversationId={conversation.id} onSent={onSent} />
+        <TemplateSender conversationId={conversation.id} onSent={onSent} onAccessDenied={onAccessDenied} />
       </div>
     );
   }
@@ -228,6 +260,8 @@ export function Composer({
               className="rounded-full border border-border bg-chip px-3 py-1 text-xs font-semibold text-text-2 transition-colors hover:border-brand hover:bg-brand-tint hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               onClick={() => {
                 const firstName = conversation.contact.name.split(" ")[0] ?? "";
+                textRetry.current = null;
+                attempt.current.clear();
                 setText(t.body.replace(/\{\{\s*1\s*\}\}/g, firstName));
                 taRef.current?.focus();
                 setTimeout(autogrow, 0);
@@ -274,7 +308,7 @@ export function Composer({
             Coordenadas o enlace de Google Maps
             <input
               value={coordsRaw}
-              onChange={(e) => setCoordsRaw(e.target.value)}
+              onChange={(e) => { attempt.current.clear(); setCoordsRaw(e.target.value); }}
               placeholder="21.019, -101.257"
               className="mt-1 w-full rounded-md border border-border-strong bg-background px-2.5 py-1.5 text-sm outline-none transition-[border-color,box-shadow] focus:border-brand focus:ring-[3px] focus:ring-brand-soft"
             />
@@ -283,7 +317,7 @@ export function Composer({
             Nombre del lugar (opcional)
             <input
               value={placeName}
-              onChange={(e) => setPlaceName(e.target.value)}
+              onChange={(e) => { attempt.current.clear(); setPlaceName(e.target.value); }}
               placeholder="Oficina AISHIA"
               className="mt-1 w-full rounded-md border border-border-strong bg-background px-2.5 py-1.5 text-sm outline-none transition-[border-color,box-shadow] focus:border-brand focus:ring-[3px] focus:ring-brand-soft"
             />
@@ -311,7 +345,7 @@ export function Composer({
             Nombre
             <input
               value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
+              onChange={(e) => { attempt.current.clear(); setContactName(e.target.value); }}
               placeholder="Xavier Pérez"
               className="mt-1 w-full rounded-md border border-border-strong bg-background px-2.5 py-1.5 text-sm outline-none transition-[border-color,box-shadow] focus:border-brand focus:ring-[3px] focus:ring-brand-soft"
             />
@@ -320,7 +354,7 @@ export function Composer({
             Teléfono
             <input
               value={contactPhone}
-              onChange={(e) => setContactPhone(e.target.value)}
+              onChange={(e) => { attempt.current.clear(); setContactPhone(e.target.value); }}
               placeholder="+52 462 123 4567"
               className="mt-1 w-full rounded-md border border-border-strong bg-background px-2.5 py-1.5 text-sm outline-none transition-[border-color,box-shadow] focus:border-brand focus:ring-[3px] focus:ring-brand-soft"
             />
@@ -388,6 +422,8 @@ export function Composer({
           value={text}
           rows={1}
           onChange={(e) => {
+            textRetry.current = null;
+            attempt.current.clear();
             setText(e.target.value);
             autogrow();
           }}
@@ -412,7 +448,7 @@ export function Composer({
         </button>
       </div>
       <div className="mt-1.5 flex items-center justify-between">
-        {error ? <p className="text-xs text-destructive">{error}</p> : <span />}
+        {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : <span />}
         <p className="font-mono text-[10.5px] tracking-[0.04em] text-text-3">
           Ventana abierta · quedan {formatRemaining(conversation.windowRemainingMs)}
         </p>

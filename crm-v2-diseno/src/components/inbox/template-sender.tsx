@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { templateLanguageName } from "@/lib/template-languages";
 import type { TemplateDto } from "@/lib/types";
 import { countVariables } from "@/lib/templates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createSendAttempt, UNCERTAIN_SEND } from "./send-attempt";
 
 /**
  * Selector de plantilla aprobada para conversaciones con ventana cerrada
@@ -15,10 +16,13 @@ import { Label } from "@/components/ui/label";
 export function TemplateSender({
   conversationId,
   onSent,
+  onAccessDenied,
 }: {
   conversationId: string;
   onSent: () => void;
+  onAccessDenied: () => void;
 }) {
+  const attempt = useRef(createSendAttempt());
   const [templates, setTemplates] = useState<TemplateDto[] | null>(null);
   const [selectedId, setSelectedId] = useState<string>("");
   const [variables, setVariables] = useState<string[]>([]);
@@ -77,12 +81,20 @@ export function TemplateSender({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          idempotencyKey: attempt.current.key(JSON.stringify([conversationId, selected.id, values])),
           templateId: selected.id,
           variables: variableCount > 0 ? values : undefined,
         }),
       }
-    );
+    ).catch(() => null);
     setSending(false);
+    if (!res) { setError(UNCERTAIN_SEND); return; }
+    if (res.status === 409) {
+      const body = await res.json().catch(() => null);
+      setError(body?.error?.code === "human_control_required" ? "Toma la conversación para responder" : UNCERTAIN_SEND);
+      return;
+    }
+    if (res.status === 403) { onAccessDenied(); return; }
     if (!res.ok) {
       const data = (await res.json().catch(() => null)) as {
         error?: { message?: string };
@@ -90,6 +102,7 @@ export function TemplateSender({
       setError(data?.error?.message ?? "No se pudo enviar la plantilla");
       return;
     }
+    attempt.current.clear();
     setSelectedId("");
     setVariables([]);
     onSent();
@@ -103,6 +116,7 @@ export function TemplateSender({
           id="template-select"
           value={selectedId}
           onChange={(e) => {
+            attempt.current.clear();
             setSelectedId(e.target.value);
             setVariables([]);
           }}
@@ -129,21 +143,22 @@ export function TemplateSender({
           <Input
             id={`template-variable-${i + 1}`}
             value={value}
-            onChange={(e) =>
+            onChange={(e) => {
+              attempt.current.clear();
               setVariables((prev) => {
                 const next = [...prev];
                 while (next.length < variableCount) next.push("");
                 next[i] = e.target.value;
                 return next;
-              })
-            }
+              });
+            }}
             placeholder={
               i === 0 ? "p. ej. el nombre del cliente" : "p. ej. 12 de agosto"
             }
           />
         </div>
       ))}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
       <Button
         onClick={() => void send()}
         disabled={!selected || sending || missingValue}

@@ -20,6 +20,3 @@ EliPanel-copias/
 eli-crm-*/
 *.sql.gz
 *.dump
-
-# workflows/ se queda solo en local; no se comparte en el repo
-workflows/

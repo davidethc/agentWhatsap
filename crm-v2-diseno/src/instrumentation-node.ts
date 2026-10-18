@@ -82,3 +82,5 @@ export function resumeDispatch(): void {
     );
   }
 }
+
+export { startPrivacyMaintenance } from "@/server/privacy/worker";

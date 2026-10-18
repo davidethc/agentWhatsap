@@ -1,3 +1,4 @@
+import { PrivacyError } from "@/server/privacy/policy";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/lib/db";
@@ -10,6 +11,8 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({
   conversationId: z.string().min(1),
   text: z.string().min(1).max(4096),
+  epoch: z.number().int().nonnegative().optional(),
+  idempotencyKey: z.string().min(1).max(128).optional(),
 });
 
 /**
@@ -62,9 +65,12 @@ export async function POST(req: Request) {
       organizationId,
       text: body.data.text,
       aiGenerated: true,
+      expectedEpoch: body.data.epoch,
+      idempotencyKey: body.data.idempotencyKey,
     });
     return Response.json({ messageId: result.messageId });
   } catch (err) {
+    if (err instanceof PrivacyError) return apiError(err.code === "not_found" ? 404 : 409, err.code, err.code);
     if (err instanceof SendError) {
       if (err.code === "window_closed") {
         return apiError(409, "window_closed", err.message);

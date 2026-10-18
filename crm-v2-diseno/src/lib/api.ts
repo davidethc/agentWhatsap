@@ -1,3 +1,5 @@
+import { hasOperationalAccess } from "@/server/privacy/access";
+import { PrivacyError } from "@/server/privacy/policy";
 import { z } from "zod";
 import { requireSession, UnauthorizedError, type SessionContext } from "@/lib/auth/session";
 
@@ -28,9 +30,13 @@ export function withAuth<Args extends unknown[]>(
       throw err;
     }
     try {
+      const request = args.find(arg => arg instanceof Request) as Request | undefined;
+      const technical = request && /^\/api\/(settings(?:\/|$)|branding(?:\/|$)|onboarding(?:\/|$))/.test(new URL(request.url).pathname);
+      if (!technical && !(await hasOperationalAccess(session))) return apiError(403, "operational_access_required", "Acceso reservado a la doctora");
       return await handler(session, ...args);
     } catch (err) {
-      console.error("[api] error no controlado:", err);
+      if (err instanceof PrivacyError) return apiError(err.code === "not_found" ? 404 : 409, err.code, err.code);
+      console.error("[api] error no controlado");
       return apiError(500, "internal", "Error interno");
     }
   };

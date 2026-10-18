@@ -362,6 +362,9 @@ export const conversation = pgTable(
      * responder; WhatsApp no lo necesita y queda null.
      */
     channelThreadRef: text("channel_thread_ref"),
+    controlEpoch: integer("control_epoch").notNull().default(0),
+    contentDeletedAt: timestamp("content_deleted_at"),
+    contentPurgePending: boolean("content_purge_pending").notNull().default(false),
     aiEnabled: boolean("ai_enabled").notNull().default(true),
     handoffAt: timestamp("handoff_at"),
     handoffReason: text("handoff_reason", {
@@ -1184,3 +1187,48 @@ export const dispatch = pgTable(
     index("dispatch_status_notbefore_idx").on(t.status, t.notBefore),
   ]
 );
+
+/** La administración técnica no concede acceso al contenido clínico. */
+export const operationalGrant = pgTable("operational_grant", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, t => [uniqueIndex("operational_grant_org_user_uq").on(t.organizationId, t.userId)]);
+
+/** Solo referencias, acción, actor y fecha; jamás texto, ficha ni motivo libre. */
+export const privacyAudit = pgTable("privacy_audit", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  conversationId: text("conversation_id"),
+  actorUserId: text("actor_user_id"),
+  action: text("action").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, t => [index("privacy_audit_org_date_idx").on(t.organizationId, t.createdAt)]);
+
+/** No depende de media_asset: sobrevive al borrado del registro y a reinicios. */
+export const mediaPurgeJob = pgTable("media_purge_job", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  assetId: text("asset_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, t => [uniqueIndex("media_purge_asset_uq").on(t.organizationId, t.assetId)]);
+
+/** Huellas técnicas para que reintentos del webhook no resuciten contenido purgado. */
+export const messageReceipt = pgTable("message_receipt", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  waMessageId: text("wa_message_id").notNull(),
+}, t => [uniqueIndex("message_receipt_org_wa_uq").on(t.organizationId, t.waMessageId)]);
+
+/** Acuse durable de aceptación: un reintento devuelve el mismo mensaje. */
+export const outboundReceipt = pgTable("outbound_receipt", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  conversationId: text("conversation_id").notNull(),
+  epoch: integer("epoch").notNull(),
+  key: text("key").notNull(),
+  messageId: text("message_id"),
+  requestHash: text("request_hash").notNull(),
+  status: text("status", { enum: ["pending", "sent", "uncertain"] }).notNull().default("pending"),
+}, t => [uniqueIndex("outbound_receipt_org_conv_key_uq").on(t.organizationId, t.conversationId, t.key)]);

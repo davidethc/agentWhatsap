@@ -1,3 +1,4 @@
+import { afterCommit } from "@/lib/db/transaction-context";
 import { EventEmitter } from "node:events";
 
 /**
@@ -43,7 +44,7 @@ function getBus(): EventEmitter {
 }
 
 export function publish(organizationId: string, event: SseEvent): void {
-  getBus().emit(`org:${organizationId}`, event);
+  afterCommit(() => { getBus().emit(`org:${organizationId}`, event); });
 }
 
 export function subscribe(

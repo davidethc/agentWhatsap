@@ -1,3 +1,5 @@
+import { requestContentDeletion } from "@/server/privacy/service";
+import { runPrivacyMaintenance } from "@/server/privacy/worker";
 import { z } from "zod";
 import { apiError, parseBody, withAuth } from "@/lib/api";
 import { publish } from "@/server/events/bus";
@@ -18,7 +20,7 @@ export const PATCH = withAuth(async (session, req: Request, ctx: Params) => {
   const body = await parseBody(req, patchSchema);
   if (!body.ok) return body.response;
 
-  const updated = await updateConversation(session.organizationId, id, body.data);
+  const updated = await updateConversation(session.organizationId, id, body.data, session.userId);
   if (!updated) return apiError(404, "not_found", "Conversación no encontrada");
 
   const row = await getConversation(session.organizationId, id);
@@ -37,4 +39,12 @@ export const PATCH = withAuth(async (session, req: Request, ctx: Params) => {
     return Response.json({ conversation: dto });
   }
   return Response.json({ conversation: null });
+});
+
+export const DELETE = withAuth(async (session, _req: Request, ctx: Params) => {
+  const { id } = await ctx.params;
+  await requestContentDeletion(session.organizationId, id, session.userId);
+  publish(session.organizationId, { type: "conversation.updated", data: { conversation: { id } } });
+  void runPrivacyMaintenance();
+  return Response.json({ deleted: true }, { status: 202 });
 });

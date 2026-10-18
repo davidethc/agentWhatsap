@@ -1,4 +1,5 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { contentAvailable } from "@/server/privacy/policy";
+import { asc, desc, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
 import { scoped } from "@/lib/db/tenant";
@@ -76,8 +77,8 @@ async function executeTurn(conversationId: string): Promise<void> {
   entry.running = true;
   try {
     await runAgentTurn(conversationId);
-  } catch (err) {
-    console.error("[agente] turno falló:", err);
+  } catch {
+    console.error("[agente] turno falló");
   } finally {
     entry.running = false;
     if (entry.pending) {
@@ -101,7 +102,7 @@ export async function runAgentTurn(conversationId: string): Promise<void> {
     .where(eq(schema.conversation.id, conversationId))
     .limit(1);
   const conversation = convRows[0];
-  if (!conversation) return;
+  if (!conversation || !contentAvailable(conversation)) return;
   const organizationId = conversation.organizationId;
 
   // ¿Esta organización tiene IA? Lo guardado en Ajustes → IA, o si no, el
@@ -212,11 +213,13 @@ export async function runAgentTurn(conversationId: string): Promise<void> {
   if (!result.ok) {
     if (result.error === "not_configured") return;
     // Fallo persistente del proveedor o salida imposible → escalar (FR-022).
-    console.error(`[agente] fallo del proveedor (raw): ${result.detail}`);
+    console.error("[agente] fallo del proveedor");
     await applyHandoff(conversationId, organizationId, "error");
     return;
   }
 
+  const [current] = await getDb().select().from(schema.conversation).where(eq(schema.conversation.id, conversationId)).limit(1);
+  if (!current || !contentAvailable(current) || current.controlEpoch !== conversation.controlEpoch || !current.aiEnabled || current.handoffAt) return;
   let action: AgentActionType = result.data;
 
   // 015 — Agenda. Un fallo del motor degrada el turno (el agente responde sin
@@ -247,8 +250,8 @@ export async function runAgentTurn(conversationId: string): Promise<void> {
           });
         }
         return;
-      } catch (err) {
-        console.error(`[agente] el motor de agenda falló: ${err}`);
+      } catch {
+        console.error("[agente] el motor de agenda falló");
         action = degradeAction(action);
       }
     }
@@ -309,6 +312,7 @@ async function deliverReply(
       organizationId: conversation.organizationId,
       text,
       aiGenerated: true,
+      expectedEpoch: conversation.controlEpoch,
     });
   } catch (err) {
     if (err instanceof SendError && err.code === "window_closed") {
@@ -337,10 +341,10 @@ async function deliverReply(
 async function acknowledgeHandoff(conversation: Conversation): Promise<void> {
   try {
     await deliverReply(conversation, HANDOFF_BACKUP_ACK);
-  } catch (err) {
+  } catch {
     console.error(
       `[agente] el acuse del traspaso no salió en ${conversation.id}; se traspasa igual:`,
-      err
+      "envío fallido"
     );
   }
 }
@@ -376,7 +380,7 @@ export async function applyHandoff(
   const db = getDb();
   const updated = await db
     .update(schema.conversation)
-    .set({ handoffAt: new Date(), handoffReason: reason, updatedAt: new Date() })
+    .set({ handoffAt: new Date(), handoffReason: reason, controlEpoch: sql`${schema.conversation.controlEpoch} + 1`, updatedAt: new Date() })
     .where(eq(schema.conversation.id, conversationId))
     .returning();
   if (!updated[0]) return;

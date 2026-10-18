@@ -42,6 +42,7 @@ export type EventoDespacho = {
     id: string;
     channel: CanalDelEvento;
     aiEnabled: boolean;
+    epoch?: number;
     windowOpen: boolean;
     windowExpiresAt: string | null;
   };
@@ -81,6 +82,7 @@ export function armarEvento(datos: {
     id: string;
     channel: CanalDelEvento;
     aiEnabled: boolean;
+    epoch?: number;
     windowOpen: boolean;
     windowExpiresAt: Date | null;
   };
@@ -99,6 +101,7 @@ export function armarEvento(datos: {
       id: datos.conversation.id,
       channel: datos.conversation.channel,
       aiEnabled: datos.conversation.aiEnabled,
+      ...(datos.conversation.epoch !== undefined ? { epoch: datos.conversation.epoch } : {}),
       windowOpen: datos.conversation.windowOpen,
       windowExpiresAt: datos.conversation.windowExpiresAt?.toISOString() ?? null,
     },

@@ -120,6 +120,20 @@
       "when": 1791469451742,
       "tag": "0016_despacho_al_cerebro",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792210509743,
+      "tag": "0017_privacidad_conversacional",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792210968634,
+      "tag": "0018_intencion_envio_durable",
+      "breakpoints": true
     }
   ]
 }

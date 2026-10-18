@@ -539,7 +539,7 @@
       "parameters": {
         "phoneNumberId": "={{ $('Normalizar mensaje').first().json.phoneNumberId }}",
         "to": "={{ $('Normalizar mensaje').first().json.to }}",
-        "message": "={{ $json.output }}"
+        "message": "={{ $('Preparar respuesta').first().json.enviar ? $('Preparar respuesta').first().json.respaldo : $('Preparar respuesta').first().json.output }}"
       },
       "id": "5df7987e-766b-4779-83b6-57371c2d9d11",
       "name": "Responder por WhatsApp",
@@ -1388,7 +1388,7 @@
       "main": [
         [
           {
-            "node": "Responder por WhatsApp",
+            "node": "Preparar respuesta",
             "type": "main",
             "index": 0
           }

@@ -20,7 +20,6 @@ import { cn, formatPhone } from "@/lib/utils";
 import { AnuncioOrigen } from "@/components/anuncio-origen";
 import { ContactAvatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { FichaPanel } from "@/components/ficha-panel";
 
@@ -35,7 +34,6 @@ const HANDOFF_LABELS: Record<string, string> = {
 export function ContactPanel({
   conversation,
   refreshKey = 0,
-  onPatchConversation,
   onClose,
 }: {
   conversation: ConversationDto;
@@ -70,7 +68,6 @@ export function ContactPanel({
   // El control es la FUENTE DE VERDAD de la conversación: el agente in-process
   // y cualquier cerebro externo conectado por /api/bot/* respetan este flag,
   // así que el toggle opera siempre — `agentReady` solo matiza el texto.
-  const aiActive = conversation.aiEnabled && !conversation.handoffAt;
 
   // Aparte del resto: consultar el /health del cerebro externo puede tardar
   // hasta 2 s, y eso no debe demorar la etapa ni la ficha.
@@ -217,14 +214,7 @@ export function ContactPanel({
                 {HANDOFF_LABELS[conversation.handoffReason ?? ""] ??
                   "La IA está en pausa en esta conversación."}
               </p>
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-2 w-full"
-                onClick={() => void onPatchConversation({ reactivate: true })}
-              >
-                Reactivar IA
-              </Button>
+
             </div>
           )}
 
@@ -242,16 +232,7 @@ export function ContactPanel({
                         : "Activada"}
                 </p>
               </div>
-              <Switch
-                size="sm"
-                checked={aiActive}
-                label="IA en esta conversación"
-                onCheckedChange={() => {
-                  void onPatchConversation({
-                    aiEnabled: !conversation.aiEnabled,
-                  });
-                }}
-              />
+
             </div>
 
             {brain?.warning === "doble_respuesta" ? (

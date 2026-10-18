@@ -13,6 +13,8 @@ import { ConversationList } from "./conversation-list";
 import { MessageThread } from "./message-thread";
 import { Composer } from "./composer";
 import { ContactPanel } from "./contact-panel";
+import { ConversationActions } from "./conversation-actions";
+import { UNCERTAIN_SEND } from "./send-attempt";
 
 /**
  * Texto que ya salió del compositor pero cuyo POST todavía viaja. Existe solo
@@ -37,6 +39,19 @@ const isWideEnoughForPanel = () =>
 
 export function InboxClient({ channels }: { channels: readonly Channel[] }) {
   const multiChannel = channels.length > 1;
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [denied, setDenied] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const accessEpoch = useRef(0);
+  const listRequest = useRef(0);
+  const clearAccess = useCallback(() => {
+    accessEpoch.current += 1;
+    setDenied(true);
+    setConversations([]);
+    setSelectedId(null);
+    setMessages([]);
+    setPending([]);
+  }, []);
   const [conversations, setConversations] = useState<ConversationDto[] | null>(
     null
   );
@@ -73,21 +88,39 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
   const sendQueue = useRef<Promise<unknown>>(Promise.resolve());
 
   const refetchConversations = useCallback(async () => {
-    const res = await fetch("/api/conversations").catch(() => null);
-    if (!res?.ok) return;
+    const epoch = accessEpoch.current;
+    const request = ++listRequest.current;
+    const res = await fetch("/api/conversations", { cache: "no-store" }).catch(() => null);
+    if (res?.status === 403) { clearAccess(); return; }
+    if (epoch !== accessEpoch.current || request !== listRequest.current) return;
+    if (!res?.ok) { setLoadError("No se pudo cargar la bandeja. Intenta de nuevo."); return; }
+    setLoadError(null);
     const data = (await res.json()) as { conversations: ConversationDto[] };
+    if (epoch !== accessEpoch.current || request !== listRequest.current) return;
     setConversations(data.conversations);
+    if (selectedIdRef.current && !data.conversations.some((c) => c.id === selectedIdRef.current)) { setSelectedId(null); setMessages([]); setPending([]); }
     lastFetchRef.current = new Date().toISOString();
-  }, []);
+  }, [clearAccess]);
 
   const refetchMessages = useCallback(async (conversationId: string) => {
+    const epoch = accessEpoch.current;
+    setMessagesLoading(true);
     const res = await fetch(
-      `/api/conversations/${conversationId}/messages`
+      `/api/conversations/${conversationId}/messages`, { cache: "no-store" }
     ).catch(() => null);
-    if (!res?.ok) return;
+    if (res?.status === 403) { clearAccess(); return; }
+    if (epoch !== accessEpoch.current || selectedIdRef.current !== conversationId) return;
+    setMessagesLoading(false);
+    if (res?.status === 404) {
+      setSelectedId(null); setMessages([]);
+      setConversations((prev) => prev?.filter((c) => c.id !== conversationId) ?? []);
+      return;
+    }
+    if (!res?.ok) { setMessages([]); setLoadError("No se pudo cargar el historial. Intenta de nuevo."); return; }
+    setLoadError(null);
     const data = (await res.json()) as { messages: MessageDto[] };
-    if (selectedIdRef.current === conversationId) setMessages(data.messages);
-  }, []);
+    if (epoch === accessEpoch.current && selectedIdRef.current === conversationId) setMessages(data.messages);
+  }, [clearAccess]);
 
   useEffect(() => {
     void refetchConversations();
@@ -95,6 +128,7 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
 
   const select = useCallback(
     (id: string) => {
+      selectedIdRef.current = id;
       setSelectedId(id);
       setMessages([]);
       void refetchMessages(id);
@@ -118,6 +152,7 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
 
   useEvents({
     onMessageNew: ({ conversationId, message }) => {
+      if (denied) return;
       if (selectedIdRef.current === conversationId) {
         const m = message as MessageDto;
         setMessages((prev) =>
@@ -134,7 +169,7 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
       setDetailRev((v) => v + 1);
     },
     onMessageStatus: ({ conversationId, messageId, status, error }) => {
-      if (selectedIdRef.current !== conversationId) return;
+      if (denied || selectedIdRef.current !== conversationId) return;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === messageId
@@ -209,10 +244,11 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
    * jamás se pierde en silencio.
    */
   const sendText = useCallback(
-    async (text: string): Promise<string | null> => {
+    async (text: string, idempotencyKey: string): Promise<string | null> => {
       const conversationId = selectedIdRef.current;
       if (!conversationId) return "Sin conversación seleccionada";
 
+      const epoch = accessEpoch.current;
       const tmpId = `tmp_${++tmpSeq.current}`;
       setPending((prev) => [
         ...prev,
@@ -226,14 +262,21 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
       const drop = () => setPending((prev) => prev.filter((p) => p.id !== tmpId));
 
       const run = async (): Promise<string | null> => {
+        if (epoch !== accessEpoch.current) { drop(); return "La conversación ya no está disponible"; }
         const res = await fetch(`/api/conversations/${conversationId}/messages`, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text, idempotencyKey }),
         }).catch(() => null);
         if (!res) {
           drop();
-          return "Sin conexión con el servidor";
+          return UNCERTAIN_SEND;
+        }
+        if (res.status === 403) { clearAccess(); drop(); return "Acceso denegado"; }
+        if (res.status === 409) {
+          const body = await res.json().catch(() => null);
+          drop();
+          return body?.error?.code === "human_control_required" ? "Toma la conversación para responder" : UNCERTAIN_SEND;
         }
         if (!res.ok) {
           const data = (await res.json().catch(() => null)) as {
@@ -254,24 +297,29 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
       sendQueue.current = queued.catch(() => null);
       return queued;
     },
-    [refetchMessages, refetchConversations]
+    [refetchMessages, refetchConversations, clearAccess]
   );
 
   const patchConversation = useCallback(
     async (patch: { aiEnabled?: boolean; reactivate?: boolean }) => {
       if (!selectedIdRef.current) return;
-      await fetch(`/api/conversations/${selectedIdRef.current}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
+      const res = await fetch(`/api/conversations/${selectedIdRef.current}`, {
+        method: "PATCH", headers: { "content-type": "application/json" },
         body: JSON.stringify(patch),
       }).catch(() => null);
-      void refetchConversations();
+      if (res?.status === 403) { clearAccess(); return; }
+      if (!res?.ok) throw new Error("No se pudo cambiar quién responde.");
+      await refetchConversations();
     },
-    [refetchConversations]
+    [refetchConversations, clearAccess]
   );
 
+  if (denied) return <div role="alert" className="p-6">Acceso denegado. La bandeja está disponible solo para la doctora.</div>;
+
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col">
+      {loadError && <div role="alert" className="border-b bg-warning-tint p-3 text-warning-text">{loadError} <button className="underline focus-visible:ring-2 focus-visible:ring-ring" onClick={() => { void refetchConversations(); if (selectedId) void refetchMessages(selectedId); }}>Reintentar</button></div>}
+      <div className="flex min-h-0 flex-1">
       {/* Móvil: una columna a la vez. La lista cede la pantalla completa al
           hilo en cuanto hay conversación elegida (patrón maestro-detalle). */}
       <section
@@ -350,8 +398,25 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
                 </button>
               )}
             </header>
-            <MessageThread messages={thread} />
+            <ConversationActions
+              key={selected.id}
+              conversation={selected}
+              onToggle={(aiEnabled) => patchConversation({ aiEnabled })}
+              onDelete={async () => {
+                const id = selected.id;
+                const res = await fetch(`/api/conversations/${id}`, { method: "DELETE" });
+                if (res.status === 403) { clearAccess(); return; }
+                if (res.status !== 202 && res.status !== 404) throw new Error("No se pudo eliminar la conversación.");
+                accessEpoch.current += 1;
+                setMessages([]); setPending((prev) => prev.filter((p) => p.conversationId !== id));
+                setSelectedId(null);
+                setConversations((prev) => prev?.filter((c) => c.id !== id) ?? []);
+              }}
+            />
+            {messagesLoading ? <p role="status" className="p-4">Cargando historial…</p> : <MessageThread messages={thread} />}
             <Composer
+              key={selected.id}
+              onAccessDenied={clearAccess}
               conversation={selected}
               onSend={sendText}
               onSent={() => {
@@ -397,6 +462,7 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
           // hundido; como cajón (debajo de xl) ocupa el borde a borde.
           <div className="h-full w-[320px] max-xl:w-[min(320px,88vw)] xl:bg-subtle xl:p-2.5">
             <ContactPanel
+              key={selected.id}
               conversation={selected}
               refreshKey={detailRev}
               onPatchConversation={patchConversation}
@@ -405,6 +471,7 @@ export function InboxClient({ channels }: { channels: readonly Channel[] }) {
           </div>
         )}
       </section>
+      </div>
     </div>
   );
 }
